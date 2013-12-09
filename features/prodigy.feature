@@ -18,3 +18,18 @@ Feature: Prodigy
     Then the variable "foo" should be undefined
     When I start prodigy
     Then the variable "foo" should have value "bar"
+
+  Scenario: Sorted by name
+    Given I add the following processes:
+      | name |
+      | Baz  |
+      | Foo  |
+      | Qux  |
+      | Bar  |
+    Given I start prodigy
+    Then I should see the following processes:
+      | name |
+      | Bar  |
+      | Baz  |
+      | Foo  |
+      | Qux  |

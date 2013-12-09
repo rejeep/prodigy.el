@@ -73,12 +73,21 @@
 (defun prodigy-prev ()
   "..."
   (interactive)
-  (when (> (line-number-at-pos (point)) 2)
+  (when (> (line-number-at-pos (point)) 1)
     (forward-line -1)))
 
 (defun prodigy-define (&rest args)
   "..."
   (push args prodigy-services))
+
+(defun prodigy-sorted-services ()
+  "..."
+  (-sort
+   (lambda (service-1 service-2)
+     (string<
+      (plist-get service-1 :name)
+      (plist-get service-2 :name)))
+   prodigy-services))
 
 ;; TODO:
 ;;  - save-excursion
@@ -87,16 +96,9 @@
   (interactive)
   (let (buffer-read-only)
     (erase-buffer)
-    (when prodigy-services
-      (insert "Name Command\n"))
-    (dolist (service prodigy-services)
-      (insert (s-join " "
-                      (list
-                       (plist-get service :name)
-                       (plist-get service :command))))
-      (insert "\n"))
-    (goto-char (point-min))
-    (forward-line 1)))
+    (dolist (service (prodigy-sorted-services))
+      (insert (plist-get service :name) "\n"))
+    (goto-char (point-min))))
 
 ;;;###autoload
 (defun prodigy ()

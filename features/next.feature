@@ -9,30 +9,30 @@ Feature: Next
 
   Scenario: Single process
     Given I add the following processes:
-      | name | command |
-      | Foo  | echo    |
+      | name |
+      | Foo  |
     Given I start prodigy
     Then I should see the following processes:
-      | name | command |
-      | Foo  | echo    |
-    And the point should be on line "2"
+      | name |
+      | Foo  |
+    And the point should be on line "1"
     When I press "n"
-    Then the point should be on line "2"
+    Then the point should be on line "1"
     When I press "n"
-    Then the point should be on line "2"
+    Then the point should be on line "1"
 
   Scenario: Multiple processes
     Given I add the following processes:
-      | name | command |
-      | Foo  | echo    |
-      | Bar  | echo    |
+      | name |
+      | Foo  |
+      | Bar  |
     Given I start prodigy
     Then I should see the following processes:
-      | name | command |
-      | Foo  | echo    |
-      | Bar  | echo    |
-    And the point should be on line "2"
+      | name |
+      | Bar  |
+      | Foo  |
+    And the point should be on line "1"
     When I press "n"
-    Then the point should be on line "3"
+    Then the point should be on line "2"
     When I press "n"
-    Then the point should be on line "3"
+    Then the point should be on line "2"

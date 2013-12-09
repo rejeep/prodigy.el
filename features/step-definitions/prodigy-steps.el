@@ -43,5 +43,10 @@
   (lambda (table)
     (let ((head (car table))
           (rows (cdr table)))
-      ;; todo
-      )))
+      (save-excursion
+        (goto-char (point-min))
+        (dolist (row rows)
+          (let ((line (buffer-substring-no-properties (line-beginning-position)
+                                                      (line-end-position))))
+            (should (equal (nth 0 row) line))
+            (forward-line 1)))))))
