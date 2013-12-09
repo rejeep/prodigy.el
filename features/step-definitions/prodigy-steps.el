@@ -22,3 +22,26 @@
 (Then "^I should not be in prodigy mode$"
   (lambda ()
     (should-not (equal major-mode 'prodigy-mode))))
+
+;; TODO: Make this more prodigy specific. Make sure point is at
+;; beginning of line and that the line is highlighted with the correct
+;; face.
+(Then "^the point should be on line \"\\([^\"]+\\)\"$"
+  (lambda (line)
+    (should (= (line-number-at-pos (point)) (string-to-number line)))))
+
+(Given "^I add the following processes:$"
+  (lambda (table)
+    (let ((head (car table))
+          (rows (cdr table)))
+      (dolist (row rows)
+        (prodigy-define
+         :name (nth 0 row)
+         :command (nth 1 row))))))
+
+(Then "^I should see the following processes:$"
+  (lambda (table)
+    (let ((head (car table))
+          (rows (cdr table)))
+      ;; todo
+      )))

@@ -14,4 +14,5 @@
 (require 'ert)
 
 (Before
+ (setq prodigy-services nil)
  (makunbound 'foo))

@@ -6,6 +6,7 @@
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
 ;; Version: 0.0.1
 ;; URL: http://github.com/rejeep/prodigy.el
+;; Package-Requires: ((s "1.8.0") (dash "2.4.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -30,14 +31,17 @@
 
 ;;; Code:
 
+(require 's)
+(require 'dash)
+
 (defgroup wrap-region nil
-  "Process manager."
+  "..."
   :prefix "prodigy-"
   :group 'tools
   :link '(url-link :tag "Github" "https://github.com/rejeep/prodigy.el"))
 
 (defcustom prodigy-buffer-name "*prodigy*"
-  "Name of Prodigy buffer."
+  "..."
   :group 'prodigy)
 
 (defvar prodigy-mode-hook nil
@@ -46,17 +50,57 @@
 (defvar prodigy-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'prodigy-quit)
+    (define-key map (kbd "n") 'prodigy-next)
+    (define-key map (kbd "p") 'prodigy-prev)
     map)
   "Keymap for `prodigy-mode'.")
 
+(defvar prodigy-services nil
+  "...")
+
 (defun prodigy-quit ()
-  "Quit Prodigy."
+  "..."
   (interactive)
   (kill-buffer (buffer-name)))
 
+(defun prodigy-next ()
+  "..."
+  (interactive)
+  (when (< (1+ (line-number-at-pos (point)))
+           (line-number-at-pos (point-max)))
+    (forward-line 1)))
+
+(defun prodigy-prev ()
+  "..."
+  (interactive)
+  (when (> (line-number-at-pos (point)) 2)
+    (forward-line -1)))
+
+(defun prodigy-define (&rest args)
+  "..."
+  (push args prodigy-services))
+
+;; TODO:
+;;  - save-excursion
+(defun prodigy-refresh ()
+  "..."
+  (interactive)
+  (let (buffer-read-only)
+    (erase-buffer)
+    (when prodigy-services
+      (insert "Name Command\n"))
+    (dolist (service prodigy-services)
+      (insert (s-join " "
+                      (list
+                       (plist-get service :name)
+                       (plist-get service :command))))
+      (insert "\n"))
+    (goto-char (point-min))
+    (forward-line 1)))
+
 ;;;###autoload
 (defun prodigy ()
-  "Start Prodigy mode."
+  "..."
   (interactive)
   (switch-to-buffer (get-buffer-create prodigy-buffer-name))
   (kill-all-local-variables)
@@ -64,6 +108,7 @@
   (setq mode-name "Prodigy")
   (setq major-mode 'prodigy-mode)
   (use-local-map prodigy-mode-map)
+  (prodigy-refresh)
   (run-mode-hooks 'prodigy-mode-hook))
 
 (provide 'prodigy)
