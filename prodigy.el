@@ -6,7 +6,7 @@
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
 ;; Version: 0.0.1
 ;; URL: http://github.com/rejeep/prodigy.el
-;; Package-Requires: ((s "1.8.0") (dash "2.4.0"))
+;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (cl-lib "0.3"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -33,6 +33,7 @@
 
 (require 's)
 (require 'dash)
+(require 'cl-lib)
 
 (defgroup wrap-region nil
   "..."
