@@ -1,4 +1,4 @@
-;;; prodigy.el --- 
+;;; prodigy.el --- Process manager
 
 ;; Copyright (C) 2013 Johan Andersson
 
