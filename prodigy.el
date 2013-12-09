@@ -30,6 +30,30 @@
 
 ;;; Code:
 
+(defgroup wrap-region nil
+  "Process manager."
+  :prefix "prodigy-"
+  :group 'tools
+  :link '(url-link :tag "Github" "https://github.com/rejeep/prodigy.el"))
+
+(defcustom prodigy-buffer-name "*prodigy*"
+  "Name of Prodigy buffer."
+  :group 'prodigy)
+
+(defvar prodigy-mode-hook nil
+  "Mode hook for `prodigy-mode'.")
+
+;;;###autoload
+(defun prodigy ()
+  "Start Prodigy mode."
+  (interactive)
+  (switch-to-buffer (get-buffer-create prodigy-buffer-name))
+  (kill-all-local-variables)
+  (setq buffer-read-only t)
+  (setq mode-name "Prodigy")
+  (setq major-mode 'prodigy-mode)
+  (run-mode-hooks 'prodigy-mode-hook))
+
 (provide 'prodigy)
 
 ;;; prodigy.el ends here

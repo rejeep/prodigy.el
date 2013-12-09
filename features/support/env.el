@@ -12,3 +12,6 @@
 (require 'prodigy (f-expand "prodigy" prodigy-root-path))
 (require 'espuds)
 (require 'ert)
+
+(Before
+ (makunbound 'foo))
