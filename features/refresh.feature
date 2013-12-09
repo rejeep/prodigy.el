@@ -3,17 +3,17 @@ Feature: Refresh
   Scenario: Save line
     Given I add the following processes:
       | name |
-      | Foo  |
-      | Bar  |
+      | foo  |
+      | bar  |
     And I start prodigy
     And I press "n"
     And I add the following processes:
       | name |
-      | Baz  |
+      | baz  |
     When I press "g"
     Then I should see the following processes:
       | name |
-      | Bar  |
-      | Baz  |
-      | Foo  |
+      | bar  |
+      | baz  |
+      | foo  |
     And the point should be on line "2"

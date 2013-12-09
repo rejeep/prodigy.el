@@ -10,11 +10,11 @@ Feature: Next
   Scenario: Single process
     Given I add the following processes:
       | name |
-      | Foo  |
+      | foo  |
     Given I start prodigy
     Then I should see the following processes:
       | name |
-      | Foo  |
+      | foo  |
     And the point should be on line "1"
     When I press "n"
     Then the point should be on line "1"
@@ -24,13 +24,13 @@ Feature: Next
   Scenario: Multiple processes
     Given I add the following processes:
       | name |
-      | Foo  |
-      | Bar  |
+      | foo  |
+      | bar  |
     Given I start prodigy
     Then I should see the following processes:
       | name |
-      | Bar  |
-      | Foo  |
+      | bar  |
+      | foo  |
     And the point should be on line "1"
     When I press "n"
     Then the point should be on line "2"

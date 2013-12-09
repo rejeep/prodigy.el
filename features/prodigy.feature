@@ -22,14 +22,14 @@ Feature: Prodigy
   Scenario: Sorted by name
     Given I add the following processes:
       | name |
-      | Baz  |
-      | Foo  |
-      | Qux  |
-      | Bar  |
+      | baz  |
+      | foo  |
+      | qux  |
+      | bar  |
     Given I start prodigy
     Then I should see the following processes:
       | name |
-      | Bar  |
-      | Baz  |
-      | Foo  |
-      | Qux  |
+      | bar  |
+      | baz  |
+      | foo  |
+      | qux  |
