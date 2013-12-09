@@ -41,6 +41,10 @@
   (lambda (table)
     (let ((head (car table))
           (rows (cdr table)))
+      (should
+       (= (- (line-number-at-pos (point-max))
+             (line-number-at-pos (point-min)))
+          (length rows)))
       (save-excursion
         (goto-char (point-min))
         (dolist (row rows)
