@@ -52,6 +52,7 @@
     (define-key map (kbd "q") 'prodigy-quit)
     (define-key map (kbd "n") 'prodigy-next)
     (define-key map (kbd "p") 'prodigy-prev)
+    (define-key map (kbd "g") 'prodigy-refresh)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -89,16 +90,16 @@
       (plist-get service-2 :name)))
    prodigy-services))
 
-;; TODO:
-;;  - save-excursion
 (defun prodigy-refresh ()
   "..."
   (interactive)
   (let (buffer-read-only)
-    (erase-buffer)
-    (dolist (service (prodigy-sorted-services))
-      (insert (plist-get service :name) "\n"))
-    (goto-char (point-min))))
+    (let ((line (line-number-at-pos (point))))
+      (erase-buffer)
+      (dolist (service (prodigy-sorted-services))
+        (insert (plist-get service :name) "\n"))
+      (goto-char (point-min))
+      (forward-line (1- line)))))
 
 ;;;###autoload
 (defun prodigy ()
