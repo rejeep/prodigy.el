@@ -35,6 +35,8 @@
 (require 'dash)
 (require 'cl-lib)
 
+(cl-defstruct prodigy-service name)
+
 (defgroup wrap-region nil
   "..."
   :prefix "prodigy-"
@@ -80,15 +82,15 @@
 
 (defmacro prodigy-define-service (name)
   "..."
-  (push args prodigy-services))
+  `(!cons (make-prodigy-service :name (symbol-name ,name)) prodigy-services))
 
 (defun prodigy-sorted-services ()
   "..."
   (-sort
    (lambda (service-1 service-2)
      (string<
-      (plist-get service-1 :name)
-      (plist-get service-2 :name)))
+      (prodigy-service-name service-1)
+      (prodigy-service-name service-2)))
    prodigy-services))
 
 (defun prodigy-refresh ()
@@ -98,7 +100,7 @@
     (let ((line (line-number-at-pos (point))))
       (erase-buffer)
       (dolist (service (prodigy-sorted-services))
-        (insert (plist-get service :name) "\n"))
+        (insert (prodigy-service-name service) "\n"))
       (goto-char (point-min))
       (forward-line (1- line)))))
 
