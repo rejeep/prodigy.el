@@ -43,6 +43,17 @@
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
 
+(defvar prodigy-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "q") 'prodigy-quit)
+    map)
+  "Keymap for `prodigy-mode'.")
+
+(defun prodigy-quit ()
+  "Quit Prodigy."
+  (interactive)
+  (kill-buffer (buffer-name)))
+
 ;;;###autoload
 (defun prodigy ()
   "Start Prodigy mode."
@@ -52,6 +63,7 @@
   (setq buffer-read-only t)
   (setq mode-name "Prodigy")
   (setq major-mode 'prodigy-mode)
+  (use-local-map prodigy-mode-map)
   (run-mode-hooks 'prodigy-mode-hook))
 
 (provide 'prodigy)

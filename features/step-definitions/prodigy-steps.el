@@ -18,3 +18,7 @@
 (Then "^the variable \"\\([^\"]+\\)\" should have value \"\\([^\"]+\\)\"$"
   (lambda (variable-name value)
     (should (equal (eval (intern variable-name)) value))))
+
+(Then "^I should not be in prodigy mode$"
+  (lambda ()
+    (should-not (equal major-mode 'prodigy-mode))))
