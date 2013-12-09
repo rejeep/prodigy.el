@@ -35,9 +35,7 @@
     (let ((head (car table))
           (rows (cdr table)))
       (dolist (row rows)
-        (prodigy-define
-         :name (nth 0 row)
-         :command (nth 1 row))))))
+        (prodigy-define-service (intern (nth 0 row)))))))
 
 (Then "^I should see the following processes:$"
   (lambda (table)

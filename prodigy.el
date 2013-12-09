@@ -78,7 +78,7 @@
   (when (> (line-number-at-pos (point)) 1)
     (forward-line -1)))
 
-(defun prodigy-define (&rest args)
+(defmacro prodigy-define-service (name)
   "..."
   (push args prodigy-services))
 
