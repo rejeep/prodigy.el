@@ -47,6 +47,11 @@
   "..."
   :group 'prodigy)
 
+(defface prodigy-line-face
+  '((((class color)) :background "#4A708B"))
+  "..."
+  :group 'prodigy)
+
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
 
@@ -67,18 +72,31 @@
   (interactive)
   (kill-buffer (buffer-name)))
 
+(defun prodigy-line-face (&optional face)
+  "..."
+  (put-text-property (line-beginning-position)
+                     (line-beginning-position 2)
+                     'face face))
+
+(defun prodigy-move (n)
+  "..."
+  (let ((inhibit-read-only t))
+    (prodigy-line-face)
+    (forward-line n)
+    (prodigy-line-face 'prodigy-line-face)))
+
 (defun prodigy-next ()
   "..."
   (interactive)
   (when (< (1+ (line-number-at-pos (point)))
            (line-number-at-pos (point-max)))
-    (forward-line 1)))
+    (prodigy-move 1)))
 
 (defun prodigy-prev ()
   "..."
   (interactive)
   (when (> (line-number-at-pos (point)) 1)
-    (forward-line -1)))
+    (prodigy-move -1)))
 
 (defun prodigy-define-service (&rest args)
   "..."
@@ -99,13 +117,13 @@
 (defun prodigy-refresh ()
   "..."
   (interactive)
-  (let (buffer-read-only)
+  (let ((inhibit-read-only t))
     (let ((line (line-number-at-pos (point))))
       (erase-buffer)
       (dolist (service (prodigy-sorted-services))
         (insert (prodigy-service-name service) "\n"))
       (goto-char (point-min))
-      (forward-line (1- line)))))
+      (prodigy-move (1- line)))))
 
 ;;;###autoload
 (defun prodigy ()

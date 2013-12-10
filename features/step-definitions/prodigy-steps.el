@@ -23,12 +23,16 @@
   (lambda ()
     (should-not (equal major-mode 'prodigy-mode))))
 
-;; TODO: Make this more prodigy specific. Make sure point is at
-;; beginning of line and that the line is highlighted with the correct
-;; face.
-(Then "^the point should be on line \"\\([^\"]+\\)\"$"
+(Then "^I should be on line \"\\([^\"]+\\)\"$"
   (lambda (line)
     (should (= (line-number-at-pos (point)) (string-to-number line)))))
+
+(Then "^I should be on service line \"\\([^\"]+\\)\"$"
+  (lambda (line)
+    (should (= (current-column) 0))
+    (should (= (line-number-at-pos (point)) (string-to-number line)))
+    (should (eq (get-text-property (line-beginning-position) 'face) 'prodigy-line-face))
+    (should (eq (get-text-property (line-end-position) 'face) 'prodigy-line-face))))
 
 (Given "^I add the following processes:$"
   (lambda (table)

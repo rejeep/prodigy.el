@@ -16,4 +16,4 @@ Feature: Refresh
       | bar  |
       | baz  |
       | foo  |
-    And the point should be on line "2"
+    And I should be on service line "2"
