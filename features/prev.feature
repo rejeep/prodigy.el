@@ -3,9 +3,7 @@ Feature: Prev
   Scenario: No processes
     Given I start prodigy
     When I press "p"
-    Then I should be on line "1"
-    When I press "p"
-    Then I should be on line "1"
+    Then I should see message "Cannot move further up"
 
   Scenario: Single process
     Given I add the following processes:
@@ -17,9 +15,7 @@ Feature: Prev
       | foo  |
     And I should be on service line "1"
     When I press "p"
-    Then I should be on service line "1"
-    When I press "p"
-    Then I should be on service line "1"
+    Then I should see message "Cannot move further up"
 
   Scenario: Multiple processes
     Given I add the following processes:
@@ -37,4 +33,4 @@ Feature: Prev
     When I press "p"
     Then I should be on service line "1"
     When I press "p"
-    Then I should be on service line "1"
+    Then I should see message "Cannot move further up"

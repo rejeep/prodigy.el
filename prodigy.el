@@ -88,15 +88,17 @@
 (defun prodigy-next ()
   "..."
   (interactive)
-  (when (< (1+ (line-number-at-pos (point)))
-           (line-number-at-pos (point-max)))
-    (prodigy-move 1)))
+  (if (< (1+ (line-number-at-pos (point)))
+         (line-number-at-pos (point-max)))
+      (prodigy-move 1)
+    (message "Cannot move further down")))
 
 (defun prodigy-prev ()
   "..."
   (interactive)
-  (when (> (line-number-at-pos (point)) 1)
-    (prodigy-move -1)))
+  (if (> (line-number-at-pos (point)) 1)
+      (prodigy-move -1)
+    (message "Cannot move further up")))
 
 (defun prodigy-define-service (&rest args)
   "..."
