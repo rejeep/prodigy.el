@@ -80,9 +80,12 @@
   (when (> (line-number-at-pos (point)) 1)
     (forward-line -1)))
 
-(defmacro prodigy-define-service (name)
+(defun prodigy-define-service (&rest args)
   "..."
-  `(!cons (make-prodigy-service :name (symbol-name ,name)) prodigy-services))
+  (!cons
+   (make-prodigy-service
+    :name (plist-get args :name))
+   prodigy-services))
 
 (defun prodigy-sorted-services ()
   "..."
