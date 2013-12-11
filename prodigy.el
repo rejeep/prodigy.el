@@ -85,21 +85,18 @@
   "..."
   (prodigy-color-line))
 
-(defun prodigy-service-at-point-p (&optional point)
+(defun prodigy-service-at-line-p (&optional line)
   "..."
-  (unless point
-    (setq point (point)))
-  (<= (line-number-at-pos point)
-      (length (ht-keys prodigy-services))))
+  (<= (or line (line-number-at-pos)) (length (ht-keys prodigy-services))))
 
 (defun prodigy-move (n)
   "..."
   (let ((inhibit-read-only t))
     (when (or
            (and
-            (> n 0) (prodigy-service-at-point-p (line-beginning-position 2)))
+            (> n 0) (prodigy-service-at-line-p (1+ (line-number-at-pos))))
            (and
-            (< n 0) (prodigy-service-at-point-p (line-beginning-position -1)))
+            (< n 0) (prodigy-service-at-line-p (1- (line-number-at-pos))))
            (= n 0))
       (prodigy-lowlight-line)
       (forward-line n)
@@ -123,7 +120,7 @@
 (defun prodigy-mark ()
   "..."
   (interactive)
-  (when (prodigy-service-at-point-p)
+  (when (prodigy-service-at-line-p)
     (let ((inhibit-read-only t))
       (save-excursion
         (goto-char (line-beginning-position))
@@ -135,7 +132,7 @@
 (defun prodigy-unmark ()
   "..."
   (interactive)
-  (when (prodigy-service-at-point-p)
+  (when (prodigy-service-at-line-p)
     (let ((inhibit-read-only t))
       (save-excursion
         (goto-char (line-beginning-position))
