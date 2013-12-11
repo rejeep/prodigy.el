@@ -150,12 +150,7 @@
 
 (defun prodigy-sorted-services ()
   "..."
-  (--sort
-   (string< it other)
-   (ht-map
-    (lambda (name service)
-      name)
-    prodigy-services)))
+  (--sort (string< it other) (ht-keys prodigy-services)))
 
 (defun prodigy-refresh ()
   "..."
