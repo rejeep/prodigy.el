@@ -6,7 +6,7 @@
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
 ;; Version: 0.0.1
 ;; URL: http://github.com/rejeep/prodigy.el
-;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (cl-lib "0.3"))
+;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (ht "1.5"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -33,9 +33,7 @@
 
 (require 's)
 (require 'dash)
-(require 'cl-lib)
-
-(cl-defstruct prodigy-service name)
+(require 'ht)
 
 (defgroup wrap-region nil
   "..."
@@ -64,7 +62,7 @@
     map)
   "Keymap for `prodigy-mode'.")
 
-(defvar prodigy-services nil
+(defvar prodigy-services (ht)
   "...")
 
 (defun prodigy-quit ()
@@ -102,19 +100,16 @@
 
 (defun prodigy-define-service (&rest args)
   "..."
-  (!cons
-   (make-prodigy-service
-    :name (plist-get args :name))
-   prodigy-services))
+  (ht-set prodigy-services (plist-get args :name) (ht-from-plist args)))
 
 (defun prodigy-sorted-services ()
   "..."
-  (-sort
-   (lambda (service-1 service-2)
-     (string<
-      (prodigy-service-name service-1)
-      (prodigy-service-name service-2)))
-   prodigy-services))
+  (--sort
+   (string< it other)
+   (ht-map
+    (lambda (name service)
+      name)
+    prodigy-services)))
 
 (defun prodigy-refresh ()
   "..."
@@ -122,8 +117,10 @@
   (let ((inhibit-read-only t))
     (let ((line (line-number-at-pos (point))))
       (erase-buffer)
-      (dolist (service (prodigy-sorted-services))
-        (insert (prodigy-service-name service) "\n"))
+      (-each
+       (prodigy-sorted-services)
+       (lambda (service-name)
+         (insert service-name "\n")))
       (goto-char (point-min))
       (prodigy-move (1- line)))))
 
