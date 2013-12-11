@@ -20,14 +20,14 @@ Feature: Prodigy
     Then the variable "foo" should have value "bar"
 
   Scenario: Sorted by name
-    Given I add the following processes:
+    Given I add the following services:
       | name |
       | baz  |
       | foo  |
       | qux  |
       | bar  |
     Given I start prodigy
-    Then I should see the following processes:
+    Then I should see the following services:
       | name |
       | bar  |
       | baz  |

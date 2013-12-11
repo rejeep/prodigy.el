@@ -34,7 +34,7 @@
     (should (eq (get-text-property (line-beginning-position) 'face) 'prodigy-line-face))
     (should (eq (get-text-property (line-end-position) 'face) 'prodigy-line-face))))
 
-(Given "^I add the following processes:$"
+(Given "^I add the following services:$"
   (lambda (table)
     (let ((head (car table))
           (rows (cdr table)))
@@ -42,7 +42,7 @@
         (prodigy-define-service
          :name (nth 0 row))))))
 
-(Then "^I should see the following processes:$"
+(Then "^I should see the following services:$"
   (lambda (table)
     (let ((head (car table))
           (rows (cdr table)))

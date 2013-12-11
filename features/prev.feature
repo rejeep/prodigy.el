@@ -1,29 +1,29 @@
 Feature: Prev
 
-  Scenario: No processes
+  Scenario: No services
     Given I start prodigy
     When I press "p"
     Then I should see message "Cannot move further up"
 
-  Scenario: Single process
-    Given I add the following processes:
+  Scenario: Single service
+    Given I add the following services:
       | name |
       | foo  |
     Given I start prodigy
-    Then I should see the following processes:
+    Then I should see the following services:
       | name |
       | foo  |
     And I should be on service line "1"
     When I press "p"
     Then I should see message "Cannot move further up"
 
-  Scenario: Multiple processes
-    Given I add the following processes:
+  Scenario: Multiple services
+    Given I add the following services:
       | name |
       | foo  |
       | bar  |
     Given I start prodigy
-    Then I should see the following processes:
+    Then I should see the following services:
       | name |
       | bar  |
       | foo  |
