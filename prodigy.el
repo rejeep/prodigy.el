@@ -135,8 +135,7 @@
       (save-excursion
         (goto-char (line-beginning-position))
         (insert "*")
-        (delete-region (point) (1+ (point))))
-      (prodigy-highlight-line))
+        (delete-region (point) (1+ (point)))))
     (ignore-errors
       (prodigy-goto-next-line))))
 
@@ -148,8 +147,7 @@
       (save-excursion
         (goto-char (line-beginning-position))
         (delete-region (point) (1+ (point)))
-        (insert " "))
-      (prodigy-highlight-line))
+        (insert " ")))
     (ignore-errors
       (prodigy-goto-next-line))))
 

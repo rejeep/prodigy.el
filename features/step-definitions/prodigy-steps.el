@@ -31,7 +31,7 @@
   (lambda (line)
     (should (= (current-column) 0))
     (should (= (line-number-at-pos (point)) (string-to-number line)))
-    (should (eq (get-text-property (line-beginning-position) 'face) 'prodigy-line-face))
+    (should (eq (get-text-property (1+ (line-beginning-position)) 'face) 'prodigy-line-face))
     (should (eq (get-text-property (line-end-position) 'face) 'prodigy-line-face))))
 
 (Given "^I add the following services:$"
