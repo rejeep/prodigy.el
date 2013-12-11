@@ -11,8 +11,9 @@ Feature: Mark
       | foo  |
     And I start prodigy
     When I press "m"
-    Then I should be on service line "1"
-    And service at line "1" should be marked
+    Then I should see services:
+      | name | highlighted | marked |
+      | foo  | t           | t      |
 
   Scenario: Multiple services
     Given I add the following services:
@@ -21,14 +22,12 @@ Feature: Mark
       | bar  |
     And I start prodigy
     When I press "m"
-    Then I should be on service line "2"
-    And service at line "1" should be marked
-    And service at line "2" should not be marked
     When I press "n"
     And I press "m"
-    Then I should be on service line "2"
-    And service at line "1" should be marked
-    And service at line "2" should be marked
+    Then I should see services:
+      | name | highlighted | marked |
+      | bar  | nil         | t      |
+      | foo  | t           | t      |
 
   Scenario: Already marked
     Given I add the following services:
@@ -37,5 +36,6 @@ Feature: Mark
     And I start prodigy
     When I press "m"
     And I press "m"
-    Then I should be on service line "1"
-    And service at line "1" should be marked
+    Then I should see services:
+      | name | highlighted | marked |
+      | foo  | t           | t      |

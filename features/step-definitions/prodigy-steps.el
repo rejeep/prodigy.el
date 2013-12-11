@@ -23,47 +23,40 @@
   (lambda ()
     (should-not (equal major-mode 'prodigy-mode))))
 
-(Then "^I should be on line \"\\([^\"]+\\)\"$"
-  (lambda (line)
-    (should (= (line-number-at-pos (point)) (string-to-number line)))))
-
-(Then "^I should be on service line \"\\([^\"]+\\)\"$"
-  (lambda (line)
-    (should (= (current-column) 0))
-    (should (= (line-number-at-pos (point)) (string-to-number line)))
-    (should (eq (get-text-property (1+ (line-beginning-position)) 'face) 'prodigy-line-face))
-    (should (eq (get-text-property (line-end-position) 'face) 'prodigy-line-face))))
-
 (Given "^I add the following services:$"
   (lambda (table)
     (let ((head (car table))
           (rows (cdr table)))
       (dolist (row rows)
         (prodigy-define-service
-         :name (nth 0 row))))))
+          :name (nth 0 row))))))
 
-(Then "^I should see the following services:$"
+(Then "^I should see services:$"
   (lambda (table)
-    (let ((head (car table))
-          (rows (cdr table)))
-      (should
-       (= (- (line-number-at-pos (point-max))
-             (line-number-at-pos (point-min)))
-          (length rows)))
+    (let* ((head (car table))
+           (name-index (-elem-index "name" head))
+           (highlighted-index (-elem-index "highlighted" head))
+           (marked-index (-elem-index "marked" head))
+           (rows (cdr table))
+           )
       (save-excursion
         (goto-char (point-min))
-        (dolist (row rows)
-          (let ((line (buffer-substring-no-properties (line-beginning-position)
-                                                      (line-end-position))))
-            (should (s-contains? (nth 0 row) line))
-            (forward-line 1)))))))
-
-(Then "^service at line \"\\([^\"]+\\)\" should be marked$"
-  (lambda (line)
-    (When "I go to line \"%s\"" line)
-    (should (looking-at "^*"))))
-
-(Then "^service at line \"\\([^\"]+\\)\" should not be marked$"
-  (lambda (line)
-    (When "I go to line \"%s\"" line)
-    (should-not (looking-at "^*"))))
+        (-each
+         rows
+         (lambda (row)
+           (let ((name (nth name-index row))
+                 (highlighted
+                  (when highlighted-index
+                    (read (nth highlighted-index row))))
+                 (marked
+                  (when marked-index
+                    (read (nth marked-index row)))))
+             (let ((line (buffer-substring-no-properties (line-beginning-position)
+                                                         (line-end-position))))
+               (if marked
+                   (should (s-starts-with? (concat "* " name) line))
+                 (should (s-starts-with? (concat "  " name) line))))
+             (when highlighted
+               (should (eq (get-text-property (1+ (line-beginning-position)) 'face) 'prodigy-line-face))
+               (should (eq (get-text-property (line-end-position) 'face) 'prodigy-line-face)))
+             (forward-line 1))))))))

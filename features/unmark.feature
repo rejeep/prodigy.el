@@ -12,8 +12,9 @@ Feature: Unmark
     And I start prodigy
     When I press "m"
     And I press "u"
-    Then I should be on service line "1"
-    And service at line "1" should not be marked
+    Then I should see services:
+      | name | highlighted | marked |
+      | foo  | t           | nil    |
 
   Scenario: Multiple services
     Given I add the following services:
@@ -24,15 +25,16 @@ Feature: Unmark
     When I press "m"
     When I press "p"
     And I press "u"
-    Then I should be on service line "2"
-    And service at line "1" should not be marked
-    And service at line "2" should not be marked
-    When I press "n"
+    Then I should see services:
+      | name | highlighted | marked |
+      | bar  | nil         | nil    |
+      | foo  | t           | nil    |
     And I press "m"
     And I press "u"
-    Then I should be on service line "2"
-    And service at line "1" should not be marked
-    And service at line "2" should not be marked
+    Then I should see services:
+      | name | highlighted | marked |
+      | bar  | nil         | nil    |
+      | foo  | t           | nil    |
 
   Scenario: Already marked
     Given I add the following services:
@@ -41,5 +43,6 @@ Feature: Unmark
     And I start prodigy
     When I press "u"
     And I press "u"
-    Then I should be on service line "1"
-    And service at line "1" should not be marked
+    Then I should see services:
+      | name | highlighted | marked |
+      | foo  | t           | nil    |

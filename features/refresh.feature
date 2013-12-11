@@ -11,9 +11,8 @@ Feature: Refresh
       | name |
       | baz  |
     When I press "g"
-    Then I should see the following services:
-      | name |
-      | bar  |
-      | baz  |
-      | foo  |
-    And I should be on service line "2"
+    Then I should see services:
+      | name | highlighted |
+      | bar  | nil         |
+      | baz  | t           |
+      | foo  | nil         |

@@ -10,10 +10,9 @@ Feature: Next
       | name |
       | foo  |
     And I start prodigy
-    Then I should see the following services:
-      | name |
-      | foo  |
-    And I should be on service line "1"
+    Then I should see services:
+      | name | highlighted |
+      | foo  | t           |
     When I press "n"
     Then I should see message "Cannot move further down"
 
@@ -23,12 +22,14 @@ Feature: Next
       | foo  |
       | bar  |
     Given I start prodigy
-    Then I should see the following services:
-      | name |
-      | bar  |
-      | foo  |
-    And I should be on service line "1"
+    Then I should see services:
+      | name | highlighted |
+      | bar  | t           |
+      | foo  | nil         |
     When I press "n"
-    Then I should be on service line "2"
+    Then I should see services:
+      | name | highlighted |
+      | bar  | nil         |
+      | foo  | t           |
     When I press "n"
     Then I should see message "Cannot move further down"

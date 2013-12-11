@@ -27,9 +27,9 @@ Feature: Prodigy
       | qux  |
       | bar  |
     Given I start prodigy
-    Then I should see the following services:
-      | name |
-      | bar  |
-      | baz  |
-      | foo  |
-      | qux  |
+    Then I should see services:
+      | name | highlighted |
+      | bar  | t           |
+      | baz  | nil         |
+      | foo  | nil         |
+      | qux  | nil         |
