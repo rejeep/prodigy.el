@@ -87,35 +87,45 @@
 
 (defun prodigy-service-at-line-p (&optional line)
   "..."
-  (<= (or line (line-number-at-pos)) (length (ht-keys prodigy-services))))
+  (unless line
+    (setq line (line-number-at-pos)))
+  (and (> line 0)
+       (<= line (length (ht-keys prodigy-services)))))
 
-(defun prodigy-move (n)
+(defun prodigy-goto-next-line ()
   "..."
-  (let ((inhibit-read-only t))
-    (when (or
-           (and
-            (> n 0) (prodigy-service-at-line-p (1+ (line-number-at-pos))))
-           (and
-            (< n 0) (prodigy-service-at-line-p (1- (line-number-at-pos))))
-           (= n 0))
-      (prodigy-lowlight-line)
-      (forward-line n)
-      (prodigy-highlight-line))))
+  (prodigy-goto-line (1+ (line-number-at-pos))))
+
+(defun prodigy-goto-prev-line ()
+  "..."
+  (prodigy-goto-line (1- (line-number-at-pos))))
+
+(defun prodigy-goto-line (line)
+  "..."
+  (cond ((prodigy-service-at-line-p line)
+         (let ((inhibit-read-only t))
+           (prodigy-lowlight-line)
+           (goto-char (point-min))
+           (forward-line (1- line))
+           (prodigy-highlight-line)))
+        (t
+         (error "No service at line %s" line))))
 
 (defun prodigy-next ()
   "..."
   (interactive)
-  (if (< (1+ (line-number-at-pos (point)))
-         (line-number-at-pos (point-max)))
-      (prodigy-move 1)
-    (message "Cannot move further down")))
+  (condition-case err
+      (prodigy-goto-next-line)
+    (error
+     (message "Cannot move further down"))))
 
 (defun prodigy-prev ()
   "..."
   (interactive)
-  (if (> (line-number-at-pos (point)) 1)
-      (prodigy-move -1)
-    (message "Cannot move further up")))
+  (condition-case err
+      (prodigy-goto-prev-line)
+    (error
+     (message "Cannot move further up"))))
 
 (defun prodigy-mark ()
   "..."
@@ -127,7 +137,8 @@
         (insert "*")
         (delete-region (point) (1+ (point))))
       (prodigy-highlight-line))
-    (prodigy-move 1)))
+    (ignore-errors
+      (prodigy-goto-next-line))))
 
 (defun prodigy-unmark ()
   "..."
@@ -139,7 +150,8 @@
         (delete-region (point) (1+ (point)))
         (insert " "))
       (prodigy-highlight-line))
-    (prodigy-move 1)))
+    (ignore-errors
+      (prodigy-goto-next-line))))
 
 (defun prodigy-define-service (&rest args)
   "..."
@@ -159,8 +171,8 @@
        (prodigy-sorted-services)
        (lambda (service-name)
          (insert "  " service-name "\n")))
-      (goto-char (point-min))
-      (prodigy-move (1- line)))))
+      (unless (zerop (length (ht-keys prodigy-services))) ; TODO: Use ht-empty-p once merged
+        (prodigy-goto-line line)))))
 
 ;;;###autoload
 (defun prodigy ()
