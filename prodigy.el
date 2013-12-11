@@ -134,8 +134,8 @@
     (let ((inhibit-read-only t))
       (save-excursion
         (goto-char (line-beginning-position))
-        (insert "*")
-        (delete-region (point) (1+ (point)))))
+        (delete-region (line-beginning-position) (1+ (line-beginning-position)))
+        (insert "*")))
     (ignore-errors
       (prodigy-goto-next-line))))
 
@@ -146,7 +146,7 @@
     (let ((inhibit-read-only t))
       (save-excursion
         (goto-char (line-beginning-position))
-        (delete-region (point) (1+ (point)))
+        (delete-region (line-beginning-position) (1+ (line-beginning-position)))
         (insert " ")))
     (ignore-errors
       (prodigy-goto-next-line))))
