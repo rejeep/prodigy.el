@@ -59,6 +59,8 @@
     (define-key map (kbd "n") 'prodigy-next)
     (define-key map (kbd "p") 'prodigy-prev)
     (define-key map (kbd "g") 'prodigy-refresh)
+    (define-key map (kbd "m") 'prodigy-mark)
+    (define-key map (kbd "u") 'prodigy-unmark)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -70,18 +72,38 @@
   (interactive)
   (kill-buffer (buffer-name)))
 
-(defun prodigy-line-face (&optional face)
-  "..."
+(defun prodigy-color-line (&optional face)
   (put-text-property (line-beginning-position)
                      (line-beginning-position 2)
                      'face face))
 
+(defun prodigy-highlight-line ()
+  "..."
+  (prodigy-color-line 'prodigy-line-face))
+
+(defun prodigy-lowlight-line ()
+  "..."
+  (prodigy-color-line))
+
+(defun prodigy-service-at-point-p (&optional point)
+  "..."
+  (unless point
+    (setq point (point)))
+  (<= (line-number-at-pos point)
+      (length (ht-keys prodigy-services))))
+
 (defun prodigy-move (n)
   "..."
   (let ((inhibit-read-only t))
-    (prodigy-line-face)
-    (forward-line n)
-    (prodigy-line-face 'prodigy-line-face)))
+    (when (or
+           (and
+            (> n 0) (prodigy-service-at-point-p (line-beginning-position 2)))
+           (and
+            (< n 0) (prodigy-service-at-point-p (line-beginning-position -1)))
+           (= n 0))
+      (prodigy-lowlight-line)
+      (forward-line n)
+      (prodigy-highlight-line))))
 
 (defun prodigy-next ()
   "..."
@@ -97,6 +119,30 @@
   (if (> (line-number-at-pos (point)) 1)
       (prodigy-move -1)
     (message "Cannot move further up")))
+
+(defun prodigy-mark ()
+  "..."
+  (interactive)
+  (when (prodigy-service-at-point-p)
+    (let ((inhibit-read-only t))
+      (save-excursion
+        (goto-char (line-beginning-position))
+        (insert "*")
+        (delete-region (point) (1+ (point))))
+      (prodigy-highlight-line))
+    (prodigy-move 1)))
+
+(defun prodigy-unmark ()
+  "..."
+  (interactive)
+  (when (prodigy-service-at-point-p)
+    (let ((inhibit-read-only t))
+      (save-excursion
+        (goto-char (line-beginning-position))
+        (delete-region (point) (1+ (point)))
+        (insert " "))
+      (prodigy-highlight-line))
+    (prodigy-move 1)))
 
 (defun prodigy-define-service (&rest args)
   "..."
@@ -120,7 +166,7 @@
       (-each
        (prodigy-sorted-services)
        (lambda (service-name)
-         (insert service-name "\n")))
+         (insert "  " service-name "\n")))
       (goto-char (point-min))
       (prodigy-move (1- line)))))
 

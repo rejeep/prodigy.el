@@ -55,5 +55,15 @@
         (dolist (row rows)
           (let ((line (buffer-substring-no-properties (line-beginning-position)
                                                       (line-end-position))))
-            (should (equal (nth 0 row) line))
+            (should (s-contains? (nth 0 row) line))
             (forward-line 1)))))))
+
+(Then "^service at line \"\\([^\"]+\\)\" should be marked$"
+  (lambda (line)
+    (When "I go to line \"%s\"" line)
+    (should (looking-at "^*"))))
+
+(Then "^service at line \"\\([^\"]+\\)\" should not be marked$"
+  (lambda (line)
+    (When "I go to line \"%s\"" line)
+    (should-not (looking-at "^*"))))
