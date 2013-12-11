@@ -14,5 +14,5 @@
 (require 'ert)
 
 (Before
- (setq prodigy-services (ht))
+ (ht-clear prodigy-services)
  (makunbound 'foo))
