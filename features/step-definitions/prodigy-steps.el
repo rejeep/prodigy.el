@@ -37,8 +37,7 @@
            (name-index (-elem-index "name" head))
            (highlighted-index (-elem-index "highlighted" head))
            (marked-index (-elem-index "marked" head))
-           (rows (cdr table))
-           )
+           (rows (cdr table)))
       (save-excursion
         (goto-char (point-min))
         (-each
