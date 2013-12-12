@@ -23,13 +23,13 @@ Feature: Unmark
       | bar  |
     And I start prodigy
     When I press "m"
-    When I press "p"
+    And I press "p"
     And I press "u"
     Then I should see services:
       | name | highlighted | marked |
       | bar  | nil         | nil    |
       | foo  | t           | nil    |
-    And I press "m"
+    When I press "m"
     And I press "u"
     Then I should see services:
       | name | highlighted | marked |
