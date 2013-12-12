@@ -1,4 +1,4 @@
-;;; prodigy.el --- Process manager
+;;; prodigy.el --- Manage processes from within Emacs
 
 ;; Copyright (C) 2013 Johan Andersson
 
@@ -36,18 +36,18 @@
 (require 'ht)
 
 (defgroup wrap-region nil
-  "..."
+  "Manage processes from within Emacs."
   :prefix "prodigy-"
   :group 'tools
   :link '(url-link :tag "Github" "https://github.com/rejeep/prodigy.el"))
 
 (defface prodigy-line-face
   '((((class color)) :background "#4A708B"))
-  "..."
+  "Color of current line."
   :group 'prodigy)
 
 (defconst prodigy-buffer-name "*prodigy*"
-  "...")
+  "Name of Prodigy mode buffer.")
 
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
@@ -64,7 +64,10 @@
   "Keymap for `prodigy-mode'.")
 
 (defvar prodigy-services (ht)
-  "...")
+  "All registered services.
+
+Keys is the name of a service and the value is a hash table per
+service.")
 
 (defmacro prodigy--with-modify-line (&rest body)
   `(let ((inhibit-read-only t))
@@ -125,12 +128,12 @@
                      'face face))
 
 (defun prodigy-quit ()
-  "..."
+  "Quit prodigy."
   (interactive)
   (kill-buffer (buffer-name)))
 
 (defun prodigy-next ()
-  "..."
+  "Go to next service."
   (interactive)
   (condition-case err
       (prodigy--goto-next-line)
@@ -138,7 +141,7 @@
      (message "Cannot move further down"))))
 
 (defun prodigy-prev ()
-  "..."
+  "Go to previous service."
   (interactive)
   (condition-case err
       (prodigy--goto-prev-line)
@@ -146,17 +149,17 @@
      (message "Cannot move further up"))))
 
 (defun prodigy-mark ()
-  "..."
+  "Mark service at point."
   (interactive)
   (prodigy--set-marker "*"))
 
 (defun prodigy-unmark ()
-  "..."
+  "Unmark service at point."
   (interactive)
   (prodigy--set-marker " "))
 
 (defun prodigy-refresh ()
-  "..."
+  "Refresh UI by clearing the screen and adding the services."
   (interactive)
   (let ((inhibit-read-only t))
     (let ((line (line-number-at-pos (point))))
@@ -171,12 +174,16 @@
         (prodigy--goto-line line)))))
 
 (defun prodigy-define-service (&rest args)
-  "..."
+  "Define a new service.
+
+ARGS is a plist with support for the following keys:
+
+name - Name of the service"
   (ht-set prodigy-services (plist-get args :name) (ht-from-plist args)))
 
 ;;;###autoload
 (defun prodigy ()
-  "..."
+  "Manage processes from within Emacs."
   (interactive)
   (switch-to-buffer (get-buffer-create prodigy-buffer-name))
   (kill-all-local-variables)
