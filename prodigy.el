@@ -66,8 +66,7 @@
 (defvar prodigy-services (ht)
   "...")
 
-(defmacro prodigy-with-modify-line (&rest body)
-  "..."
+(defmacro prodigy--with-modify-line (&rest body)
   `(let ((inhibit-read-only t))
      (save-excursion
        (goto-char (line-beginning-position))
@@ -77,29 +76,24 @@
                             (line-end-position)
                             'service-name service-name)))))
 
-(defun prodigy-sorted-services ()
-  "..."
+(defun prodigy--sorted-services ()
   (--sort (string< it other) (ht-keys prodigy-services)))
 
-(defun prodigy-set-marker (marker)
-  "..."
-  (when (prodigy-service-at-line-p)
-    (prodigy-with-modify-line
+(defun prodigy--set-marker (marker)
+  (when (prodigy--service-at-line-p)
+    (prodigy--with-modify-line
      (delete-region (line-beginning-position) (1+ (line-beginning-position)))
      (insert marker))
     (ignore-errors
-      (prodigy-goto-next-line))))
+      (prodigy--goto-next-line))))
 
-(defun prodigy-highlight-line ()
-  "..."
-  (prodigy-color-line 'prodigy-line-face))
+(defun prodigy--highlight-line ()
+  (prodigy--color-line 'prodigy-line-face))
 
-(defun prodigy-lowlight-line ()
-  "..."
-  (prodigy-color-line))
+(defun prodigy--lowlight-line ()
+  (prodigy--color-line))
 
-(defun prodigy-service-at-line-p (&optional line)
-  "..."
+(defun prodigy--service-at-line-p (&optional line)
   (unless line
     (setq line (line-number-at-pos)))
   (let ((point
@@ -109,41 +103,37 @@
            (line-beginning-position))))
     (not (null (get-text-property point 'service-name)))))
 
-(defun prodigy-goto-next-line ()
-  "..."
-  (prodigy-goto-line (1+ (line-number-at-pos))))
+(defun prodigy--goto-next-line ()
+  (prodigy--goto-line (1+ (line-number-at-pos))))
 
-(defun prodigy-goto-prev-line ()
-  "..."
-  (prodigy-goto-line (1- (line-number-at-pos))))
+(defun prodigy--goto-prev-line ()
+  (prodigy--goto-line (1- (line-number-at-pos))))
 
-(defun prodigy-goto-line (line)
-  "..."
-  (cond ((prodigy-service-at-line-p line)
+(defun prodigy--goto-line (line)
+  (cond ((prodigy--service-at-line-p line)
          (let ((inhibit-read-only t))
-           (prodigy-lowlight-line)
+           (prodigy--lowlight-line)
            (goto-char (point-min))
            (forward-line (1- line))
-           (prodigy-highlight-line)))
+           (prodigy--highlight-line)))
         (t
          (error "No service at line %s" line))))
+
+(defun prodigy--color-line (&optional face)
+  (put-text-property (line-beginning-position)
+                     (line-beginning-position 2)
+                     'face face))
 
 (defun prodigy-quit ()
   "..."
   (interactive)
   (kill-buffer (buffer-name)))
 
-(defun prodigy-color-line (&optional face)
-  "..."
-  (put-text-property (line-beginning-position)
-                     (line-beginning-position 2)
-                     'face face))
-
 (defun prodigy-next ()
   "..."
   (interactive)
   (condition-case err
-      (prodigy-goto-next-line)
+      (prodigy--goto-next-line)
     (error
      (message "Cannot move further down"))))
 
@@ -151,19 +141,19 @@
   "..."
   (interactive)
   (condition-case err
-      (prodigy-goto-prev-line)
+      (prodigy--goto-prev-line)
     (error
      (message "Cannot move further up"))))
 
 (defun prodigy-mark ()
   "..."
   (interactive)
-  (prodigy-set-marker "*"))
+  (prodigy--set-marker "*"))
 
 (defun prodigy-unmark ()
   "..."
   (interactive)
-  (prodigy-set-marker " "))
+  (prodigy--set-marker " "))
 
 (defun prodigy-refresh ()
   "..."
@@ -172,13 +162,13 @@
     (let ((line (line-number-at-pos (point))))
       (erase-buffer)
       (-each
-       (prodigy-sorted-services)
+       (prodigy--sorted-services)
        (lambda (service-name)
          (insert "  " service-name)
          (put-text-property (line-beginning-position) (line-end-position) 'service-name service-name)
          (insert "\n")))
       (unless (zerop (length (ht-keys prodigy-services))) ; TODO: Use ht-empty-p once merged
-        (prodigy-goto-line line)))))
+        (prodigy--goto-line line)))))
 
 (defun prodigy-define-service (&rest args)
   "..."
