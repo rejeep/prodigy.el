@@ -77,16 +77,18 @@
                             (line-end-position)
                             'service-name service-name)))))
 
-(defun prodigy-quit ()
+(defun prodigy-sorted-services ()
   "..."
-  (interactive)
-  (kill-buffer (buffer-name)))
+  (--sort (string< it other) (ht-keys prodigy-services)))
 
-(defun prodigy-color-line (&optional face)
+(defun prodigy-set-marker (marker)
   "..."
-  (put-text-property (line-beginning-position)
-                     (line-beginning-position 2)
-                     'face face))
+  (when (prodigy-service-at-line-p)
+    (prodigy-with-modify-line
+     (delete-region (line-beginning-position) (1+ (line-beginning-position)))
+     (insert marker))
+    (ignore-errors
+      (prodigy-goto-next-line))))
 
 (defun prodigy-highlight-line ()
   "..."
@@ -126,6 +128,17 @@
         (t
          (error "No service at line %s" line))))
 
+(defun prodigy-quit ()
+  "..."
+  (interactive)
+  (kill-buffer (buffer-name)))
+
+(defun prodigy-color-line (&optional face)
+  "..."
+  (put-text-property (line-beginning-position)
+                     (line-beginning-position 2)
+                     'face face))
+
 (defun prodigy-next ()
   "..."
   (interactive)
@@ -142,15 +155,6 @@
     (error
      (message "Cannot move further up"))))
 
-(defun prodigy-set-marker (marker)
-  "..."
-  (when (prodigy-service-at-line-p)
-    (prodigy-with-modify-line
-     (delete-region (line-beginning-position) (1+ (line-beginning-position)))
-     (insert marker))
-    (ignore-errors
-      (prodigy-goto-next-line))))
-
 (defun prodigy-mark ()
   "..."
   (interactive)
@@ -160,14 +164,6 @@
   "..."
   (interactive)
   (prodigy-set-marker " "))
-
-(defun prodigy-define-service (&rest args)
-  "..."
-  (ht-set prodigy-services (plist-get args :name) (ht-from-plist args)))
-
-(defun prodigy-sorted-services ()
-  "..."
-  (--sort (string< it other) (ht-keys prodigy-services)))
 
 (defun prodigy-refresh ()
   "..."
@@ -183,6 +179,10 @@
          (insert "\n")))
       (unless (zerop (length (ht-keys prodigy-services))) ; TODO: Use ht-empty-p once merged
         (prodigy-goto-line line)))))
+
+(defun prodigy-define-service (&rest args)
+  "..."
+  (ht-set prodigy-services (plist-get args :name) (ht-from-plist args)))
 
 ;;;###autoload
 (defun prodigy ()
