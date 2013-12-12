@@ -41,14 +41,13 @@
   :group 'tools
   :link '(url-link :tag "Github" "https://github.com/rejeep/prodigy.el"))
 
-(defcustom prodigy-buffer-name "*prodigy*"
-  "..."
-  :group 'prodigy)
-
 (defface prodigy-line-face
   '((((class color)) :background "#4A708B"))
   "..."
   :group 'prodigy)
+
+(defconst prodigy-buffer-name "*prodigy*"
+  "...")
 
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
