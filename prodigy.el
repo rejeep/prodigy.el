@@ -69,26 +69,20 @@
 Keys is the name of a service and the value is a hash table per
 service.")
 
-(defmacro prodigy--with-modify-line (&rest body)
-  `(let ((inhibit-read-only t))
-     (save-excursion
-       (goto-char (line-beginning-position))
-       (let ((service-name (get-text-property (point) 'service-name)))
-         ,@body
-         (put-text-property (line-beginning-position)
-                            (line-end-position)
-                            'service-name service-name)))))
-
 (defun prodigy--sorted-services ()
   (--sort (string< it other) (ht-keys prodigy-services)))
 
 (defun prodigy--set-marker (marker)
   (when (prodigy--service-at-line-p)
-    (prodigy--with-modify-line
-     (delete-region (line-beginning-position) (1+ (line-beginning-position)))
-     (insert marker))
-    (ignore-errors
-      (prodigy--goto-next-line))))
+    (let ((inhibit-read-only t))
+      (save-excursion
+        (let ((service-name (get-text-property (line-beginning-position) 'service-name)))
+          (delete-region (line-beginning-position) (1+ (line-beginning-position)))
+          (goto-char (line-beginning-position))
+          (insert marker)
+          (put-text-property (line-beginning-position)
+                             (line-end-position)
+                             'service-name service-name))))))
 
 (defun prodigy--highlight-line ()
   (prodigy--color-line 'prodigy-line-face))
@@ -151,12 +145,16 @@ service.")
 (defun prodigy-mark ()
   "Mark service at point."
   (interactive)
-  (prodigy--set-marker "*"))
+  (prodigy--set-marker "*")
+  (ignore-errors
+    (prodigy--goto-next-line)))
 
 (defun prodigy-unmark ()
   "Unmark service at point."
   (interactive)
-  (prodigy--set-marker " "))
+  (prodigy--set-marker " ")
+  (ignore-errors
+    (prodigy--goto-next-line)))
 
 (defun prodigy-refresh ()
   "Refresh UI by clearing the screen and adding the services."
