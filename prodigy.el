@@ -71,6 +71,7 @@ Keys is the name of a service and the value is a hash table per
 service.")
 
 (defun prodigy--sorted-services ()
+  "Return list of services sorted by name."
   (-sort
    (lambda (service-1 service-2)
      (string<
@@ -79,6 +80,7 @@ service.")
    (ht-values prodigy-services)))
 
 (defun prodigy--service-at-line (&optional line)
+  "Return service at LINE or current line."
   (unless line
     (setq line (line-number-at-pos)))
   (let ((point
@@ -90,15 +92,19 @@ service.")
       (ht-get prodigy-services service-name))))
 
 (defun prodigy--service-at-line-p (&optional line)
+  "Return true if there is a service at LINE or current line."
   (not (null (prodigy--service-at-line line))))
 
 (defun prodigy--goto-next-line ()
+  "Go to next line."
   (prodigy--goto-line (1+ (line-number-at-pos))))
 
 (defun prodigy--goto-prev-line ()
+  "Go to previous line."
   (prodigy--goto-line (1- (line-number-at-pos))))
 
 (defun prodigy--goto-line (line)
+  "Go to LINE."
   (cond ((prodigy--service-at-line-p line)
          (when (prodigy--service-at-line-p)
            (prodigy--service-set (prodigy--service-at-line) :highlighted nil))
@@ -109,6 +115,7 @@ service.")
          (error "No service at line %s" line))))
 
 (defun prodigy--write-service-at-line (service)
+  "Remove service at line and insert SERVICE."
   (let ((inhibit-read-only t) (service-name (ht-get service :name)))
     (delete-region (line-beginning-position) (line-end-position))
     (if (ht-get service :marked)
@@ -121,6 +128,10 @@ service.")
       (put-text-property (line-beginning-position) (line-beginning-position 2) 'face nil))))
 
 (defun prodigy--service-set (service key value)
+  "Set SERVICE KEY to VALUE.
+
+This will update the SERVICE object, but also update the line
+representing SERVICE."
   (ht-set service key value)
   (save-excursion
     (goto-char (point-min))
@@ -129,6 +140,7 @@ service.")
     (prodigy--write-service-at-line service)))
 
 (defun prodigy--repaint ()
+  "Clear buffer and repaint all services."
   (let ((inhibit-read-only t))
     (erase-buffer)
     (-each
