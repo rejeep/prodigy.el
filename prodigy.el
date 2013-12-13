@@ -339,6 +339,8 @@ With prefix argument, unmark all services with tag."
 ARGS is a plist with support for the following keys:
 
 name - Name of the service"
+  (when (eq (type-of (car args)) 'string)
+    (pop args))
   (ht-set prodigy-services (plist-get args :name) (ht-from-plist args)))
 
 ;;;###autoload
