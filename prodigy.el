@@ -49,6 +49,12 @@
 (defconst prodigy-buffer-name "*prodigy*"
   "Name of Prodigy mode buffer.")
 
+(defcustom prodigy-completion-system 'ido
+  "The completion system to be used by Prodigy."
+  :group 'prodigy
+  :type 'symbol
+  :options '(ido default))
+
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
 
@@ -153,6 +159,49 @@ representing SERVICE."
     (ignore-errors
       (prodigy--goto-line 1))))
 
+(defun prodigy--tags ()
+  "Return uniq list of tags."
+  (-uniq
+   (-flatten
+    (-map
+     (lambda (service)
+       (ht-get service :tags))
+     (ht-values prodigy-services)))))
+
+(defun prodigy--service-tagged-with? (service tag)
+  "Return true if SERVICE is tagged with TAG."
+  (-contains? (ht-get service :tags) tag))
+
+(defun prodigy--services-tagged-with (tag)
+  "Return list of services tagged with TAG."
+  (let (services)
+    (ht-each
+     (lambda (name service)
+       (if (prodigy--service-tagged-with? service tag)
+           (push service services)))
+     prodigy-services)
+    services))
+
+(defun prodigy--completing-read (prompt collection)
+  "Read a string in the minibuffer, with completion.
+
+PROMPT is a string to prompt with.
+COLLECTION is the list of strings that the user will be asked to
+select between.
+
+The completion system used is determined by
+`prodigy-completion-system'."
+  (let ((args `(,prompt ,collection nil 'require-match)))
+    (cond ((eq prodigy-completion-system 'ido)
+           (apply 'ido-completing-read args))
+          ((eq prodigy-completion-system 'default)
+           (apply 'completing-read args)))))
+
+(defun prodigy--read-tag ()
+  "Read tag from list of all possible tags."
+  (let ((tag-names (-map 'symbol-name (prodigy--tags))))
+    (intern (prodigy--completing-read "tag: " tag-names))))
+
 (defun prodigy-quit ()
   "Quit prodigy."
   (interactive)
@@ -174,13 +223,19 @@ representing SERVICE."
     (error
      (message "Cannot move further up"))))
 
-(defun prodigy-mark ()
+(defun prodigy-mark (mark-tag)
   "Mark service at point."
-  (interactive)
-  (-when-let (service (prodigy--service-at-line))
-    (prodigy--service-set service :marked t)
-    (ignore-errors
-      (prodigy--goto-next-line))))
+  (interactive "P")
+  (if mark-tag
+      (let ((tag (prodigy--read-tag)))
+        (-each
+         (prodigy--services-tagged-with tag)
+         (lambda (service)
+           (prodigy--service-set service :marked t))))
+    (-when-let (service (prodigy--service-at-line))
+      (prodigy--service-set service :marked t)
+      (ignore-errors
+        (prodigy--goto-next-line)))))
 
 (defun prodigy-mark-all ()
   "Mark all services."
@@ -190,13 +245,19 @@ representing SERVICE."
      (prodigy--service-set service :marked t))
    prodigy-services))
 
-(defun prodigy-unmark ()
+(defun prodigy-unmark (mark-tag)
   "Unmark service at point."
-  (interactive)
-  (-when-let (service (prodigy--service-at-line))
-    (prodigy--service-set service :marked nil)
-    (ignore-errors
-      (prodigy--goto-next-line))))
+  (interactive "P")
+  (if mark-tag
+      (let ((tag (prodigy--read-tag)))
+        (-each
+         (prodigy--services-tagged-with tag)
+         (lambda (service)
+           (prodigy--service-set service :marked nil))))
+    (-when-let (service (prodigy--service-at-line))
+      (prodigy--service-set service :marked nil)
+      (ignore-errors
+        (prodigy--goto-next-line)))))
 
 (defun prodigy-unmark-all ()
   "Unmark all services."

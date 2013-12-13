@@ -51,3 +51,21 @@ Feature: Mark
       | name | highlighted | marked |
       | bar  | t           | t      |
       | foo  | nil         | t      |
+
+  Scenario: Mark tag
+    Given I add the following services:
+      | name | tags          |
+      | foo  | (tag-1 tag-2) |
+      | bar  | ()            |
+      | baz  | (tag-2)       |
+    And I start prodigy
+    When I start an action chain
+    And I press "C-u m"
+    And I type "tag-2"
+    And I press "RET"
+    And I execute the action chain
+    Then I should see services:
+      | name | marked |
+      | bar  | nil    |
+      | baz  | t      |
+      | foo  | t      |
