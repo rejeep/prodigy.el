@@ -72,25 +72,7 @@ service.")
 (defun prodigy--sorted-services ()
   (--sort (string< it other) (ht-keys prodigy-services)))
 
-(defun prodigy--set-marker (marker)
-  (when (prodigy--service-at-line-p)
-    (let ((inhibit-read-only t))
-      (save-excursion
-        (let ((service-name (get-text-property (line-beginning-position) 'service-name)))
-          (delete-region (line-beginning-position) (1+ (line-beginning-position)))
-          (goto-char (line-beginning-position))
-          (insert marker)
-          (put-text-property (line-beginning-position)
-                             (line-end-position)
-                             'service-name service-name))))))
-
-(defun prodigy--highlight-line ()
-  (prodigy--color-line 'prodigy-line-face))
-
-(defun prodigy--lowlight-line ()
-  (prodigy--color-line))
-
-(defun prodigy--service-at-line-p (&optional line)
+(defun prodigy--service-at-line (&optional line)
   (unless line
     (setq line (line-number-at-pos)))
   (let ((point
@@ -98,7 +80,11 @@ service.")
            (goto-char (point-min))
            (forward-line (1- line))
            (line-beginning-position))))
-    (not (null (get-text-property point 'service-name)))))
+    (let ((service-name (get-text-property point 'service-name)))
+      (ht-get prodigy-services service-name))))
+
+(defun prodigy--service-at-line-p (&optional line)
+  (not (null (prodigy--service-at-line line))))
 
 (defun prodigy--goto-next-line ()
   (prodigy--goto-line (1+ (line-number-at-pos))))
@@ -108,18 +94,34 @@ service.")
 
 (defun prodigy--goto-line (line)
   (cond ((prodigy--service-at-line-p line)
-         (let ((inhibit-read-only t))
-           (prodigy--lowlight-line)
-           (goto-char (point-min))
-           (forward-line (1- line))
-           (prodigy--highlight-line)))
+         (when (prodigy--service-at-line-p)
+           (prodigy--service-set (prodigy--service-at-line) :highlighted nil))
+         (goto-char (point-min))
+         (forward-line (1- line))
+         (prodigy--service-set (prodigy--service-at-line) :highlighted t))
         (t
          (error "No service at line %s" line))))
 
-(defun prodigy--color-line (&optional face)
-  (put-text-property (line-beginning-position)
-                     (line-beginning-position 2)
-                     'face face))
+(defun prodigy--service-set (service key value)
+  (ht-set service key value)
+  ;; TODO: Perhaps move to a repaint function?
+  (save-excursion
+    (prodigy--goto-service service)
+    (let ((inhibit-read-only t) (service-name (ht-get service :name)))
+      (delete-region (line-beginning-position) (line-end-position))
+      (if (ht-get service :marked)
+          (insert "* ")
+        (insert "  "))
+      (insert service-name)
+      (put-text-property (line-beginning-position) (line-end-position) 'service-name service-name)
+      (if (ht-get service :highlighted)
+          (put-text-property (line-beginning-position) (line-beginning-position 2) 'face 'prodigy-line-face)
+        (put-text-property (line-beginning-position) (line-beginning-position 2) 'face nil)))))
+
+(defun prodigy--goto-service (service)
+  (goto-char (point-min))
+  (while (not (eq (prodigy--service-at-line) service))
+    (forward-line 1)))
 
 (defun prodigy-quit ()
   "Quit prodigy."
@@ -145,16 +147,20 @@ service.")
 (defun prodigy-mark ()
   "Mark service at point."
   (interactive)
-  (prodigy--set-marker "*")
-  (ignore-errors
-    (prodigy--goto-next-line)))
+  (-when-let (service (prodigy--service-at-line))
+    (prodigy--service-set service :marked t)
+    (ignore-errors
+      (prodigy--goto-next-line))))
+
 
 (defun prodigy-unmark ()
   "Unmark service at point."
   (interactive)
-  (prodigy--set-marker " ")
-  (ignore-errors
-    (prodigy--goto-next-line)))
+  (-when-let (service (prodigy--service-at-line))
+    (prodigy--service-set service :marked nil)
+    (ignore-errors
+      (prodigy--goto-next-line))))
+
 
 (defun prodigy-refresh ()
   "Refresh UI by clearing the screen and adding the services."
