@@ -69,6 +69,7 @@
     (define-key map (kbd "u") 'prodigy-unmark)
     (define-key map (kbd "U") 'prodigy-unmark-all)
     (define-key map (kbd "s") 'prodigy-start)
+    (define-key map (kbd "S") 'prodigy-stop)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -235,6 +236,21 @@ The completion system used is determined by
          (process (apply 'start-process (append (list name buffer command) args))))
     (prodigy-service-set service :process process)))
 
+(defun prodigy-stop-service (service)
+  "Stop SERVICE."
+  (-when-let (process (ht-get service :process))
+    (when (process-live-p process)
+      (kill-process process))
+    (prodigy-service-set service :process nil)))
+
+(defun prodigy-apply (fn)
+  "Apply FN to service at line or marked services."
+  (let ((services (prodigy-marked-services)))
+    (if services
+        (-each services fn)
+      (-when-let (service (prodigy-service-at-line))
+        (funcall fn service)))))
+
 
 ;;;; User functions
 
@@ -310,11 +326,12 @@ With prefix argument, unmark all services with tag."
 (defun prodigy-start ()
   "Start service at line or marked services."
   (interactive)
-  (let ((services (prodigy-marked-services)))
-    (if services
-        (-each services 'prodigy-start-service)
-      (-when-let (service (prodigy-service-at-line))
-        (prodigy-start-service service)))))
+  (prodigy-apply 'prodigy-start-service))
+
+(defun prodigy-stop ()
+  "Stop service at line or marked services."
+  (interactive)
+  (prodigy-apply 'prodigy-stop-service))
 
 (defun prodigy-define-service (&rest args)
   "Define a new service.

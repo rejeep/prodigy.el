@@ -98,6 +98,18 @@
           (sleep-for 2)
           (call-process "curl" nil (current-buffer) nil "-s" ,url)
           (buffer-string)))
-     `(lambda (result)
-        (should (equal (s-trim result) (s-trim ,body)))
+     `(lambda (response)
+        (should (equal (s-trim response) (s-trim ,body)))
+        (funcall ,callback)))))
+
+(Then "^requesting \"\\([^\"]+\\)\" should fail$"
+  (lambda (url callback)
+    (async-start
+     `(lambda ()
+        (with-temp-buffer
+          (sleep-for 2)
+          (call-process "curl" nil (current-buffer) nil "-I" ,url)
+          (buffer-string)))
+     `(lambda (response)
+        (should-not (s-contains? "HTTP/1.1" response))
         (funcall ,callback)))))
