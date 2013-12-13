@@ -76,7 +76,10 @@
 Keys is the name of a service and the value is a hash table per
 service.")
 
-(defun prodigy--sorted-services ()
+
+;;;; Internal functions
+
+(defun prodigy-sorted-services ()
   "Return list of services sorted by name."
   (-sort
    (lambda (service-1 service-2)
@@ -85,7 +88,7 @@ service.")
       (ht-get service-2 :name)))
    (ht-values prodigy-services)))
 
-(defun prodigy--service-at-line (&optional line)
+(defun prodigy-service-at-line (&optional line)
   "Return service at LINE or current line."
   (unless line
     (setq line (line-number-at-pos)))
@@ -97,30 +100,30 @@ service.")
     (let ((service-name (get-text-property point 'service-name)))
       (ht-get prodigy-services service-name))))
 
-(defun prodigy--service-at-line-p (&optional line)
+(defun prodigy-service-at-line-p (&optional line)
   "Return true if there is a service at LINE or current line."
-  (not (null (prodigy--service-at-line line))))
+  (not (null (prodigy-service-at-line line))))
 
-(defun prodigy--goto-next-line ()
+(defun prodigy-goto-next-line ()
   "Go to next line."
-  (prodigy--goto-line (1+ (line-number-at-pos))))
+  (prodigy-goto-line (1+ (line-number-at-pos))))
 
-(defun prodigy--goto-prev-line ()
+(defun prodigy-goto-prev-line ()
   "Go to previous line."
-  (prodigy--goto-line (1- (line-number-at-pos))))
+  (prodigy-goto-line (1- (line-number-at-pos))))
 
-(defun prodigy--goto-line (line)
+(defun prodigy-goto-line (line)
   "Go to LINE."
-  (cond ((prodigy--service-at-line-p line)
-         (when (prodigy--service-at-line-p)
-           (prodigy--service-set (prodigy--service-at-line) :highlighted nil))
+  (cond ((prodigy-service-at-line-p line)
+         (when (prodigy-service-at-line-p)
+           (prodigy-service-set (prodigy-service-at-line) :highlighted nil))
          (goto-char (point-min))
          (forward-line (1- line))
-         (prodigy--service-set (prodigy--service-at-line) :highlighted t))
+         (prodigy-service-set (prodigy-service-at-line) :highlighted t))
         (t
          (error "No service at line %s" line))))
 
-(defun prodigy--write-service-at-line (service)
+(defun prodigy-write-service-at-line (service)
   "Remove service at line and insert SERVICE."
   (let ((inhibit-read-only t) (service-name (ht-get service :name)))
     (delete-region (line-beginning-position) (line-end-position))
@@ -135,7 +138,7 @@ service.")
         (put-text-property (line-beginning-position) (line-beginning-position 2) 'face 'prodigy-line-face)
       (put-text-property (line-beginning-position) (line-beginning-position 2) 'face nil))))
 
-(defun prodigy--service-set (service key value)
+(defun prodigy-service-set (service key value)
   "Set SERVICE KEY to VALUE.
 
 This will update the SERVICE object, but also update the line
@@ -143,23 +146,23 @@ representing SERVICE."
   (ht-set service key value)
   (save-excursion
     (goto-char (point-min))
-    (while (not (eq (prodigy--service-at-line) service))
+    (while (not (eq (prodigy-service-at-line) service))
       (forward-line 1))
-    (prodigy--write-service-at-line service)))
+    (prodigy-write-service-at-line service)))
 
-(defun prodigy--repaint ()
+(defun prodigy-repaint ()
   "Clear buffer and repaint all services."
   (let ((inhibit-read-only t))
     (erase-buffer)
     (-each
-     (prodigy--sorted-services)
+     (prodigy-sorted-services)
      (lambda (service)
-       (prodigy--write-service-at-line service)
+       (prodigy-write-service-at-line service)
        (insert "\n")))
     (ignore-errors
-      (prodigy--goto-line 1))))
+      (prodigy-goto-line 1))))
 
-(defun prodigy--tags ()
+(defun prodigy-tags ()
   "Return uniq list of tags."
   (-uniq
    (-flatten
@@ -168,21 +171,21 @@ representing SERVICE."
        (ht-get service :tags))
      (ht-values prodigy-services)))))
 
-(defun prodigy--service-tagged-with? (service tag)
+(defun prodigy-service-tagged-with? (service tag)
   "Return true if SERVICE is tagged with TAG."
   (-contains? (ht-get service :tags) tag))
 
-(defun prodigy--services-tagged-with (tag)
+(defun prodigy-services-tagged-with (tag)
   "Return list of services tagged with TAG."
   (let (services)
     (ht-each
      (lambda (name service)
-       (if (prodigy--service-tagged-with? service tag)
+       (if (prodigy-service-tagged-with? service tag)
            (push service services)))
      prodigy-services)
     services))
 
-(defun prodigy--completing-read (prompt collection)
+(defun prodigy-completing-read (prompt collection)
   "Read a string in the minibuffer, with completion.
 
 PROMPT is a string to prompt with.
@@ -197,10 +200,13 @@ The completion system used is determined by
           ((eq prodigy-completion-system 'default)
            (apply 'completing-read args)))))
 
-(defun prodigy--read-tag ()
+(defun prodigy-read-tag ()
   "Read tag from list of all possible tags."
-  (let ((tag-names (-map 'symbol-name (prodigy--tags))))
-    (intern (prodigy--completing-read "tag: " tag-names))))
+  (let ((tag-names (-map 'symbol-name (prodigy-tags))))
+    (intern (prodigy-completing-read "tag: " tag-names))))
+
+
+;;;; User functions
 
 (defun prodigy-quit ()
   "Quit prodigy."
@@ -211,7 +217,7 @@ The completion system used is determined by
   "Go to next service."
   (interactive)
   (condition-case err
-      (prodigy--goto-next-line)
+      (prodigy-goto-next-line)
     (error
      (message "Cannot move further down"))))
 
@@ -219,7 +225,7 @@ The completion system used is determined by
   "Go to previous service."
   (interactive)
   (condition-case err
-      (prodigy--goto-prev-line)
+      (prodigy-goto-prev-line)
     (error
      (message "Cannot move further up"))))
 
@@ -227,44 +233,44 @@ The completion system used is determined by
   "Mark service at point."
   (interactive "P")
   (if mark-tag
-      (let ((tag (prodigy--read-tag)))
+      (let ((tag (prodigy-read-tag)))
         (-each
-         (prodigy--services-tagged-with tag)
+         (prodigy-services-tagged-with tag)
          (lambda (service)
-           (prodigy--service-set service :marked t))))
-    (-when-let (service (prodigy--service-at-line))
-      (prodigy--service-set service :marked t)
+           (prodigy-service-set service :marked t))))
+    (-when-let (service (prodigy-service-at-line))
+      (prodigy-service-set service :marked t)
       (ignore-errors
-        (prodigy--goto-next-line)))))
+        (prodigy-goto-next-line)))))
 
 (defun prodigy-mark-all ()
   "Mark all services."
   (interactive)
   (ht-each
    (lambda (name service)
-     (prodigy--service-set service :marked t))
+     (prodigy-service-set service :marked t))
    prodigy-services))
 
 (defun prodigy-unmark (mark-tag)
   "Unmark service at point."
   (interactive "P")
   (if mark-tag
-      (let ((tag (prodigy--read-tag)))
+      (let ((tag (prodigy-read-tag)))
         (-each
-         (prodigy--services-tagged-with tag)
+         (prodigy-services-tagged-with tag)
          (lambda (service)
-           (prodigy--service-set service :marked nil))))
-    (-when-let (service (prodigy--service-at-line))
-      (prodigy--service-set service :marked nil)
+           (prodigy-service-set service :marked nil))))
+    (-when-let (service (prodigy-service-at-line))
+      (prodigy-service-set service :marked nil)
       (ignore-errors
-        (prodigy--goto-next-line)))))
+        (prodigy-goto-next-line)))))
 
 (defun prodigy-unmark-all ()
   "Unmark all services."
   (interactive)
   (ht-each
    (lambda (name service)
-     (prodigy--service-set service :marked nil))
+     (prodigy-service-set service :marked nil))
    prodigy-services))
 
 (defun prodigy-define-service (&rest args)
@@ -285,7 +291,7 @@ name - Name of the service"
   (setq mode-name "Prodigy")
   (setq major-mode 'prodigy-mode)
   (use-local-map prodigy-mode-map)
-  (prodigy--repaint)
+  (prodigy-repaint)
   (run-mode-hooks 'prodigy-mode-hook))
 
 (provide 'prodigy)
