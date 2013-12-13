@@ -9,8 +9,12 @@
 (defvar prodigy-root-path
   (f-parent prodigy-features-path))
 
+(defvar prodigy-servers-path
+  (f-expand "servers" prodigy-features-path))
+
 (require 'prodigy (f-expand "prodigy" prodigy-root-path))
 (require 'espuds)
+(require 'async)
 (require 'ert)
 
 (Before

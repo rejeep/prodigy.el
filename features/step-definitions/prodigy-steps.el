@@ -28,11 +28,17 @@
     (let* ((head (car table))
            (rows (cdr table))
            (name-index (-elem-index "name" head))
-           (tags-index (-elem-index "tags" head)))
+           (tags-index (-elem-index "tags" head))
+           (cwd-index (-elem-index "cwd" head))
+           (command-index (-elem-index "command" head))
+           (args-index (-elem-index "args" head)))
       (dolist (row rows)
         (prodigy-define-service
           :name (nth name-index row)
-          :tags (and tags-index (read (nth tags-index row))))))))
+          :tags (and tags-index (read (nth tags-index row)))
+          :cwd (and cwd-index (f-expand (nth cwd-index row) prodigy-servers-path))
+          :command (and command-index (nth command-index row))
+          :args (and args-index (read (nth args-index row))))))))
 
 (Then "^I should see services:$"
   (lambda (table)
@@ -41,6 +47,7 @@
            (highlighted-index (-elem-index "highlighted" head))
            (marked-index (-elem-index "marked" head))
            (tags-index (-elem-index "tags" head))
+           (started-index (-elem-index "started" head))
            (rows (cdr table)))
       (save-excursion
         (goto-char (point-min))
@@ -56,12 +63,17 @@
                     (read (nth marked-index row))))
                  (tags
                   (when tags-index
-                    (read (nth tags-index row)))))
-             (let ((line (buffer-substring-no-properties (line-beginning-position)
-                                                         (line-end-position))))
+                    (read (nth tags-index row))))
+                 (started
+                  (when started-index
+                    (read (nth started-index row)))))
+             (let ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
                (if marked
                    (should (s-starts-with? (concat "* " name) line))
                  (should (s-starts-with? (concat "  " name) line)))
+               (if started
+                   (should (s-contains? "Running" line))
+                 (should-not (s-contains? "Running" line)))
                (let ((match (s-matches? (format "\\[%s\\]" (s-join ", " (-map 'symbol-name tags))) line)))
                  (if tags
                      (should match)
@@ -70,3 +82,22 @@
                (should (eq (get-text-property (1+ (line-beginning-position)) 'face) 'prodigy-line-face))
                (should (eq (get-text-property (line-end-position) 'face) 'prodigy-line-face)))
              (forward-line 1))))))))
+
+;; Using Curl here because for some weird reason, using
+;; `url-retrieve-synchronously' fails with the message "Emacs is not
+;; compiled with network support". That however only is an issue
+;; inside the step.
+;;
+;; We are also sleeping before making the request to give the server
+;; time to start.
+(Then "^requesting \"\\([^\"]+\\)\" should respond with:$"
+  (lambda (url body callback)
+    (async-start
+     `(lambda ()
+        (with-temp-buffer
+          (sleep-for 2)
+          (call-process "curl" nil (current-buffer) nil "-s" ,url)
+          (buffer-string)))
+     `(lambda (result)
+        (should (equal (s-trim result) (s-trim ,body)))
+        (funcall ,callback)))))

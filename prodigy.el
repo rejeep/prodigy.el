@@ -6,7 +6,7 @@
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
 ;; Version: 0.0.1
 ;; URL: http://github.com/rejeep/prodigy.el
-;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (ht "1.5"))
+;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (ht "1.5") (f "0.14.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -34,6 +34,7 @@
 (require 's)
 (require 'dash)
 (require 'ht)
+(require 'f)
 
 (defgroup wrap-region nil
   "Manage processes from within Emacs."
@@ -67,6 +68,7 @@
     (define-key map (kbd "M") 'prodigy-mark-all)
     (define-key map (kbd "u") 'prodigy-unmark)
     (define-key map (kbd "U") 'prodigy-unmark-all)
+    (define-key map (kbd "s") 'prodigy-start)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -131,6 +133,9 @@ service.")
         (insert "* ")
       (insert "  "))
     (insert service-name)
+    (-when-let (process (ht-get service :process))
+      (when (process-live-p process)
+        (insert " Running")))
     (-when-let (tags (ht-get service :tags))
       (insert " [" (s-join ", " (-map 'symbol-name tags)) "]"))
     (put-text-property (line-beginning-position) (line-end-position) 'service-name service-name)
@@ -185,6 +190,16 @@ representing SERVICE."
      prodigy-services)
     services))
 
+(defun prodigy-marked-services ()
+  "Return list of services that are marked."
+  (let (services)
+    (ht-each
+     (lambda (name service)
+       (if (ht-get service :marked)
+           (push service services)))
+     prodigy-services)
+    services))
+
 (defun prodigy-completing-read (prompt collection)
   "Read a string in the minibuffer, with completion.
 
@@ -204,6 +219,21 @@ The completion system used is determined by
   "Read tag from list of all possible tags."
   (let ((tag-names (-map 'symbol-name (prodigy-tags))))
     (intern (prodigy-completing-read "tag: " tag-names))))
+
+(defun prodigy-buffer-name (service)
+  "Return name of process buffer for SERVICE."
+  (concat "*prodigy-" (s-dashed-words (s-downcase (ht-get service :name))) "*"))
+
+(defun prodigy-start-service (service)
+  "Start SERVICE."
+  (let* ((name (ht-get service :name))
+         (cwd (ht-get service :cwd))
+         (command (ht-get service :command))
+         (args (ht-get service :args))
+         (buffer (prodigy-buffer-name service))
+         (default-directory (f-full cwd))
+         (process (apply 'start-process (append (list name buffer command) args))))
+    (prodigy-service-set service :process process)))
 
 
 ;;;; User functions
@@ -276,6 +306,15 @@ With prefix argument, unmark all services with tag."
    (lambda (name service)
      (prodigy-service-set service :marked nil))
    prodigy-services))
+
+(defun prodigy-start ()
+  "Start service at line or marked services."
+  (interactive)
+  (let ((services (prodigy-marked-services)))
+    (if services
+        (-each services 'prodigy-start-service)
+      (-when-let (service (prodigy-service-at-line))
+        (prodigy-start-service service)))))
 
 (defun prodigy-define-service (&rest args)
   "Define a new service.
