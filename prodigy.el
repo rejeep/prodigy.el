@@ -65,8 +65,10 @@
     (define-key map (kbd "n") 'prodigy-next)
     (define-key map (kbd "p") 'prodigy-prev)
     (define-key map (kbd "m") 'prodigy-mark)
+    (define-key map (kbd "t") 'prodigy-mark-tag)
     (define-key map (kbd "M") 'prodigy-mark-all)
     (define-key map (kbd "u") 'prodigy-unmark)
+    (define-key map (kbd "T") 'prodigy-unmark-tag)
     (define-key map (kbd "U") 'prodigy-unmark-all)
     (define-key map (kbd "s") 'prodigy-start)
     (define-key map (kbd "S") 'prodigy-stop)
@@ -288,21 +290,22 @@ The completion system used is determined by
     (error
      (message "Cannot move further up"))))
 
-(defun prodigy-mark (mark-tag)
-  "Mark service at point.
+(defun prodigy-mark ()
+  "Mark service at point."
+  (interactive)
+  (-when-let (service (prodigy-service-at-line))
+    (prodigy-service-set service :marked t)
+    (ignore-errors
+      (prodigy-goto-next-line))))
 
-With prefix argument, mark all services with tag."
-  (interactive "P")
-  (if mark-tag
-      (let ((tag (prodigy-read-tag)))
-        (-each
-         (prodigy-services-tagged-with tag)
-         (lambda (service)
-           (prodigy-service-set service :marked t))))
-    (-when-let (service (prodigy-service-at-line))
-      (prodigy-service-set service :marked t)
-      (ignore-errors
-        (prodigy-goto-next-line)))))
+(defun prodigy-mark-tag ()
+  "Mark all services with tag."
+  (interactive)
+  (let ((tag (prodigy-read-tag)))
+    (-each
+     (prodigy-services-tagged-with tag)
+     (lambda (service)
+       (prodigy-service-set service :marked t)))))
 
 (defun prodigy-mark-all ()
   "Mark all services."
@@ -312,21 +315,22 @@ With prefix argument, mark all services with tag."
      (prodigy-service-set service :marked t))
    prodigy-services))
 
-(defun prodigy-unmark (mark-tag)
-  "Unmark service at point.
+(defun prodigy-unmark ()
+  "Unmark service at point."
+  (interactive)
+  (-when-let (service (prodigy-service-at-line))
+    (prodigy-service-set service :marked nil)
+    (ignore-errors
+      (prodigy-goto-next-line))))
 
-With prefix argument, unmark all services with tag."
-  (interactive "P")
-  (if mark-tag
-      (let ((tag (prodigy-read-tag)))
-        (-each
-         (prodigy-services-tagged-with tag)
-         (lambda (service)
-           (prodigy-service-set service :marked nil))))
-    (-when-let (service (prodigy-service-at-line))
-      (prodigy-service-set service :marked nil)
-      (ignore-errors
-        (prodigy-goto-next-line)))))
+(defun prodigy-unmark-tag ()
+  "Unmark all services with tag."
+  (interactive)
+  (let ((tag (prodigy-read-tag)))
+    (-each
+     (prodigy-services-tagged-with tag)
+     (lambda (service)
+       (prodigy-service-set service :marked nil)))))
 
 (defun prodigy-unmark-all ()
   "Unmark all services."

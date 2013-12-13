@@ -69,7 +69,7 @@ Feature: Unmark
     And I start prodigy
     When I start an action chain
     And I press "M"
-    And I press "C-u u"
+    And I press "T"
     And I type "tag-2"
     And I press "RET"
     And I execute the action chain

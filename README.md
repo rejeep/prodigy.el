@@ -73,13 +73,21 @@ Open service at line in browser.
 
 Mark service at line.
 
-### Unmark (`u`)
+### Mark tag (`t`)
 
-Unmark service at line.
+Mark services with tag.
 
 ### Mark all (`M`)
 
 Mark all services.
+
+### Unmark (`u`)
+
+Unmark service at line.
+
+### Unmark tag (`t`)
+
+Unmark services with tag.
 
 ### Unmark all (`U`)
 

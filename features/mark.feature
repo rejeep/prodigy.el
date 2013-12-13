@@ -60,7 +60,7 @@ Feature: Mark
       | baz  | (tag-2)       |
     And I start prodigy
     When I start an action chain
-    And I press "C-u m"
+    And I press "t"
     And I type "tag-2"
     And I press "RET"
     And I execute the action chain
