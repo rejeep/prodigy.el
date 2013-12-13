@@ -370,9 +370,15 @@ With prefix argument, unmark all services with tag."
 (defun prodigy-define-service (&rest args)
   "Define a new service.
 
-ARGS is a plist with support for the following keys:
+If first argument is a string, it is considered a doc
+string. ARGS is a plist with support for the following keys:
 
-name - Name of the service"
+:name    - Name of service
+:command - Command to run
+:args    - Arguments passed to command
+:cwd     - Run command with this as `default-directory'
+:port    - Specify service port for use with open function
+:tags    - List of tags"
   (when (eq (type-of (car args)) 'string)
     (pop args))
   (ht-set prodigy-services (plist-get args :name) (ht-from-plist args)))
