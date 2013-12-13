@@ -230,7 +230,9 @@ The completion system used is determined by
      (message "Cannot move further up"))))
 
 (defun prodigy-mark (mark-tag)
-  "Mark service at point."
+  "Mark service at point.
+
+With prefix argument, mark all services with tag."
   (interactive "P")
   (if mark-tag
       (let ((tag (prodigy-read-tag)))
@@ -252,7 +254,9 @@ The completion system used is determined by
    prodigy-services))
 
 (defun prodigy-unmark (mark-tag)
-  "Unmark service at point."
+  "Unmark service at point.
+
+With prefix argument, unmark all services with tag."
   (interactive "P")
   (if mark-tag
       (let ((tag (prodigy-read-tag)))
