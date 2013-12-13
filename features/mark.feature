@@ -5,7 +5,6 @@ Feature: Mark
     When I press "m"
     Then the buffer should be empty
 
-  @wip
   Scenario: Single service
     Given I add the following services:
       | name |
