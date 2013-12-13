@@ -46,3 +46,16 @@ Feature: Unmark
     Then I should see services:
       | name | highlighted | marked |
       | foo  | t           | nil    |
+
+  Scenario: Unmark all
+    Given I add the following services:
+      | name |
+      | foo  |
+      | bar  |
+    And I start prodigy
+    When I press "M"
+    And I press "U"
+    Then I should see services:
+      | name | highlighted | marked |
+      | bar  | t           | nil    |
+      | foo  | nil         | nil    |

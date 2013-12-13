@@ -5,6 +5,7 @@ Feature: Mark
     When I press "m"
     Then the buffer should be empty
 
+  @wip
   Scenario: Single service
     Given I add the following services:
       | name |
@@ -39,3 +40,15 @@ Feature: Mark
     Then I should see services:
       | name | highlighted | marked |
       | foo  | t           | t      |
+
+  Scenario: Mark all
+    Given I add the following services:
+      | name |
+      | foo  |
+      | bar  |
+    And I start prodigy
+    When I press "M"
+    Then I should see services:
+      | name | highlighted | marked |
+      | bar  | t           | t      |
+      | foo  | nil         | t      |

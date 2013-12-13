@@ -59,7 +59,9 @@
     (define-key map (kbd "p") 'prodigy-prev)
     (define-key map (kbd "g") 'prodigy-refresh)
     (define-key map (kbd "m") 'prodigy-mark)
+    (define-key map (kbd "M") 'prodigy-mark-all)
     (define-key map (kbd "u") 'prodigy-unmark)
+    (define-key map (kbd "U") 'prodigy-unmark-all)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -152,6 +154,13 @@ service.")
     (ignore-errors
       (prodigy--goto-next-line))))
 
+(defun prodigy-mark-all ()
+  "Mark all services."
+  (interactive)
+  (ht-each
+   (lambda (name service)
+     (prodigy--service-set service :marked t))
+   prodigy-services))
 
 (defun prodigy-unmark ()
   "Unmark service at point."
@@ -161,6 +170,13 @@ service.")
     (ignore-errors
       (prodigy--goto-next-line))))
 
+(defun prodigy-unmark-all ()
+  "Unmark all services."
+  (interactive)
+  (ht-each
+   (lambda (name service)
+     (prodigy--service-set service :marked nil))
+   prodigy-services))
 
 (defun prodigy-refresh ()
   "Refresh UI by clearing the screen and adding the services."
