@@ -70,6 +70,7 @@
     (define-key map (kbd "U") 'prodigy-unmark-all)
     (define-key map (kbd "s") 'prodigy-start)
     (define-key map (kbd "S") 'prodigy-stop)
+    (define-key map (kbd "r") 'prodigy-restart)
     (define-key map (kbd "l") 'prodigy-switch-to-buffer)
     (define-key map (kbd "o") 'prodigy-browse)
     map)
@@ -344,6 +345,12 @@ With prefix argument, unmark all services with tag."
   "Stop service at line or marked services."
   (interactive)
   (prodigy-apply 'prodigy-stop-service))
+
+(defun prodigy-restart ()
+  "Restart service at line or marked services."
+  (interactive)
+  (prodigy-apply 'prodigy-stop-service)
+  (prodigy-apply 'prodigy-start-service))
 
 (defun prodigy-switch-to-buffer ()
   "Switch to buffer associated with service process."
