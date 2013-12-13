@@ -2,7 +2,14 @@
 
 Manage external processes from Emacs.
 
-TODO: More info here
+I came up with the idea when I got to work one Monday morning and
+before I could start working I had to manually start ten or so
+services.
+
+To get rid of this tedious work, I started working on this Emacs
+plugin. Prodigy provides a
+[Magit](https://github.com/magit/magit)-like GUI to manage services in
+a simple way.
 
 ## Installation
 
