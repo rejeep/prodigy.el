@@ -57,7 +57,6 @@
     (define-key map (kbd "q") 'prodigy-quit)
     (define-key map (kbd "n") 'prodigy-next)
     (define-key map (kbd "p") 'prodigy-prev)
-    (define-key map (kbd "g") 'prodigy-refresh)
     (define-key map (kbd "m") 'prodigy-mark)
     (define-key map (kbd "M") 'prodigy-mark-all)
     (define-key map (kbd "u") 'prodigy-unmark)
@@ -72,7 +71,12 @@ Keys is the name of a service and the value is a hash table per
 service.")
 
 (defun prodigy--sorted-services ()
-  (--sort (string< it other) (ht-keys prodigy-services)))
+  (-sort
+   (lambda (service-1 service-2)
+     (string<
+      (ht-get service-1 :name)
+      (ht-get service-2 :name)))
+   (ht-values prodigy-services)))
 
 (defun prodigy--service-at-line (&optional line)
   (unless line
@@ -104,26 +108,36 @@ service.")
         (t
          (error "No service at line %s" line))))
 
+(defun prodigy--write-service-at-line (service)
+  (let ((inhibit-read-only t) (service-name (ht-get service :name)))
+    (delete-region (line-beginning-position) (line-end-position))
+    (if (ht-get service :marked)
+        (insert "* ")
+      (insert "  "))
+    (insert service-name)
+    (put-text-property (line-beginning-position) (line-end-position) 'service-name service-name)
+    (if (ht-get service :highlighted)
+        (put-text-property (line-beginning-position) (line-beginning-position 2) 'face 'prodigy-line-face)
+      (put-text-property (line-beginning-position) (line-beginning-position 2) 'face nil))))
+
 (defun prodigy--service-set (service key value)
   (ht-set service key value)
-  ;; TODO: Perhaps move to a repaint function?
   (save-excursion
-    (prodigy--goto-service service)
-    (let ((inhibit-read-only t) (service-name (ht-get service :name)))
-      (delete-region (line-beginning-position) (line-end-position))
-      (if (ht-get service :marked)
-          (insert "* ")
-        (insert "  "))
-      (insert service-name)
-      (put-text-property (line-beginning-position) (line-end-position) 'service-name service-name)
-      (if (ht-get service :highlighted)
-          (put-text-property (line-beginning-position) (line-beginning-position 2) 'face 'prodigy-line-face)
-        (put-text-property (line-beginning-position) (line-beginning-position 2) 'face nil)))))
+    (goto-char (point-min))
+    (while (not (eq (prodigy--service-at-line) service))
+      (forward-line 1))
+    (prodigy--write-service-at-line service)))
 
-(defun prodigy--goto-service (service)
-  (goto-char (point-min))
-  (while (not (eq (prodigy--service-at-line) service))
-    (forward-line 1)))
+(defun prodigy--repaint ()
+  (let ((inhibit-read-only t))
+    (erase-buffer)
+    (-each
+     (prodigy--sorted-services)
+     (lambda (service)
+       (prodigy--write-service-at-line service)
+       (insert "\n")))
+    (ignore-errors
+      (prodigy--goto-line 1))))
 
 (defun prodigy-quit ()
   "Quit prodigy."
@@ -178,21 +192,6 @@ service.")
      (prodigy--service-set service :marked nil))
    prodigy-services))
 
-(defun prodigy-refresh ()
-  "Refresh UI by clearing the screen and adding the services."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (let ((line (line-number-at-pos (point))))
-      (erase-buffer)
-      (-each
-       (prodigy--sorted-services)
-       (lambda (service-name)
-         (insert "  " service-name)
-         (put-text-property (line-beginning-position) (line-end-position) 'service-name service-name)
-         (insert "\n")))
-      (unless (zerop (length (ht-keys prodigy-services))) ; TODO: Use ht-empty-p once merged
-        (prodigy--goto-line line)))))
-
 (defun prodigy-define-service (&rest args)
   "Define a new service.
 
@@ -211,7 +210,7 @@ name - Name of the service"
   (setq mode-name "Prodigy")
   (setq major-mode 'prodigy-mode)
   (use-local-map prodigy-mode-map)
-  (prodigy-refresh)
+  (prodigy--repaint)
   (run-mode-hooks 'prodigy-mode-hook))
 
 (provide 'prodigy)
