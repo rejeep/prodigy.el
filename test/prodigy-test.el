@@ -1,0 +1,6 @@
+(ert-deftest prodigy-service-port-test ()
+  (should (= (prodigy-service-port (ht (:port 1234))) 1234))
+  (should (= (prodigy-service-port (ht (:args '("-p" "1234")))) 1234))
+  (should (= (prodigy-service-port (ht (:args '("-p" "12345")))) 12345))
+  (should-not (prodigy-service-port (ht (:args '("-p" "123456")))))
+  (should-not (prodigy-service-port (ht-create))))

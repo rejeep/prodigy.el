@@ -71,6 +71,7 @@
     (define-key map (kbd "s") 'prodigy-start)
     (define-key map (kbd "S") 'prodigy-stop)
     (define-key map (kbd "l") 'prodigy-switch-to-buffer)
+    (define-key map (kbd "o") 'prodigy-browse)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -252,6 +253,16 @@ The completion system used is determined by
       (-when-let (service (prodigy-service-at-line))
         (funcall fn service)))))
 
+(defun prodigy-service-port (service)
+  "Find something that look like a port in SERVICE arguments."
+  (or
+   (ht-get service :port)
+   (-when-let (port (-first
+                     (lambda (arg)
+                       (s-matches? "^\\([0-9]\\)\\{4,5\\}$" arg))
+                     (ht-get service :args)))
+     (string-to-number port))))
+
 
 ;;;; User functions
 
@@ -340,6 +351,14 @@ With prefix argument, unmark all services with tag."
   (-when-let (service (prodigy-service-at-line))
     (when (ht-get service :process)
       (switch-to-buffer (prodigy-buffer-name service)))))
+
+(defun prodigy-browse ()
+  "Browse service url at point if possible to figure out."
+  (interactive)
+  (-when-let (service (prodigy-service-at-line))
+    (-if-let (port (prodigy-service-port service))
+        (browse-url (format "http://localhost:%d" port))
+      (message "Could not determine port"))))
 
 (defun prodigy-define-service (&rest args)
   "Define a new service.
