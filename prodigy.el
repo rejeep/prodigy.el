@@ -70,6 +70,7 @@
     (define-key map (kbd "U") 'prodigy-unmark-all)
     (define-key map (kbd "s") 'prodigy-start)
     (define-key map (kbd "S") 'prodigy-stop)
+    (define-key map (kbd "l") 'prodigy-switch-to-buffer)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -332,6 +333,13 @@ With prefix argument, unmark all services with tag."
   "Stop service at line or marked services."
   (interactive)
   (prodigy-apply 'prodigy-stop-service))
+
+(defun prodigy-switch-to-buffer ()
+  "Switch to buffer associated with service process."
+  (interactive)
+  (-when-let (service (prodigy-service-at-line))
+    (when (ht-get service :process)
+      (switch-to-buffer (prodigy-buffer-name service)))))
 
 (defun prodigy-define-service (&rest args)
   "Define a new service.
