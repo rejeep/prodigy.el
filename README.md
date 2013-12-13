@@ -1,6 +1,6 @@
 # Prodigy
 
-Manage external processes from Emacs.
+Manage external services from within Emacs
 
 I came up with the idea when I got to work one Monday morning and
 before I could start working I had to manually start ten or so
@@ -35,7 +35,7 @@ Available options:
 ## Commands
 
 Start Prodigy with `prodigy`. You should see a list of all defined
-processes.
+services.
 
 ### Quit (`q`)
 

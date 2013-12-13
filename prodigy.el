@@ -1,4 +1,4 @@
-;;; prodigy.el --- Manage processes from within Emacs
+;;; prodigy.el --- Manage external services from within Emacs
 
 ;; Copyright (C) 2013 Johan Andersson
 
@@ -37,7 +37,7 @@
 (require 'f)
 
 (defgroup wrap-region nil
-  "Manage processes from within Emacs."
+  "Manage external services from within Emacs."
   :prefix "prodigy-"
   :group 'tools
   :link '(url-link :tag "Github" "https://github.com/rejeep/prodigy.el"))
@@ -393,7 +393,7 @@ name - Name of the service"
 
 ;;;###autoload
 (defun prodigy ()
-  "Manage processes from within Emacs."
+  "Manage external services from within Emacs."
   (interactive)
   (switch-to-buffer (get-buffer-create prodigy-buffer-name))
   (kill-all-local-variables)
