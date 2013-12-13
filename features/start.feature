@@ -7,6 +7,33 @@ Feature: Start
       | bar  | bar | python  | ("-m" "SimpleHTTPServer" "6002") |
     And I start prodigy
 
+  Scenario: Already started
+    When I press "s"
+    Then requesting "http://127.0.0.1:6002/index.html" should respond with:
+      """
+      <!DOCTYPE>
+      <html>
+        <head></head>
+        <body>
+          BAR
+        </body>
+      </html>
+      """
+    When I press "s"
+    Then requesting "http://127.0.0.1:6002/index.html" should respond with:
+      """
+      <!DOCTYPE>
+      <html>
+        <head></head>
+        <body>
+          BAR
+        </body>
+      </html>
+      """
+    And I should see services:
+      | name | highlighted | marked | started |
+      | bar  | t           | nil    | t       |
+
   Scenario: Start process at line
     When I press "s"
     Then requesting "http://127.0.0.1:6002/index.html" should respond with:
