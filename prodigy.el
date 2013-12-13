@@ -344,6 +344,20 @@ name - Name of the service"
   (ht-set prodigy-services (plist-get args :name) (ht-from-plist args)))
 
 ;;;###autoload
+(put 'prodigy-define-service 'lisp-indent-function 'defun)
+
+;;;###autoload
+(put 'prodigy-define-service 'doc-string-elt 1)
+
+(add-hook 'emacs-lisp-mode-hook
+          (lambda ()
+            (font-lock-add-keywords
+             nil
+             '(("(\\(\\<prodigy-define-service\\)\\>"
+                (1 font-lock-keyword-face nil t))))))
+
+
+;;;###autoload
 (defun prodigy ()
   "Manage processes from within Emacs."
   (interactive)
