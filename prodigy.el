@@ -73,7 +73,7 @@
     map)
   "Keymap for `prodigy-mode'.")
 
-(defvar prodigy-services (ht)
+(defvar prodigy-services (ht-create)
   "All registered services.
 
 Keys is the name of a service and the value is a hash table per
