@@ -423,6 +423,11 @@ string. ARGS is a plist with support for the following keys:
 :tags    - List of tags"
   (when (eq (type-of (car args)) 'string)
     (pop args))
+  (-each
+   '(:name :cwd :command)
+   (lambda (property)
+     (unless (plist-get args property)
+       (error "Property %s must be specified." property))))
   (ht-set prodigy-services (plist-get args :name) (ht-from-plist args)))
 
 ;;;###autoload

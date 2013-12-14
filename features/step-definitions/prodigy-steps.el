@@ -36,8 +36,8 @@
         (prodigy-define-service
           :name (nth name-index row)
           :tags (and tags-index (read (nth tags-index row)))
-          :cwd (and cwd-index (f-expand (nth cwd-index row) prodigy-servers-path))
-          :command (and command-index (nth command-index row))
+          :cwd (or (and cwd-index (f-expand (nth cwd-index row) prodigy-servers-path)) "cwd")
+          :command (or (and command-index (nth command-index row)) "command")
           :args (and args-index (read (nth args-index row))))))))
 
 (Then "^I should see services:$"
