@@ -437,7 +437,6 @@ string. ARGS is a plist with support for the following keys:
              '(("(\\(\\<prodigy-define-service\\)\\>"
                 (1 font-lock-keyword-face nil t))))))
 
-
 ;;;###autoload
 (defun prodigy ()
   "Manage external services from within Emacs."
