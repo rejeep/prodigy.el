@@ -427,8 +427,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-refresh ()
   "Refresh GUI."
   (interactive)
-  (let ((line (line-number-at-pos)) (inhibit-read-only t))
-    (erase-buffer)
+  (let ((line (line-number-at-pos)))
     (prodigy-repaint)
     (prodigy-goto-line line)))
 
