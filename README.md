@@ -1,4 +1,4 @@
-# Prodigy
+# Prodigy [![Build Status](https://api.travis-ci.org/rejeep/prodigy.el.png?branch=master)](http://travis-ci.org/rejeep/prodigy.el)
 
 Manage external services from within Emacs
 
