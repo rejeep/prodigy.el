@@ -262,12 +262,13 @@ The completion system used is determined by
       (let* ((name (ht-get service :name))
              (command (ht-get service :command))
              (args (ht-get service :args))
-             (default-directory (f-full (ht-get service :cwd)))
-             (process
-              (apply 'start-process (append (list name nil command) args))))
-        (set-process-filter process 'prodigy-process-filter)
-        (set-process-query-on-exit-flag process nil)
-        (prodigy-service-set service :process process)))))
+             (default-directory (f-full (ht-get service :cwd))))
+        (-when-let (init (ht-get service :init))
+          (funcall init))
+        (let ((process (apply 'start-process (append (list name nil command) args))))
+          (set-process-filter process 'prodigy-process-filter)
+          (set-process-query-on-exit-flag process nil)
+          (prodigy-service-set service :process process))))))
 
 (defun prodigy-stop-service (service)
   "Stop process associated with SERVICE."
@@ -438,7 +439,8 @@ string. ARGS is a plist with support for the following keys:
 :args    - Arguments passed to command
 :cwd     - Run command with this as `default-directory'
 :port    - Specify service port for use with open function
-:tags    - List of tags"
+:tags    - List of tags
+:init    - Function called before process is started."
   (when (eq (type-of (car args)) 'string)
     (pop args))
   (-each

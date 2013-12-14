@@ -23,14 +23,8 @@ Add `prodigy` to your [Cask](https://github.com/rejeep/prodigy.el) file:
 
 ### prodigy-define-service (`&optional doc-string &rest args`)
 
-Available options:
-
-* `:name` - Name of service
-* `:command` - Command to run
-* `:args` - Arguments passed to command
-* `:cwd` - Run command with this as `default-directory`
-* `:port` - Specify service port for use with open function
-* `:tags` - List of tags
+See doc-string for information about available options to specify:
+`M-x describe-function RET prodigy-define-service`
 
 ## Commands
 
@@ -106,7 +100,7 @@ Start simple Python server:
   :tags '(work))
 ```
 
-Start nodemon server:
+Start Node server:
 
 ```lisp
 (prodigy-define-service
@@ -117,6 +111,20 @@ Start nodemon server:
   :args '("app.coffee")
   :port 6002
   :tags '(work node))
+```
+
+Start Sinatra server:
+
+```lisp
+(prodigy-define-service
+  :name "Sinatra"
+  :command "./bin/server"
+  :cwd "/path/to/my/project"
+  :port 6003
+  :tags '(work ruby)
+  :init (lambda ()
+          ;; Setup RVM
+          ))
 ```
 
 ## Contribution

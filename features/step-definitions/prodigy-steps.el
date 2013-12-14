@@ -31,14 +31,18 @@
            (tags-index (-elem-index "tags" head))
            (cwd-index (-elem-index "cwd" head))
            (command-index (-elem-index "command" head))
-           (args-index (-elem-index "args" head)))
-      (dolist (row rows)
-        (prodigy-define-service
+           (args-index (-elem-index "args" head))
+           (init-index (-elem-index "init" head)))
+      (mapc
+       (lambda (row)
+         (prodigy-define-service
           :name (nth name-index row)
           :tags (and tags-index (read (nth tags-index row)))
           :cwd (or (and cwd-index (f-expand (nth cwd-index row) prodigy-servers-path)) "cwd")
           :command (or (and command-index (nth command-index row)) "command")
-          :args (and args-index (read (nth args-index row))))))))
+          :args (and args-index (read (nth args-index row)))
+          :init (and init-index (read (nth init-index row)))))
+         rows))))
 
 (Then "^I should see services:$"
   (lambda (table)
