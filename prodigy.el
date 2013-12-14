@@ -248,6 +248,7 @@ The completion system used is determined by
              (process
               (apply 'start-process (append (list name nil command) args))))
         (set-process-filter process 'prodigy-process-filter)
+        (set-process-query-on-exit-flag process nil)
         (prodigy-service-set service :process process)))))
 
 (defun prodigy-stop-service (service)
