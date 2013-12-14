@@ -23,71 +23,71 @@ Add `prodigy` to your [Cask](https://github.com/rejeep/prodigy.el) file:
 
 ### prodigy-define-service (`&optional doc-string &rest args`)
 
-See doc-string for information about available options to specify:
+See doc-string for information about available properties to specify:
 `M-x describe-function RET prodigy-define-service`
 
 ## Commands
 
-Start Prodigy with `prodigy`. You should see a list of all defined
+Start Prodigy with `M-x prodigy`. You should see a list of all defined
 services.
 
 ### Quit (`q`)
 
 Quit Prodigy.
 
-### Next (`n`)
+### Next service (`n`)
 
 Go to next service.
 
-### Prev (`p`)
+### Prev service (`p`)
 
 Go to previous service.
 
-### Start (`s`)
+### Start service (`s`)
 
 Start service at line or marked services.
 
-### Stop (`S`)
+### Stop service (`S`)
 
 Stop service at line or marked services.
 
-### Restart (`r`)
+### Restart service (`r`)
 
 Restart service at line or marked services.
 
-### Switch to buffer (`l`)
+### Display service process output (`$`)
 
 Switch to buffer for service at line.
 
-### Open (`o`)
+### Open in browser (`o`)
 
 Open service at line in browser.
 
-### Mark (`m`)
+### Mark service (`m`)
 
 Mark service at line.
 
-### Mark tag (`t`)
+### Mark services with tag (`t`)
 
 Mark services with tag.
 
-### Mark all (`M`)
+### Mark all services (`M`)
 
 Mark all services.
 
-### Unmark (`u`)
+### Unmark service (`u`)
 
 Unmark service at line.
 
-### Unmark tag (`t`)
+### Unmark services with tag (`t`)
 
 Unmark services with tag.
 
-### Unmark all (`U`)
+### Unmark all services (`U`)
 
 Unmark all services.
 
-### Refresh (`g`)
+### Refresh GUI (`g`)
 
 Refresh GUI.
 
