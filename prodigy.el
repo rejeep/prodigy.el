@@ -48,6 +48,11 @@
   "Color of current line."
   :group 'prodigy)
 
+(defface prodigy-status-face
+  '((((class color)) :foreground "firebrick"))
+  "Color of current process status."
+  :group 'prodigy)
+
 (defconst prodigy-buffer-name "*prodigy*"
   "Name of Prodigy mode buffer.")
 
@@ -138,6 +143,20 @@ service.")
         (t
          (error "No service at line %s" line))))
 
+(defun prodigy-status-name (process)
+  "Return PROCESS status name."
+  (let ((status (process-status process)))
+    (cond ((eq status 'run) "Running")
+          ((eq status 'stop) "Stopped")
+          ((eq status 'exit) "Exit")
+          ((eq status 'signal) "Signal")
+          ((eq status 'open) "Open")
+          ((eq status 'closed) "Closed")
+          ((eq status 'connect) "Connect")
+          ((eq status 'failed) "Failed")
+          ((eq status 'listen) "Listen")
+          (t "Unknown"))))
+
 (defun prodigy-write-service-at-line (service)
   "Remove service at line and insert SERVICE."
   (let ((inhibit-read-only t) (service-name (ht-get service :name)))
@@ -147,8 +166,7 @@ service.")
       (insert "  "))
     (insert service-name)
     (-when-let (process (ht-get service :process))
-      (when (process-live-p process)
-        (insert " Running")))
+      (insert " " (prodigy-status-name process)))
     (-when-let (tags (ht-get service :tags))
       (insert " [" (s-join ", " (-map 'symbol-name tags)) "]"))
     (put-text-property (line-beginning-position) (line-end-position) 'service-name service-name)
