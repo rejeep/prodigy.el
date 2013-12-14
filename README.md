@@ -122,8 +122,9 @@ Start Sinatra server:
 ```lisp
 (prodigy-define-service
   :name "Sinatra"
-  :command "./bin/server"
+  :command "server"
   :cwd "/path/to/my/project"
+  :path '("/path/to/my/project/bin")
   :port 6003
   :tags '(work ruby)
   :init (lambda ()

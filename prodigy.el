@@ -265,7 +265,8 @@ The completion system used is determined by
       (let* ((name (ht-get service :name))
              (command (ht-get service :command))
              (args (ht-get service :args))
-             (default-directory (f-full (ht-get service :cwd))))
+             (default-directory (f-full (ht-get service :cwd)))
+             (exec-path (append (ht-get service :path) exec-path)))
         (-when-let (init (ht-get service :init))
           (funcall init))
         (let ((process (apply 'start-process (append (list name nil command) args))))
@@ -450,7 +451,8 @@ string. ARGS is a plist with support for the following keys:
 :cwd     - Run command with this as `default-directory'
 :port    - Specify service port for use with open function
 :tags    - List of tags
-:init    - Function called before process is started."
+:init    - Function called before process is started
+:path    - List of directories added to PATH when command runs"
   (when (eq (type-of (car args)) 'string)
     (pop args))
   (-each

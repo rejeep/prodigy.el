@@ -32,17 +32,19 @@
            (cwd-index (-elem-index "cwd" head))
            (command-index (-elem-index "command" head))
            (args-index (-elem-index "args" head))
-           (init-index (-elem-index "init" head)))
+           (init-index (-elem-index "init" head))
+           (path-index (-elem-index "path" head)))
       (mapc
        (lambda (row)
          (prodigy-define-service
-          :name (nth name-index row)
-          :tags (and tags-index (read (nth tags-index row)))
-          :cwd (or (and cwd-index (f-expand (nth cwd-index row) prodigy-servers-path)) "cwd")
-          :command (or (and command-index (nth command-index row)) "command")
-          :args (and args-index (read (nth args-index row)))
-          :init (and init-index (read (nth init-index row)))))
-         rows))))
+           :name (nth name-index row)
+           :tags (and tags-index (read (nth tags-index row)))
+           :cwd (or (and cwd-index (f-expand (nth cwd-index row) prodigy-servers-path)) "cwd")
+           :command (or (and command-index (nth command-index row)) "command")
+           :args (and args-index (read (nth args-index row)))
+           :init (and init-index (read (nth init-index row)))
+           :path (and path-index (--map (f-expand it prodigy-servers-path) (read (nth path-index row))))))
+       rows))))
 
 (Then "^I should see services:$"
   (lambda (table)
