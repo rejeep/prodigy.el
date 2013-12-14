@@ -242,7 +242,7 @@ The completion system used is determined by
     (prodigy-service-set service :process process)))
 
 (defun prodigy-stop-service (service)
-  "Stop SERVICE."
+  "Stop process associated with SERVICE."
   (-when-let (process (ht-get service :process))
     (when (process-live-p process)
       (kill-process process))
