@@ -66,6 +66,14 @@
     map)
   "Keymap for `prodigy-log-mode'.")
 
+(define-derived-mode prodigy-mode special-mode "Prodigy mode"
+  "Special mode for prodigy buffers"
+  (put 'funny-mode 'mode-class 'special)
+  (prodigy-reset)
+  (prodigy-repaint)
+  (set (make-local-variable 'revert-buffer-function) 'prodigy-refresh))
+
+
 (defvar prodigy-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'prodigy-quit)
@@ -82,7 +90,7 @@
     (define-key map (kbd "r") 'prodigy-restart)
     (define-key map (kbd "$") 'prodigy-display-process)
     (define-key map (kbd "o") 'prodigy-browse)
-    (define-key map (kbd "g") 'prodigy-refresh)
+    ;; (define-key map (kbd "g") 'prodigy-refresh)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -486,15 +494,7 @@ string. ARGS is a plist with support for the following keys:
     (pop-to-buffer buffer)
     (unless buffer-p
       (kill-all-local-variables)
-      (setq buffer-read-only t)
-      (setq mode-name "Prodigy")
-      (setq major-mode 'prodigy-mode)
-      (use-local-map prodigy-mode-map)
-      (prodigy-reset)
-      (prodigy-repaint)
-      (ignore-errors
-        (prodigy-goto-line 1))
-      (run-mode-hooks 'prodigy-mode-hook))))
+      (prodigy-mode))))
 
 ;;;###autoload
 (defun prodigy-log-mode (service)
