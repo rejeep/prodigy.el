@@ -13,7 +13,7 @@ a simple way.
 
 ## Installation
 
-Add `prodigy` to your [Cask](https://github.com/rejeep/prodigy.el) file:
+Add `prodigy` to your [Cask](https://github.com/cask/cask) file:
 
 ```lisp
 (depends-on "prodigy")
