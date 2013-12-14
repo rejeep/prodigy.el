@@ -136,7 +136,7 @@ Start Sinatra server:
 
 Contribution is much welcome!
 
-Install [cask](https://github.com/cask/cask) if you haven't
+Install [Cask](https://github.com/cask/cask) if you haven't
 already, then:
 
     $ cd /path/to/prodigy.el
