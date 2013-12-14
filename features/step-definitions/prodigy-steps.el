@@ -122,9 +122,17 @@
 
 (Then "^I should be in prodigy log mode$"
   (lambda ()
-    (should (equal major-mode 'prodigy-log-mode))
+    (should (eq major-mode 'prodigy-log-mode))
     (should (equal mode-name "Prodigy Log"))))
 
 (Then "^the buffer \"\\([^\"]+\\)\" should exist$"
   (lambda (buffer-name)
     (should (get-buffer buffer-name))))
+
+(When "^I kill the prodigy buffer$"
+  (lambda ()
+    (kill-buffer prodigy-buffer-name)))
+
+(Then "^I should not be in prodigy log mode$"
+  (lambda ()
+    (should-not (eq major-mode 'prodigy-log-mode))))

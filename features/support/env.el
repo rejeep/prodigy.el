@@ -20,5 +20,6 @@
 (Before
  (ht-clear prodigy-services)
  (makunbound 'foo)
- (-each (process-list) 'kill-process)
+ (-when-let (buffer (get-buffer prodigy-buffer-name))
+   (kill-buffer buffer))
  (delete-other-windows))

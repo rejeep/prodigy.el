@@ -2,8 +2,8 @@ Feature: Log
 
   Background:
     Given I add the following services:
-      | name | cwd | command | args                             |
-      | foo  | foo | python  | ("-m" "SimpleHTTPServer" "6001") |
+      | name | cwd | command | args    |
+      | foo  | foo | echo    | ("foo") |
     And I start prodigy
 
   Scenario: Not started
@@ -23,5 +23,5 @@ Feature: Log
     And I press "$"
     Then I should be in prodigy log mode
     When I press "q"
-    Then I should be in prodigy mode
+    Then I should not be in prodigy log mode
     And the buffer "*prodigy-foo*" should exist

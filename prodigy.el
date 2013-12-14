@@ -192,9 +192,15 @@ representing SERVICE."
      (prodigy-sorted-services)
      (lambda (service)
        (prodigy-write-service-at-line service)
-       (insert "\n")))
-    (ignore-errors
-      (prodigy-goto-line 1))))
+       (insert "\n")))))
+
+(defun prodigy-reset ()
+  "Reset state such as marked and highlighted for all services."
+  (ht-each
+   (lambda (name service)
+     (ht-set service :marked nil)
+     (ht-set service :highlighted nil))
+   prodigy-services))
 
 (defun prodigy-tags ()
   "Return uniq list of tags."
@@ -323,7 +329,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-quit ()
   "Quit prodigy."
   (interactive)
-  (kill-buffer (buffer-name)))
+  (quit-window))
 
 (defun prodigy-next ()
   "Go to next service."
@@ -475,14 +481,20 @@ string. ARGS is a plist with support for the following keys:
 (defun prodigy ()
   "Manage external services from within Emacs."
   (interactive)
-  (switch-to-buffer (get-buffer-create prodigy-buffer-name))
-  (kill-all-local-variables)
-  (setq buffer-read-only t)
-  (setq mode-name "Prodigy")
-  (setq major-mode 'prodigy-mode)
-  (use-local-map prodigy-mode-map)
-  (prodigy-repaint)
-  (run-mode-hooks 'prodigy-mode-hook))
+  (let ((buffer-p (get-buffer prodigy-buffer-name))
+        (buffer (get-buffer-create prodigy-buffer-name)))
+    (pop-to-buffer buffer)
+    (unless buffer-p
+      (kill-all-local-variables)
+      (setq buffer-read-only t)
+      (setq mode-name "Prodigy")
+      (setq major-mode 'prodigy-mode)
+      (use-local-map prodigy-mode-map)
+      (prodigy-reset)
+      (prodigy-repaint)
+      (ignore-errors
+        (prodigy-goto-line 1))
+      (run-mode-hooks 'prodigy-mode-hook))))
 
 ;;;###autoload
 (defun prodigy-log-mode (service)
