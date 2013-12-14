@@ -87,6 +87,7 @@
     (define-key map (kbd "r") 'prodigy-restart)
     (define-key map (kbd "$") 'prodigy-display-process)
     (define-key map (kbd "o") 'prodigy-browse)
+    (define-key map (kbd "g") 'prodigy-refresh)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -422,6 +423,14 @@ PROCESS is the service process that the OUTPUT is associated to."
     (-if-let (port (prodigy-service-port service))
         (browse-url (format "http://localhost:%d" port))
       (message "Could not determine port"))))
+
+(defun prodigy-refresh ()
+  "Refresh GUI."
+  (interactive)
+  (let ((line (line-number-at-pos)) (inhibit-read-only t))
+    (erase-buffer)
+    (prodigy-repaint)
+    (prodigy-goto-line line)))
 
 (defun prodigy-log-quit ()
   "Quit window and bury buffer."

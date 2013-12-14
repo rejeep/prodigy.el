@@ -87,6 +87,10 @@ Unmark services with tag.
 
 Unmark all services.
 
+### Refresh (`g`)
+
+Refresh GUI.
+
 ## Examples
 
 Start simple Python server:
