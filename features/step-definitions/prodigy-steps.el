@@ -113,3 +113,12 @@
      `(lambda (response)
         (should-not (s-contains? "HTTP/1.1" response))
         (funcall ,callback)))))
+
+(Then "^I should be in prodigy log mode$"
+  (lambda ()
+    (should (equal major-mode 'prodigy-log-mode))
+    (should (equal mode-name "Prodigy Log"))))
+
+(Then "^the buffer \"\\([^\"]+\\)\" should exist$"
+  (lambda (buffer-name)
+    (should (get-buffer buffer-name))))

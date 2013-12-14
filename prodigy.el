@@ -35,6 +35,7 @@
 (require 'dash)
 (require 'ht)
 (require 'f)
+(require 'ansi-color)
 
 (defgroup wrap-region nil
   "Manage external services from within Emacs."
@@ -59,6 +60,12 @@
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
 
+(defvar prodigy-log-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "q") 'prodigy-log-quit)
+    map)
+  "Keymap for `prodigy-log-mode'.")
+
 (defvar prodigy-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "q") 'prodigy-quit)
@@ -73,7 +80,7 @@
     (define-key map (kbd "s") 'prodigy-start)
     (define-key map (kbd "S") 'prodigy-stop)
     (define-key map (kbd "r") 'prodigy-restart)
-    (define-key map (kbd "l") 'prodigy-switch-to-buffer)
+    (define-key map (kbd "$") 'prodigy-display-process)
     (define-key map (kbd "o") 'prodigy-browse)
     map)
   "Keymap for `prodigy-mode'.")
@@ -231,15 +238,17 @@ The completion system used is determined by
   (concat "*prodigy-" (s-dashed-words (s-downcase (ht-get service :name))) "*"))
 
 (defun prodigy-start-service (service)
-  "Start SERVICE."
-  (let* ((name (ht-get service :name))
-         (cwd (ht-get service :cwd))
-         (command (ht-get service :command))
-         (args (ht-get service :args))
-         (buffer (prodigy-buffer-name service))
-         (default-directory (f-full cwd))
-         (process (apply 'start-process (append (list name buffer command) args))))
-    (prodigy-service-set service :process process)))
+  "Start process associated with SERVICE."
+  (let ((process (ht-get service :process)))
+    (unless (and process (process-live-p process))
+      (let* ((name (ht-get service :name))
+             (command (ht-get service :command))
+             (args (ht-get service :args))
+             (default-directory (f-full (ht-get service :cwd)))
+             (process
+              (apply 'start-process (append (list name nil command) args))))
+        (set-process-filter process 'prodigy-process-filter)
+        (prodigy-service-set service :process process)))))
 
 (defun prodigy-stop-service (service)
   "Stop process associated with SERVICE."
@@ -265,6 +274,29 @@ The completion system used is determined by
                        (s-matches? "^\\([0-9]\\)\\{4,5\\}$" arg))
                      (ht-get service :args)))
      (string-to-number port))))
+
+;; TODO: Remove once added to ht.el
+(defun ht-find (function table)
+  (catch 'break
+    (ht-each
+     (lambda (key value)
+       (when (funcall function key value)
+         (throw 'break key)))
+     table)))
+
+(defun prodigy-process-filter (process output)
+  "Process filter for service processes.
+
+PROCESS is the service process that the OUTPUT is associated to."
+  (-when-let (service-name
+              (ht-find
+               (lambda (name service)
+                 (eq (ht-get service :process) process))
+               prodigy-services))
+    (let* ((service (ht-get prodigy-services service-name))
+           (buffer (get-buffer-create (prodigy-buffer-name service))))
+      (with-current-buffer buffer
+        (insert (ansi-color-apply output))))))
 
 
 ;;;; User functions
@@ -356,12 +388,12 @@ The completion system used is determined by
   (prodigy-apply 'prodigy-stop-service)
   (prodigy-apply 'prodigy-start-service))
 
-(defun prodigy-switch-to-buffer ()
-  "Switch to buffer associated with service process."
+(defun prodigy-display-process ()
+  "Switch to process buffer for service at current line."
   (interactive)
   (-when-let (service (prodigy-service-at-line))
     (when (ht-get service :process)
-      (switch-to-buffer (prodigy-buffer-name service)))))
+      (prodigy-log-mode service))))
 
 (defun prodigy-browse ()
   "Browse service url at point if possible to figure out."
@@ -370,6 +402,11 @@ The completion system used is determined by
     (-if-let (port (prodigy-service-port service))
         (browse-url (format "http://localhost:%d" port))
       (message "Could not determine port"))))
+
+(defun prodigy-log-quit ()
+  "Quit window and bury buffer."
+  (interactive)
+  (quit-window))
 
 (defun prodigy-define-service (&rest args)
   "Define a new service.
@@ -413,6 +450,16 @@ string. ARGS is a plist with support for the following keys:
   (use-local-map prodigy-mode-map)
   (prodigy-repaint)
   (run-mode-hooks 'prodigy-mode-hook))
+
+;;;###autoload
+(defun prodigy-log-mode (service)
+  "Open log mode for SERVICE."
+  (interactive)
+  (pop-to-buffer (prodigy-buffer-name service))
+  (kill-all-local-variables)
+  (setq mode-name "Prodigy Log")
+  (setq major-mode 'prodigy-log-mode)
+  (use-local-map prodigy-log-mode-map))
 
 (provide 'prodigy)
 
