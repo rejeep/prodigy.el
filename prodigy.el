@@ -48,11 +48,6 @@
   "Color of current line."
   :group 'prodigy)
 
-(defface prodigy-status-face
-  '((((class color)) :foreground "firebrick"))
-  "Color of current process status."
-  :group 'prodigy)
-
 (defconst prodigy-buffer-name "*prodigy*"
   "Name of Prodigy mode buffer.")
 
