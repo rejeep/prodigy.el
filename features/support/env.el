@@ -18,7 +18,7 @@
 (require 'ert)
 
 (Before
- (-when-let (buffer (get-buffer prodigy-buffer-name))
-   (kill-buffer buffer))
  (ht-clear prodigy-services)
- (makunbound 'foo))
+ (makunbound 'foo)
+ (-each (process-list) 'kill-process)
+ (delete-other-windows))
