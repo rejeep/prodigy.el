@@ -430,6 +430,7 @@ string. ARGS is a plist with support for the following keys:
 ;;;###autoload
 (put 'prodigy-define-service 'doc-string-elt 1)
 
+;;;###autoload
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
             (font-lock-add-keywords
