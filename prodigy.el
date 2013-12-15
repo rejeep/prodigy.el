@@ -37,7 +37,7 @@
 (require 'f)
 (require 'ansi-color)
 
-(defgroup wrap-region nil
+(defgroup prodigy nil
   "Manage external services from within Emacs."
   :prefix "prodigy-"
   :group 'tools
