@@ -108,13 +108,15 @@ service.")
   "Return service at LINE or current line."
   (unless line
     (setq line (line-number-at-pos)))
-  (let ((point
-         (save-excursion
-           (goto-char (point-min))
-           (forward-line (1- line))
-           (line-beginning-position))))
-    (let ((service-name (get-text-property point 'service-name)))
-      (ht-get prodigy-services service-name))))
+  (when (and (> line 0)
+             (< line (line-number-at-pos (point-max))))
+    (let ((point
+           (save-excursion
+             (goto-char (point-min))
+             (forward-line (1- line))
+             (line-beginning-position))))
+      (let ((service-name (get-text-property point 'service-name)))
+        (ht-get prodigy-services service-name)))))
 
 (defun prodigy-service-at-line-p (&optional line)
   "Return true if there is a service at LINE or current line."
