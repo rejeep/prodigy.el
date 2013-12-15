@@ -4,10 +4,15 @@ CASK ?= cask
 all: test
 
 test: clean-elc
+	${MAKE} unit
 	${MAKE} ecukes
 	${MAKE} compile
+	${MAKE} unit
 	${MAKE} ecukes
 	${MAKE} clean-elc
+
+unit:
+	${CASK} exec unit
 
 ecukes:
 	${CASK} exec ecukes
@@ -18,4 +23,4 @@ compile:
 clean-elc:
 	rm -f prodigy.elc
 
-.PHONY:	all test ecukes compile
+.PHONY:	all test unit ecukes compile
