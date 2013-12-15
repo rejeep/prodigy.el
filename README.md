@@ -19,12 +19,33 @@ Add `prodigy` to your [Cask](https://github.com/cask/cask) file:
 (depends-on "prodigy")
 ```
 
-## API
+## Usage
 
-### prodigy-define-service (`&optional doc-string &rest args`)
+Services can be defined in a few different ways. See doc-string for
+information about available properties to specify: `M-x
+describe-variable RET prodigy-services`.
 
-See doc-string for information about available properties to specify:
-`M-x describe-function RET prodigy-define-service`
+### prodigy-define-service (`&rest args`)
+
+Services can be defined using the function `prodigy-define-service`:
+
+```lisp
+(prodigy-define-service :prop value ...)
+```
+
+### prodigy-services
+
+Services can be defined by setting the variable `prodigy-services`:
+
+```lisp
+(setq prodigy-services
+ '((:prop value ...)
+   (:prop value ...)))
+```
+
+### customize
+
+TODO
 
 ## Commands
 
