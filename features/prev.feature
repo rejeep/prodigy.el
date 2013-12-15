@@ -13,7 +13,7 @@ Feature: Prev
     When I press "p"
     Then I should see services:
       | name | highlighted |
-      | foo  | t      |
+      | foo  | t           |
     Then I should see message "Cannot move further up"
 
   Scenario: Multiple services
@@ -24,21 +24,21 @@ Feature: Prev
     Given I start prodigy
     Then I should see services:
       | name | highlighted |
-      | bar  | t      |
-      | foo  | nil    |
+      | bar  | t           |
+      | foo  | nil         |
     When I press "n"
     Then I should see services:
       | name | highlighted |
-      | bar  | nil    |
-      | foo  | t      |
+      | bar  | nil         |
+      | foo  | t           |
     When I press "p"
     Then I should see services:
       | name | highlighted |
-      | bar  | t      |
-      | foo  | nil    |
+      | bar  | t           |
+      | foo  | nil         |
     When I press "p"
     Then I should see services:
       | name | highlighted |
-      | bar  | t      |
-      | foo  | nil    |
+      | bar  | t           |
+      | foo  | nil         |
     Then I should see message "Cannot move further up"
