@@ -57,6 +57,11 @@
   :type 'symbol
   :options '(ido default))
 
+(defcustom prodigy-init-async-timeout 10
+  "Seconds to wait for init async callback before failing."
+  :group 'prodigy
+  :type 'number)
+
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
 
@@ -269,13 +274,30 @@ The completion system used is determined by
              (command (ht-get service :command))
              (args (ht-get service :args))
              (default-directory (f-full (ht-get service :cwd)))
-             (exec-path (append (ht-get service :path) exec-path)))
+             (exec-path (append (ht-get service :path) exec-path))
+             (process nil)
+             (create-process
+              (lambda ()
+                (unless process
+                  (setq process (apply 'start-process (append (list name nil command) args)))))))
         (-when-let (init (ht-get service :init))
           (funcall init))
-        (let ((process (apply 'start-process (append (list name nil command) args))))
-          (set-process-filter process 'prodigy-process-filter)
-          (set-process-query-on-exit-flag process nil)
-          (prodigy-service-set service :process process))))))
+        (-when-let (init-async (ht-get service :init-async))
+          (let (callbacked)
+            (funcall
+             init-async
+             (lambda ()
+               (setq callbacked t)
+               (funcall create-process)))
+            (with-timeout
+                (prodigy-init-async-timeout
+                 (error "Did not callback async callback within %s seconds"
+                        prodigy-init-async-timeout))
+              (while (not callbacked) (accept-process-output nil 0.005)))))
+        (funcall create-process)
+        (set-process-filter process 'prodigy-process-filter)
+        (set-process-query-on-exit-flag process nil)
+        (prodigy-service-set service :process process)))))
 
 (defun prodigy-stop-service (service)
   "Stop process associated with SERVICE."
@@ -448,14 +470,15 @@ PROCESS is the service process that the OUTPUT is associated to."
 If first argument is a string, it is considered a doc
 string. ARGS is a plist with support for the following keys:
 
-:name    - Name of service
-:command - Command to run
-:args    - Arguments passed to command
-:cwd     - Run command with this as `default-directory'
-:port    - Specify service port for use with open function
-:tags    - List of tags
-:init    - Function called before process is started
-:path    - List of directories added to PATH when command runs"
+:name       - Name of service
+:command    - Command to run
+:args       - Arguments passed to command
+:cwd        - Run command with this as `default-directory'
+:port       - Specify service port for use with open function
+:tags       - List of tags
+:init       - Function called before process is started
+:init-async - Function called before process is started with async callback
+:path       - List of directories added to PATH when command runs"
   (when (eq (type-of (car args)) 'string)
     (pop args))
   (-each

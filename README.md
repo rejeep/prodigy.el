@@ -127,9 +127,8 @@ Start Sinatra server:
   :path '("/path/to/my/project/bin")
   :port 6003
   :tags '(work ruby)
-  :init (lambda ()
-          ;; Setup RVM
-          ))
+  :init-async (lambda (done)
+                (rvm-activate-ruby-for "/path/to/my/project" done)))
 ```
 
 ## Contribution

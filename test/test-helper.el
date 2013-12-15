@@ -7,4 +7,5 @@
   (f-parent prodigy-test/test-path))
 
 (require 'ert)
+(require 'el-mock)
 (require 'prodigy (f-expand "prodigy" prodigy-test/root-path))

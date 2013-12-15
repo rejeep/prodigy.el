@@ -33,6 +33,7 @@
            (command-index (-elem-index "command" head))
            (args-index (-elem-index "args" head))
            (init-index (-elem-index "init" head))
+           (init-async-index (-elem-index "init-async" head))
            (path-index (-elem-index "path" head)))
       (mapc
        (lambda (row)
@@ -43,6 +44,7 @@
            :command (or (and command-index (nth command-index row)) "command")
            :args (and args-index (read (nth args-index row)))
            :init (and init-index (read (nth init-index row)))
+           :init-async (and init-async-index (read (nth init-async-index row)))
            :path (and path-index (--map (f-expand it prodigy-servers-path) (read (nth path-index row))))))
        rows))))
 

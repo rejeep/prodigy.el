@@ -18,3 +18,20 @@ Feature: Init
       """
     And the variable "foo" should have value "BAR"
 
+  Scenario: Async
+    Given I add the following services:
+      | name | cwd | command | args                             | init-async                                                    |
+      | foo  | foo | python  | ("-m" "SimpleHTTPServer" "6001") | (lambda (done) (setq foo "BAR") (sleep-for 2) (funcall done)) |
+    And I start prodigy
+    When I press "s"
+    Then requesting "http://127.0.0.1:6001/index.html" should respond with:
+      """
+      <!DOCTYPE>
+      <html>
+        <head></head>
+        <body>
+          FOO
+        </body>
+      </html>
+      """
+    And the variable "foo" should have value "BAR"
