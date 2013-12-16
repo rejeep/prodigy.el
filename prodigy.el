@@ -93,15 +93,16 @@
 (defvar prodigy-services nil
   "List of services.
 
-:name       - Name of service
-:command    - Command to run
-:args       - Arguments passed to command
-:cwd        - Run command with this as `default-directory'
-:port       - Specify service port for use with open function
-:tags       - List of tags
-:init       - Function called before process is started
-:init-async - Function called before process is started with async callback
-:path       - List of directories added to PATH when command runs")
+:name         - Name of service
+:command      - Command to run
+:args         - Arguments passed to command
+:cwd          - Run command with this as `default-directory'
+:port         - Specify service port for use with open function
+:tags         - List of tags
+:init         - Function called before process is started
+:init-async   - Function called before process is started with async callback
+:stop-signal  - Signal to send to processes to stop (defaults to 'int)
+:path         - List of directories added to PATH when command runs")
 
 
 ;;;; Internal functions
@@ -292,7 +293,7 @@ The completion system used is determined by
   "Stop process associated with SERVICE."
   (-when-let (process (plist-get service :process))
     (when (process-live-p process)
-      (kill-process process))
+      (signal-process process (or (plist-get service :stop-signal) 'int)))
     (prodigy-service-set service :process nil)))
 
 (defun prodigy-apply (fn)
