@@ -6,7 +6,7 @@
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
 ;; Version: 0.0.1
 ;; URL: http://github.com/rejeep/prodigy.el
-;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (ht "1.5") (f "0.14.0"))
+;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (f "0.14.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -33,7 +33,6 @@
 
 (require 's)
 (require 'dash)
-(require 'ht)
 (require 'f)
 (require 'ansi-color)
 
@@ -91,11 +90,18 @@
     map)
   "Keymap for `prodigy-mode'.")
 
-(defvar prodigy-services (ht-create)
-  "All registered services.
+(defvar prodigy-services nil
+  "List of services.
 
-Keys is the name of a service and the value is a hash table per
-service.")
+:name       - Name of service
+:command    - Command to run
+:args       - Arguments passed to command
+:cwd        - Run command with this as `default-directory'
+:port       - Specify service port for use with open function
+:tags       - List of tags
+:init       - Function called before process is started
+:init-async - Function called before process is started with async callback
+:path       - List of directories added to PATH when command runs")
 
 
 ;;;; Internal functions
@@ -105,9 +111,9 @@ service.")
   (-sort
    (lambda (service-1 service-2)
      (string<
-      (ht-get service-1 :name)
-      (ht-get service-2 :name)))
-   (ht-values prodigy-services)))
+      (plist-get service-1 :name)
+      (plist-get service-2 :name)))
+   prodigy-services))
 
 (defun prodigy-service-at-line (&optional line)
   "Return service at LINE or current line."
@@ -121,7 +127,7 @@ service.")
              (forward-line (1- line))
              (line-beginning-position))))
       (let ((service-name (get-text-property point 'service-name)))
-        (ht-get prodigy-services service-name)))))
+        (prodigy-find-service service-name)))))
 
 (defun prodigy-service-at-line-p (&optional line)
   "Return true if there is a service at LINE or current line."
@@ -162,20 +168,20 @@ service.")
 
 (defun prodigy-write-service-at-line (service)
   "Remove service at line and insert SERVICE."
-  (let ((inhibit-read-only t) (service-name (ht-get service :name)))
+  (let ((inhibit-read-only t) (service-name (plist-get service :name)))
     (delete-region (line-beginning-position) (line-end-position))
-    (if (ht-get service :marked)
+    (if (plist-get service :marked)
         (insert "* ")
       (insert "  "))
     (insert service-name)
     (move-to-column 30 t)
-    (-when-let (process (ht-get service :process))
+    (-when-let (process (plist-get service :process))
       (insert " " (prodigy-status-name process)))
     (move-to-column 60 t)
-    (-when-let (tags (ht-get service :tags))
+    (-when-let (tags (plist-get service :tags))
       (insert " [" (s-join ", " (-map 'symbol-name tags)) "]"))
     (put-text-property (line-beginning-position) (line-end-position) 'service-name service-name)
-    (if (ht-get service :highlighted)
+    (if (plist-get service :highlighted)
         (put-text-property (line-beginning-position) (line-beginning-position 2) 'face 'prodigy-line-face)
       (put-text-property (line-beginning-position) (line-beginning-position 2) 'face nil))))
 
@@ -184,7 +190,7 @@ service.")
 
 This will update the SERVICE object, but also update the line
 representing SERVICE."
-  (ht-set service key value)
+  (plist-put service key value)
   (save-excursion
     (goto-char (point-min))
     (while (not (eq (prodigy-service-at-line) service))
@@ -203,44 +209,27 @@ representing SERVICE."
 
 (defun prodigy-reset ()
   "Reset state such as marked and highlighted for all services."
-  (ht-each
-   (lambda (name service)
-     (ht-set service :marked nil)
-     (ht-set service :highlighted nil))
-   prodigy-services))
+  (-each
+   prodigy-services
+   (lambda (service)
+     (plist-put service :marked nil)
+     (plist-put service :highlighted nil))))
 
 (defun prodigy-tags ()
   "Return uniq list of tags."
-  (-uniq
-   (-flatten
-    (-map
-     (lambda (service)
-       (ht-get service :tags))
-     (ht-values prodigy-services)))))
+  (-uniq (-flatten (--map (plist-get it :tags) prodigy-services))))
 
 (defun prodigy-service-tagged-with? (service tag)
   "Return true if SERVICE is tagged with TAG."
-  (-contains? (ht-get service :tags) tag))
+  (-contains? (plist-get service :tags) tag))
 
 (defun prodigy-services-tagged-with (tag)
   "Return list of services tagged with TAG."
-  (let (services)
-    (ht-each
-     (lambda (name service)
-       (if (prodigy-service-tagged-with? service tag)
-           (push service services)))
-     prodigy-services)
-    services))
+  (--filter (prodigy-service-tagged-with? it tag) prodigy-services))
 
 (defun prodigy-marked-services ()
   "Return list of services that are marked."
-  (let (services)
-    (ht-each
-     (lambda (name service)
-       (if (ht-get service :marked)
-           (push service services)))
-     prodigy-services)
-    services))
+  (--filter (plist-get it :marked) prodigy-services))
 
 (defun prodigy-completing-read (prompt collection)
   "Read a string in the minibuffer, with completion.
@@ -264,25 +253,25 @@ The completion system used is determined by
 
 (defun prodigy-buffer-name (service)
   "Return name of process buffer for SERVICE."
-  (concat "*prodigy-" (s-dashed-words (s-downcase (ht-get service :name))) "*"))
+  (concat "*prodigy-" (s-dashed-words (s-downcase (plist-get service :name))) "*"))
 
 (defun prodigy-start-service (service)
   "Start process associated with SERVICE."
-  (let ((process (ht-get service :process)))
+  (let ((process (plist-get service :process)))
     (unless (and process (process-live-p process))
-      (let* ((name (ht-get service :name))
-             (command (ht-get service :command))
-             (args (ht-get service :args))
-             (default-directory (f-full (ht-get service :cwd)))
-             (exec-path (append (ht-get service :path) exec-path))
+      (let* ((name (plist-get service :name))
+             (command (plist-get service :command))
+             (args (plist-get service :args))
+             (default-directory (f-full (plist-get service :cwd)))
+             (exec-path (append (plist-get service :path) exec-path))
              (process nil)
              (create-process
               (lambda ()
                 (unless process
                   (setq process (apply 'start-process (append (list name nil command) args)))))))
-        (-when-let (init (ht-get service :init))
+        (-when-let (init (plist-get service :init))
           (funcall init))
-        (-when-let (init-async (ht-get service :init-async))
+        (-when-let (init-async (plist-get service :init-async))
           (let (callbacked)
             (funcall
              init-async
@@ -301,7 +290,7 @@ The completion system used is determined by
 
 (defun prodigy-stop-service (service)
   "Stop process associated with SERVICE."
-  (-when-let (process (ht-get service :process))
+  (-when-let (process (plist-get service :process))
     (when (process-live-p process)
       (kill-process process))
     (prodigy-service-set service :process nil)))
@@ -317,35 +306,32 @@ The completion system used is determined by
 (defun prodigy-service-port (service)
   "Find something that look like a port in SERVICE arguments."
   (or
-   (ht-get service :port)
+   (plist-get service :port)
    (-when-let (port (-first
                      (lambda (arg)
                        (s-matches? "^\\([0-9]\\)\\{4,5\\}$" arg))
-                     (ht-get service :args)))
+                     (plist-get service :args)))
      (string-to-number port))))
-
-;; TODO: Remove once added to ht.el
-(defun ht-find (function table)
-  (catch 'break
-    (ht-each
-     (lambda (key value)
-       (when (funcall function key value)
-         (throw 'break key)))
-     table)))
 
 (defun prodigy-process-filter (process output)
   "Process filter for service processes.
 
 PROCESS is the service process that the OUTPUT is associated to."
-  (-when-let (service-name
-              (ht-find
-               (lambda (name service)
-                 (eq (ht-get service :process) process))
+  (-when-let (service
+              (-first
+               (lambda (service)
+                 (eq (plist-get service :process) process))
                prodigy-services))
-    (let* ((service (ht-get prodigy-services service-name))
-           (buffer (get-buffer-create (prodigy-buffer-name service))))
+    (let ((buffer (get-buffer-create (prodigy-buffer-name service))))
       (with-current-buffer buffer
         (insert (ansi-color-apply output))))))
+
+(defun prodigy-find-service (name)
+  "Find service with NAME."
+  (-first
+   (lambda (service)
+     (equal (plist-get service :name) name))
+   prodigy-services))
 
 
 ;;;; User functions
@@ -391,10 +377,10 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-mark-all ()
   "Mark all services."
   (interactive)
-  (ht-each
-   (lambda (name service)
-     (prodigy-service-set service :marked t))
-   prodigy-services))
+  (-each
+   prodigy-services
+   (lambda (service)
+     (prodigy-service-set service :marked t))))
 
 (defun prodigy-unmark ()
   "Unmark service at point."
@@ -416,10 +402,10 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-unmark-all ()
   "Unmark all services."
   (interactive)
-  (ht-each
-   (lambda (name service)
-     (prodigy-service-set service :marked nil))
-   prodigy-services))
+  (-each
+   prodigy-services
+   (lambda (service)
+     (prodigy-service-set service :marked nil))))
 
 (defun prodigy-start ()
   "Start service at line or marked services."
@@ -441,7 +427,7 @@ PROCESS is the service process that the OUTPUT is associated to."
   "Switch to process buffer for service at current line."
   (interactive)
   (-when-let (service (prodigy-service-at-line))
-    (when (ht-get service :process)
+    (when (plist-get service :process)
       (prodigy-log-mode service))))
 
 (defun prodigy-browse ()
@@ -465,28 +451,13 @@ PROCESS is the service process that the OUTPUT is associated to."
   (quit-window))
 
 (defun prodigy-define-service (&rest args)
-  "Define a new service.
-
-If first argument is a string, it is considered a doc
-string. ARGS is a plist with support for the following keys:
-
-:name       - Name of service
-:command    - Command to run
-:args       - Arguments passed to command
-:cwd        - Run command with this as `default-directory'
-:port       - Specify service port for use with open function
-:tags       - List of tags
-:init       - Function called before process is started
-:init-async - Function called before process is started with async callback
-:path       - List of directories added to PATH when command runs"
-  (when (eq (type-of (car args)) 'string)
-    (pop args))
-  (-each
-   '(:name :cwd :command)
-   (lambda (property)
-     (unless (plist-get args property)
-       (error "Property %s must be specified." property))))
-  (ht-set prodigy-services (plist-get args :name) (ht-from-plist args)))
+  "Define a new service."
+  (let ((compare-fn
+         (lambda (plist-a plist-b)
+           (equal
+            (plist-get plist-a :name)
+            (plist-get plist-b :name)))))
+    (add-to-list 'prodigy-services args 'append compare-fn)))
 
 ;;;###autoload
 (put 'prodigy-define-service 'lisp-indent-function 'defun)

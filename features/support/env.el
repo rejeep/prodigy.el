@@ -18,7 +18,7 @@
 (require 'ert)
 
 (Before
- (ht-clear prodigy-services)
+ (setq prodigy-services nil)
  (makunbound 'foo)
  (-when-let (buffer (get-buffer prodigy-buffer-name))
    (kill-buffer buffer))
