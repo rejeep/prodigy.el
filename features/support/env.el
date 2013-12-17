@@ -12,6 +12,8 @@
 (defvar prodigy-servers-path
   (f-expand "servers" prodigy-features-path))
 
+(defvar prodigy-buffer-list (buffer-list))
+
 (require 'prodigy (f-expand "prodigy" prodigy-root-path))
 (require 'espuds)
 (require 'async)
@@ -20,6 +22,11 @@
 (Before
  (setq prodigy-services nil)
  (makunbound 'foo)
- (-when-let (buffer (get-buffer prodigy-buffer-name))
-   (kill-buffer buffer))
+ (-each (process-list)
+        (lambda (buffer)
+          (signal-process buffer 'int)))
+  (-each (buffer-list)
+        (lambda (buffer)
+          (unless (-contains? prodigy-buffer-list buffer)
+            (kill-buffer buffer))))
  (delete-other-windows))
