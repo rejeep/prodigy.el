@@ -122,11 +122,6 @@
         (should-not (s-contains? "HTTP/1.1" response))
         (funcall ,callback)))))
 
-(Then "^I should be in prodigy log mode$"
-  (lambda ()
-    (should (eq major-mode 'prodigy-log-mode))
-    (should (equal mode-name "Prodigy Log"))))
-
 (Then "^the buffer \"\\([^\"]+\\)\" should exist$"
   (lambda (buffer-name)
     (should (get-buffer buffer-name))))
@@ -135,6 +130,6 @@
   (lambda ()
     (kill-buffer prodigy-buffer-name)))
 
-(Then "^I should not be in prodigy log mode$"
+(Then "^view mode should be enabled$"
   (lambda ()
-    (should-not (eq major-mode 'prodigy-log-mode))))
+    (should view-mode)))

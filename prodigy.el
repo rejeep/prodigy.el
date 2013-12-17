@@ -64,12 +64,6 @@
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
 
-(defvar prodigy-log-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "q") 'prodigy-log-quit)
-    map)
-  "Keymap for `prodigy-log-mode'.")
-
 (defvar prodigy-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "n") 'prodigy-next)
@@ -323,7 +317,8 @@ PROCESS is the service process that the OUTPUT is associated to."
                prodigy-services))
     (let ((buffer (get-buffer-create (prodigy-buffer-name service))))
       (with-current-buffer buffer
-        (insert (ansi-color-apply output))))))
+        (let ((inhibit-read-only t))
+          (insert (ansi-color-apply output)))))))
 
 (defun prodigy-find-service (name)
   "Find service with NAME."
@@ -421,8 +416,9 @@ PROCESS is the service process that the OUTPUT is associated to."
   "Switch to process buffer for service at current line."
   (interactive)
   (-when-let (service (prodigy-service-at-line))
-    (when (plist-get service :process)
-      (prodigy-log-mode service))))
+    (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
+        (progn (pop-to-buffer buffer) (view-mode 1))
+      (message "Nothing to show for %s" (plist-get service :name)))))
 
 (defun prodigy-browse ()
   "Browse service url at point if possible to figure out."
@@ -438,11 +434,6 @@ PROCESS is the service process that the OUTPUT is associated to."
   (let ((line (line-number-at-pos)))
     (prodigy-repaint)
     (prodigy-goto-line line)))
-
-(defun prodigy-log-quit ()
-  "Quit window and bury buffer."
-  (interactive)
-  (quit-window))
 
 (defun prodigy-define-service (&rest args)
   "Define a new service."
@@ -492,16 +483,6 @@ PROCESS is the service process that the OUTPUT is associated to."
       (ignore-errors
         (prodigy-goto-line 1)))
     (prodigy-mode)))
-
-;;;###autoload
-(defun prodigy-log-mode (service)
-  "Open log mode for SERVICE."
-  (interactive)
-  (pop-to-buffer (prodigy-buffer-name service))
-  (kill-all-local-variables)
-  (setq mode-name "Prodigy Log")
-  (setq major-mode 'prodigy-log-mode)
-  (use-local-map prodigy-log-mode-map))
 
 (provide 'prodigy)
 
