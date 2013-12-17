@@ -72,7 +72,6 @@
 
 (defvar prodigy-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "q") 'prodigy-quit)
     (define-key map (kbd "n") 'prodigy-next)
     (define-key map (kbd "p") 'prodigy-prev)
     (define-key map (kbd "m") 'prodigy-mark)
@@ -86,7 +85,6 @@
     (define-key map (kbd "r") 'prodigy-restart)
     (define-key map (kbd "$") 'prodigy-display-process)
     (define-key map (kbd "o") 'prodigy-browse)
-    (define-key map (kbd "g") 'prodigy-refresh)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -337,11 +335,6 @@ PROCESS is the service process that the OUTPUT is associated to."
 
 ;;;; User functions
 
-(defun prodigy-quit ()
-  "Quit prodigy."
-  (interactive)
-  (quit-window))
-
 (defun prodigy-next ()
   "Go to next service."
   (interactive)
@@ -439,7 +432,7 @@ PROCESS is the service process that the OUTPUT is associated to."
         (browse-url (format "http://localhost:%d" port))
       (message "Could not determine port"))))
 
-(defun prodigy-refresh ()
+(defun prodigy-refresh (ignore-auto noconfirm)
   "Refresh GUI."
   (interactive)
   (let ((line (line-number-at-pos)))
@@ -475,6 +468,18 @@ PROCESS is the service process that the OUTPUT is associated to."
                 (1 font-lock-keyword-face nil t))))))
 
 ;;;###autoload
+(define-derived-mode prodigy-mode special-mode "Prodigy"
+  "Special mode for prodigy buffers."
+  (set (make-local-variable 'revert-buffer-function) 'prodigy-refresh)
+  (buffer-disable-undo)
+  (kill-all-local-variables)
+  (setq truncate-lines t)
+  (setq mode-name "Prodigy")
+  (setq major-mode 'prodigy-mode)
+  (use-local-map prodigy-mode-map)
+  (run-mode-hooks 'prodigy-mode-hook))
+
+;;;###autoload
 (defun prodigy ()
   "Manage external services from within Emacs."
   (interactive)
@@ -482,16 +487,11 @@ PROCESS is the service process that the OUTPUT is associated to."
         (buffer (get-buffer-create prodigy-buffer-name)))
     (pop-to-buffer buffer)
     (unless buffer-p
-      (kill-all-local-variables)
-      (setq buffer-read-only t)
-      (setq mode-name "Prodigy")
-      (setq major-mode 'prodigy-mode)
-      (use-local-map prodigy-mode-map)
       (prodigy-reset)
       (prodigy-repaint)
       (ignore-errors
-        (prodigy-goto-line 1))
-      (run-mode-hooks 'prodigy-mode-hook))))
+        (prodigy-goto-line 1)))
+    (prodigy-mode)))
 
 ;;;###autoload
 (defun prodigy-log-mode (service)
