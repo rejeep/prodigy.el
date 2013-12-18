@@ -449,7 +449,8 @@ PROCESS is the service process that the OUTPUT is associated to."
       (lambda (service)
         (string= (plist-get service :name) service-name))
       prodigy-services)))
-  (push args prodigy-services))
+  (push args prodigy-services)
+  nil)
 
 ;;;###autoload
 (put 'prodigy-define-service 'lisp-indent-function 'defun)

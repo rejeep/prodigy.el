@@ -60,3 +60,10 @@
     :command "bar"
     :cwd "/path/to/name")
   (should (equal prodigy-services '((:name "name" :command "bar" :cwd "/path/to/name")))))
+
+(ert-deftest prodigy-define-service-test/returns-nil ()
+  (should-not
+   (prodigy-define-service
+     :name "name"
+     :command "foo"
+     :cwd "/path/to/name")))
