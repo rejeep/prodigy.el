@@ -59,6 +59,9 @@
            (tags-index (-elem-index "tags" head))
            (started-index (-elem-index "started" head))
            (rows (cdr table)))
+      (should (= (length rows)
+                 (- (line-number-at-pos (point-max))
+                    (line-number-at-pos (point-min)))))
       (save-excursion
         (goto-char (point-min))
         (-each
