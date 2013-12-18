@@ -33,6 +33,7 @@ Feature: Start
     And I should see services:
       | name | highlighted | marked | started |
       | bar  | t           | nil    | t       |
+      | foo  | nil         | nil    | nil     |
 
   Scenario: Start process at line
     When I press "s"
@@ -49,6 +50,7 @@ Feature: Start
     Then I should see services:
       | name | highlighted | marked | started |
       | bar  | t           | nil    | t       |
+      | foo  | nil         | nil    | nil     |
 
   Scenario: Start marked processes
     When I press "M"
