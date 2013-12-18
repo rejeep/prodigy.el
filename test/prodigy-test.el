@@ -39,3 +39,24 @@
     (let (foo)
       (prodigy-start-service
        (make-service :init-async (lambda (callback))))))))
+
+
+;;;; prodigy-define-service
+
+(ert-deftest prodigy-define-service-test/new-service ()
+  (prodigy-define-service
+    :name "name"
+    :command "foo"
+    :cwd "/path/to/name")
+  (should (equal prodigy-services '((:name "name" :command "foo" :cwd "/path/to/name")))))
+
+(ert-deftest prodigy-define-service-test/override-service-by-name ()
+  (prodigy-define-service
+    :name "name"
+    :command "foo"
+    :cwd "/path/to/name")
+  (prodigy-define-service
+    :name "name"
+    :command "bar"
+    :cwd "/path/to/name")
+  (should (equal prodigy-services '((:name "name" :command "bar" :cwd "/path/to/name")))))

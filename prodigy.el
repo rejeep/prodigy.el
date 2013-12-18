@@ -442,12 +442,14 @@ PROCESS is the service process that the OUTPUT is associated to."
 
 (defun prodigy-define-service (&rest args)
   "Define a new service."
-  (let ((compare-fn
-         (lambda (plist-a plist-b)
-           (equal
-            (plist-get plist-a :name)
-            (plist-get plist-b :name)))))
-    (add-to-list 'prodigy-services args 'append compare-fn)))
+  (-when-let (service-name (plist-get args :name))
+    (setq
+     prodigy-services
+     (-reject
+      (lambda (service)
+        (string= (plist-get service :name) service-name))
+      prodigy-services)))
+  (push args prodigy-services))
 
 ;;;###autoload
 (put 'prodigy-define-service 'lisp-indent-function 'defun)
