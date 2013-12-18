@@ -21,6 +21,7 @@
 
 (Before
  (setq prodigy-services nil)
+ (setq prodigy-filters nil)
  (makunbound 'foo)
  (-each (process-list)
         (lambda (buffer)

@@ -89,6 +89,8 @@
     (define-key map (kbd "r") 'prodigy-restart)
     (define-key map (kbd "$") 'prodigy-display-process)
     (define-key map (kbd "o") 'prodigy-browse)
+    (define-key map (kbd "f t") 'prodigy-add-tag-filter)
+    (define-key map (kbd "F") 'prodigy-clear-filters)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -109,17 +111,38 @@
                 of an environment variable and second item is the
                 value of the variable")
 
+(defvar prodigy-filters nil
+  "List of filters.
+
+Each filter is a list of two elements where the first item is the
+type of filter and the value is what should be filtered.
+
+Supported filters:
+
+:tag - name of tag")
+
 
 ;;;; Internal functions
 
-(defun prodigy-sorted-services ()
-  "Return list of services sorted by name."
-  (-sort
-   (lambda (service-1 service-2)
-     (string<
-      (plist-get service-1 :name)
-      (plist-get service-2 :name)))
-   prodigy-services))
+(defun prodigy-services ()
+  "Return list of services, with applied filters, sorted by name."
+  (let ((services (-clone prodigy-services)))
+    (-each
+     prodigy-filters
+     (lambda (filter)
+       (let ((type (-first-item filter))
+             (value (-last-item filter)))
+         (cond ((eq type :tag)
+                (setq services (-select
+                                (lambda (service)
+                                  (prodigy-service-tagged-with? service value))
+                                services)))))))
+    (-sort
+     (lambda (service-1 service-2)
+       (string<
+        (plist-get service-1 :name)
+        (plist-get service-2 :name)))
+     services)))
 
 (defun prodigy-service-at-line (&optional line)
   "Return service at LINE or current line."
@@ -218,8 +241,9 @@ representing SERVICE."
   (let ((inhibit-read-only t))
     (erase-buffer)
     (-each
-     (prodigy-sorted-services)
+     (prodigy-services)
      (lambda (service)
+       (plist-put service :highlighted nil)
        (prodigy-write-service-at-line service)
        (insert "\n")))))
 
@@ -459,6 +483,27 @@ PROCESS is the service process that the OUTPUT is associated to."
   (let ((line (line-number-at-pos)))
     (prodigy-repaint)
     (prodigy-goto-line line)))
+
+(defun prodigy-add-tag-filter ()
+  "Read tag and add filter so that only services with that tag show."
+  (interactive)
+  (let ((tag (prodigy-read-tag)))
+    (prodigy-add-filter :tag tag)
+    (prodigy-repaint)
+    (ignore-errors
+      (prodigy-goto-line 1))))
+
+(defun prodigy-clear-filters ()
+  "Clear all filters."
+  (interactive)
+  (setq prodigy-filters nil)
+  (prodigy-repaint)
+  (ignore-errors
+    (prodigy-goto-line 1)))
+
+(defun prodigy-add-filter (type value)
+  "Add filter TYPE, that filters for VALUE."
+  (push (list type value) prodigy-filters))
 
 (defun prodigy-define-service (&rest args)
   "Define a new service."

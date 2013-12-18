@@ -47,6 +47,24 @@ Services can be defined by setting the variable `prodigy-services`:
 
 TODO
 
+## Filters
+
+Filters is a way to show only specific services in the Prodigy
+buffer. For example services with specific tag.
+
+To add a filter, use `prodigy-add-filter`:
+
+```lisp
+(prodigy-add-filter :tag 'foo)
+```
+
+You can also set the variable `prodigy-filters` directly:
+
+```lisp
+(setq prodigy-filters
+      '((:tag foo)))
+```
+
 ## Commands
 
 Start Prodigy with `M-x prodigy`. You should see a list of all defined
@@ -111,6 +129,14 @@ Unmark all services.
 ### Refresh GUI (`g`)
 
 Refresh GUI.
+
+### Add tag filter (`f t`)
+
+Read tag and show only services with that tag.
+
+### Clear filters (`F`)
+
+Clear all filters.
 
 ## Examples
 

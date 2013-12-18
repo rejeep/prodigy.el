@@ -135,3 +135,16 @@
 (Then "^view mode should be enabled$"
   (lambda ()
     (should view-mode)))
+
+(When "^I filter by tag \"\\([^\"]+\\)\"$"
+  (lambda (tag)
+    (When "I start an action chain")
+    (And "I press \"f\"")
+    (And "I press \"t\"")
+    (And "I type \"%s\"" tag)
+    (And "I press \"RET\"")
+    (And "I execute the action chain")))
+
+(Then "^I should see services no services$"
+  (lambda ()
+    (should (string= (buffer-string) ""))))
