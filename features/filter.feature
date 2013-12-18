@@ -26,6 +26,20 @@ Feature: Filter
       | name | highlighted |
       | foo  | t           |
 
+  Scenario: Filter by name
+    When I filter by name "ba"
+    Then I should see services:
+      | name | highlighted |
+      | bar  | t           |
+      | baz  | nil         |
+
+  Scenario: Filter by name - case ignored
+    When I filter by name "BA"
+    Then I should see services:
+      | name | highlighted |
+      | bar  | t           |
+      | baz  | nil         |
+
   Scenario: Filter all
     When I filter by tag "tag-2"
     Then I should see services:

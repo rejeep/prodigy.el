@@ -90,6 +90,7 @@
     (define-key map (kbd "$") 'prodigy-display-process)
     (define-key map (kbd "o") 'prodigy-browse)
     (define-key map (kbd "f t") 'prodigy-add-tag-filter)
+    (define-key map (kbd "f n") 'prodigy-add-name-filter)
     (define-key map (kbd "F") 'prodigy-clear-filters)
     map)
   "Keymap for `prodigy-mode'.")
@@ -119,7 +120,8 @@ type of filter and the value is what should be filtered.
 
 Supported filters:
 
-:tag - name of tag")
+:tag  - name of tag that service must include
+:name - string that service name must contain")
 
 
 ;;;; Internal functions
@@ -136,6 +138,11 @@ Supported filters:
                 (setq services (-select
                                 (lambda (service)
                                   (prodigy-service-tagged-with? service value))
+                                services)))
+               ((eq type :name)
+                (setq services (-select
+                                (lambda (service)
+                                  (s-contains? value (plist-get service :name) 'ignore-case))
                                 services)))))))
     (-sort
      (lambda (service-1 service-2)
@@ -489,6 +496,16 @@ PROCESS is the service process that the OUTPUT is associated to."
   (interactive)
   (let ((tag (prodigy-read-tag)))
     (prodigy-add-filter :tag tag)
+    (prodigy-repaint)
+    (ignore-errors
+      (prodigy-goto-line 1))))
+
+(defun prodigy-add-name-filter ()
+  "Read string and add filter so that only services with name
+matching string show."
+  (interactive)
+  (let ((string (read-string "string: ")))
+    (prodigy-add-filter :name string)
     (prodigy-repaint)
     (ignore-errors
       (prodigy-goto-line 1))))

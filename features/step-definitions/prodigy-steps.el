@@ -148,6 +148,15 @@
     (And "I press \"RET\"")
     (And "I execute the action chain")))
 
+(When "^I filter by name \"\\([^\"]+\\)\"$"
+  (lambda (name)
+    (When "I start an action chain")
+    (And "I press \"f\"")
+    (And "I press \"n\"")
+    (And "I type \"%s\"" name)
+    (And "I press \"RET\"")
+    (And "I execute the action chain")))
+
 (Then "^I should see services no services$"
   (lambda ()
     (should (string= (buffer-string) ""))))
