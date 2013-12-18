@@ -47,6 +47,16 @@
   "Color of current line."
   :group 'prodigy)
 
+(defface prodigy-fail-face
+  '((((class color)) :foreground "firebrick"))
+  "Face to indicate starting service failed."
+  :group 'prodigy)
+
+(defface prodigy-success-face
+  '((((class color)) :foreground "SeaGreen"))
+  "Face to indicate starting service was successful."
+  :group 'prodigy)
+
 (defconst prodigy-buffer-name "*prodigy*"
   "Name of Prodigy mode buffer.")
 
@@ -162,6 +172,13 @@
           ((eq status 'listen) "Listen")
           (t "Unknown"))))
 
+(defun prodigy-status-face (process)
+  "Return face depending on PROCESS state."
+  (let ((status (process-status process)))
+    (if (eq status 'run)
+        'prodigy-success-face
+      'prodigy-fail-face)))
+
 (defun prodigy-write-service-at-line (service)
   "Remove service at line and insert SERVICE."
   (let ((inhibit-read-only t) (service-name (plist-get service :name)))
@@ -172,7 +189,10 @@
     (insert service-name)
     (move-to-column 30 t)
     (-when-let (process (plist-get service :process))
-      (insert " " (prodigy-status-name process)))
+      (insert " ")
+      (let ((beg (point)))
+        (insert (prodigy-status-name process))
+        (overlay-put (make-overlay beg (point)) 'face (prodigy-status-face process))))
     (move-to-column 60 t)
     (-when-let (tags (plist-get service :tags))
       (insert " [" (s-join ", " (-map 'symbol-name tags)) "]"))
