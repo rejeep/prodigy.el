@@ -12,6 +12,7 @@ Feature: Stop
     Then I should see services:
       | name | highlighted | marked | started |
       | bar  | t           | nil    | nil     |
+      | foo  | nil         | nil    | nil     |
 
   Scenario: Stop process at line
     When I press "s"
@@ -30,6 +31,7 @@ Feature: Stop
     And I should see services:
       | name | highlighted | marked | started |
       | bar  | t           | nil    | nil     |
+      | foo  | nil         | nil    | nil     |
 
   Scenario: Stop marked processes
     When I press "M"

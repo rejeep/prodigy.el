@@ -59,6 +59,9 @@
            (tags-index (-elem-index "tags" head))
            (started-index (-elem-index "started" head))
            (rows (cdr table)))
+      (should (= (length rows)
+                 (- (line-number-at-pos (point-max))
+                    (line-number-at-pos (point-min)))))
       (save-excursion
         (goto-char (point-min))
         (-each
@@ -135,3 +138,25 @@
 (Then "^view mode should be enabled$"
   (lambda ()
     (should view-mode)))
+
+(When "^I filter by tag \"\\([^\"]+\\)\"$"
+  (lambda (tag)
+    (When "I start an action chain")
+    (And "I press \"f\"")
+    (And "I press \"t\"")
+    (And "I type \"%s\"" tag)
+    (And "I press \"RET\"")
+    (And "I execute the action chain")))
+
+(When "^I filter by name \"\\([^\"]+\\)\"$"
+  (lambda (name)
+    (When "I start an action chain")
+    (And "I press \"f\"")
+    (And "I press \"n\"")
+    (And "I type \"%s\"" name)
+    (And "I press \"RET\"")
+    (And "I execute the action chain")))
+
+(Then "^I should see services no services$"
+  (lambda ()
+    (should (string= (buffer-string) ""))))
