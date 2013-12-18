@@ -94,7 +94,10 @@
 :init         - Function called before process is started
 :init-async   - Function called before process is started with async callback
 :stop-signal  - Signal to send to processes to stop (defaults to 'int)
-:path         - List of directories added to PATH when command runs")
+:path         - List of directories added to PATH when command runs
+:env          - List of lists (with two items). First item is the name
+                of an environment variable and second item is the
+                value of the variable")
 
 
 ;;;; Internal functions
@@ -257,6 +260,8 @@ The completion system used is determined by
              (args (plist-get service :args))
              (default-directory (f-full (plist-get service :cwd)))
              (exec-path (append (plist-get service :path) exec-path))
+             (env (--map (s-join "=" it) (plist-get service :env)))
+             (process-environment (append env process-environment))
              (process nil)
              (create-process
               (lambda ()

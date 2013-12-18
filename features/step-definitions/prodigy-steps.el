@@ -34,7 +34,8 @@
            (args-index (-elem-index "args" head))
            (init-index (-elem-index "init" head))
            (init-async-index (-elem-index "init-async" head))
-           (path-index (-elem-index "path" head)))
+           (path-index (-elem-index "path" head))
+           (env-index (-elem-index "env" head)))
       (mapc
        (lambda (row)
          (prodigy-define-service
@@ -45,7 +46,8 @@
            :args (and args-index (read (nth args-index row)))
            :init (and init-index (read (nth init-index row)))
            :init-async (and init-async-index (read (nth init-async-index row)))
-           :path (and path-index (--map (f-expand it prodigy-servers-path) (read (nth path-index row))))))
+           :path (and path-index (--map (f-expand it prodigy-servers-path) (read (nth path-index row))))
+           :env (and env-index (read (nth env-index row)))))
        rows))))
 
 (Then "^I should see services:$"
