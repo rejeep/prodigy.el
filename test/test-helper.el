@@ -24,4 +24,5 @@
 
 (require 'ert)
 (require 'el-mock)
+(require 'cl) ;; for el-mock
 (require 'prodigy (f-expand "prodigy" prodigy-test/root-path))
