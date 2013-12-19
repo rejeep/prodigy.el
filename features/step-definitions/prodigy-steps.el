@@ -175,3 +175,7 @@
 (Then "^I should see services no services$"
   (lambda ()
     (should (string= (buffer-string) ""))))
+
+(Then "^I should be on line \"\\([^\"]+\\)\"$"
+  (lambda (line)
+    (should (= (line-number-at-pos) (read line)))))

@@ -374,7 +374,9 @@ PROCESS is the service process that the OUTPUT is associated to."
     (let ((buffer (get-buffer-create (prodigy-buffer-name service))))
       (with-current-buffer buffer
         (let ((inhibit-read-only t))
-          (insert (ansi-color-apply output)))))))
+          (save-excursion
+            (goto-char (point-max))
+            (insert (ansi-color-apply output))))))))
 
 (defun prodigy-find-service (name)
   "Find service with NAME."

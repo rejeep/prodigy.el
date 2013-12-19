@@ -1,0 +1,18 @@
+#!/usr/bin/env node
+
+var counter = 1;
+
+var printLine = function() {
+  console.log('Line ' + counter++);
+};
+
+console.log('Starting append...');
+
+var http = require('http');
+http.createServer(function (req, res) {
+  printLine();
+
+  res.writeHead(200, {'Content-Type': 'text/plain'});
+  res.end('APPEND');
+}).listen(process.env.PORT, '127.0.0.1');
+
