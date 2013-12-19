@@ -2,17 +2,8 @@ Feature: Env
 
   Scenario: Add env
     Given I add the following services:
-      | name | cwd | command | env               | path    |
-      | qux  | qux | server  | (("PORT" "6004")) | ("qux") |
+      | name | cwd | command | path    | env               |
+      | foo  | foo | server  | ("foo") | (("PORT" "6001")) |
     And I start prodigy
-    When I press "s"
-    Then requesting "http://127.0.0.1:6004/index.html" should respond with:
-      """
-      <!DOCTYPE>
-      <html>
-        <head></head>
-        <body>
-          QUX
-        </body>
-      </html>
-      """
+    When I start service
+    Then requesting "http://127.0.0.1:6001" should respond with "FOO"

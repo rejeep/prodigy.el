@@ -1,3 +1,10 @@
+;; NOTE:
+;;
+;; Using Curl here because for some weird reason, using
+;; `url-retrieve-synchronously' fails with the message "Emacs is not
+;; compiled with network support". That however only is an issue
+;; inside the step.
+
 (Given "^I start prodigy$"
   (lambda ()
     (call-interactively 'prodigy)))
@@ -96,36 +103,44 @@
                (should (eq (get-text-property (line-end-position) 'face) 'prodigy-line-face)))
              (forward-line 1))))))))
 
-;; Using Curl here because for some weird reason, using
-;; `url-retrieve-synchronously' fails with the message "Emacs is not
-;; compiled with network support". That however only is an issue
-;; inside the step.
-;;
-;; We are also sleeping before making the request to give the server
-;; time to start.
-(Then "^requesting \"\\([^\"]+\\)\" should respond with:$"
-  (lambda (url body callback)
-    (async-start
-     `(lambda ()
-        (with-temp-buffer
-          (sleep-for 2)
-          (call-process "curl" nil (current-buffer) nil "-s" ,url)
-          (buffer-string)))
-     `(lambda (response)
-        (should (equal (s-trim response) (s-trim ,body)))
-        (funcall ,callback)))))
+(Then "^requesting \"\\([^\"]+\\)\" should respond with \"\\([^\"]+\\)\"$"
+  (lambda (url response callback)
+    (let ((finish-func
+           `(lambda (process)
+              (with-current-buffer (process-buffer process)
+                (when (string= (buffer-string) ,response)
+                  (funcall ,callback))))))
+      (async-start-process "curl" "curl" finish-func "-s" url))))
 
-(Then "^requesting \"\\([^\"]+\\)\" should fail$"
+(Then "^requesting \"\\([^\"]+\\)\" should not respond$"
   (lambda (url callback)
     (async-start
      `(lambda ()
         (with-temp-buffer
-          (sleep-for 2)
-          (call-process "curl" nil (current-buffer) nil "-I" ,url)
+          (call-process "curl" nil t nil "-s" "-S" ,url)
           (buffer-string)))
      `(lambda (response)
-        (should-not (s-contains? "HTTP/1.1" response))
-        (funcall ,callback)))))
+        (when (s-contains? "Connection refused" response)
+          (funcall ,callback))))))
+
+(When "^I request \"\\([^\"]+\\)\"$"
+  (lambda (url callback)
+    (async-start-process "curl" "curl" callback url)))
+
+(When "^I start services?$"
+  (lambda (callback)
+    (When "I press \"s\"")
+    (async-start-process "sleep" "sleep" callback "2")))
+
+(When "^I stop services?$"
+  (lambda (callback)
+    (When "I press \"S\"")
+    (async-start-process "sleep" "sleep" callback "1")))
+
+(When "^I restart services?$"
+  (lambda (callback)
+    (When "I press \"r\"")
+    (async-start-process "sleep" "sleep" callback "1")))
 
 (Then "^the buffer \"\\([^\"]+\\)\" should exist$"
   (lambda (buffer-name)
