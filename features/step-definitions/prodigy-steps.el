@@ -120,7 +120,8 @@
           (call-process "curl" nil t nil "-s" "-S" ,url)
           (buffer-string)))
      `(lambda (response)
-        (when (s-contains? "Connection refused" response)
+        (when (or (s-contains? "Connection refused" response)
+                  (s-contains? "couldn't connect to host" response))
           (funcall ,callback))))))
 
 (When "^I request \"\\([^\"]+\\)\"$"
