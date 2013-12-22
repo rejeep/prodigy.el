@@ -13,7 +13,6 @@ Feature: Quit
 
   Scenario: Quit remembers state
     When I press "m"
-    And I press "n"
     Then I should see services:
       | name | highlighted | marked |
       | bar  | nil         | t      |
@@ -28,7 +27,6 @@ Feature: Quit
 
   Scenario: Quit hard does not remember state
     When I press "m"
-    And I press "n"
     Then I should see services:
       | name | highlighted | marked |
       | bar  | nil         | t      |
