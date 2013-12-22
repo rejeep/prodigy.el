@@ -151,39 +151,35 @@ Supported filters:
         (plist-get service-2 :name)))
      services)))
 
-(defun prodigy-service-at-line (&optional line)
-  "Return service at LINE or current line."
-  (unless line
-    (setq line (line-number-at-pos)))
-  (when (and (> line 0)
-             (< line (line-number-at-pos (point-max))))
-    (let ((point
-           (save-excursion
-             (goto-char (point-min))
-             (forward-line (1- line))
-             (line-beginning-position))))
-      (let ((service-name (get-text-property point 'service-name)))
-        (prodigy-find-service service-name)))))
+(defun prodigy-service-at-pos (&optional pos)
+  "Return service at POS or current position."
+  (unless pos (setq pos (point)))
+  (when (and (>= pos (point-min))
+             (<= pos (point-max)))
+    (-when-let (service-name (get-text-property pos 'service-name))
+      (prodigy-find-service service-name))))
 
-(defun prodigy-service-at-line-p (&optional line)
-  "Return true if there is a service at LINE or current line."
-  (not (null (prodigy-service-at-line line))))
+(defun prodigy-service-at-pos-p (&optional pos)
+  "Return true if there is a service at POS or current position."
+  (not (null (prodigy-service-at-pos pos))))
 
 (defun prodigy-goto-next-line ()
   "Go to next line."
-  (prodigy-goto-line (1+ (line-number-at-pos))))
+  (prodigy-goto-pos (line-beginning-position 2)))
 
 (defun prodigy-goto-prev-line ()
   "Go to previous line."
-  (prodigy-goto-line (1- (line-number-at-pos))))
+  (prodigy-goto-pos (line-beginning-position 0)))
 
-(defun prodigy-goto-line (line)
-  "Go to LINE."
-  (cond ((prodigy-service-at-line-p line)
-         (goto-char (point-min))
-         (forward-line (1- line)))
-        (t
-         (error "No service at line %s" line))))
+(defun prodigy-goto-first-line ()
+  "Go to first line."
+  (prodigy-goto-pos (point-min)))
+
+(defun prodigy-goto-pos (pos)
+  "Go to POS."
+  (if (prodigy-service-at-pos-p pos)
+      (goto-char pos)
+    (error "No service at point %s" pos)))
 
 (defun prodigy-status-name (process)
   "Return PROCESS status name."
@@ -233,7 +229,7 @@ representing SERVICE."
   (plist-put service key value)
   (save-excursion
     (goto-char (point-min))
-    (while (not (eq (prodigy-service-at-line) service))
+    (while (not (eq (prodigy-service-at-pos) service))
       (forward-line 1))
     (prodigy-write-service-at-line service)))
 
@@ -341,7 +337,7 @@ The completion system used is determined by
   (let ((services (prodigy-marked-services)))
     (if services
         (-each services fn)
-      (-when-let (service (prodigy-service-at-line))
+      (-when-let (service (prodigy-service-at-pos))
         (funcall fn service)))))
 
 (defun prodigy-service-port (service)
@@ -411,7 +407,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-mark ()
   "Mark service at point."
   (interactive)
-  (-when-let (service (prodigy-service-at-line))
+  (-when-let (service (prodigy-service-at-pos))
     (prodigy-service-set service :marked t)
     (ignore-errors
       (prodigy-goto-next-line))))
@@ -436,7 +432,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-unmark ()
   "Unmark service at point."
   (interactive)
-  (-when-let (service (prodigy-service-at-line))
+  (-when-let (service (prodigy-service-at-pos))
     (prodigy-service-set service :marked nil)
     (ignore-errors
       (prodigy-goto-next-line))))
@@ -477,7 +473,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-display-process ()
   "Switch to process buffer for service at current line."
   (interactive)
-  (-when-let (service (prodigy-service-at-line))
+  (-when-let (service (prodigy-service-at-pos))
     (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
         (progn (pop-to-buffer buffer) (view-mode 1))
       (message "Nothing to show for %s" (plist-get service :name)))))
@@ -485,7 +481,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-browse ()
   "Browse service url at point if possible to figure out."
   (interactive)
-  (-when-let (service (prodigy-service-at-line))
+  (-when-let (service (prodigy-service-at-pos))
     (-if-let (port (prodigy-service-port service))
         (browse-url (format "http://localhost:%d" port))
       (message "Could not determine port"))))
@@ -493,9 +489,9 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-refresh (ignore-auto noconfirm)
   "Refresh GUI."
   (interactive)
-  (let ((line (line-number-at-pos)))
+  (let ((pos (point)))
     (prodigy-repaint)
-    (prodigy-goto-line line)))
+    (prodigy-goto-pos pos)))
 
 (defun prodigy-add-tag-filter ()
   "Read tag and add filter so that only services with that tag show."
@@ -504,7 +500,7 @@ PROCESS is the service process that the OUTPUT is associated to."
     (prodigy-add-filter :tag tag)
     (prodigy-repaint)
     (ignore-errors
-      (prodigy-goto-line 1))))
+      (prodigy-goto-first-line))))
 
 (defun prodigy-add-name-filter ()
   "Read string and add filter so that only services with name
@@ -514,7 +510,7 @@ matching string show."
     (prodigy-add-filter :name string)
     (prodigy-repaint)
     (ignore-errors
-      (prodigy-goto-line 1))))
+      (prodigy-goto-first-line))))
 
 (defun prodigy-clear-filters ()
   "Clear all filters."
@@ -522,7 +518,7 @@ matching string show."
   (setq prodigy-filters nil)
   (prodigy-repaint)
   (ignore-errors
-    (prodigy-goto-line 1)))
+    (prodigy-goto-first-line)))
 
 (defun prodigy-add-filter (type value)
   "Add filter TYPE, that filters for VALUE."
@@ -580,7 +576,7 @@ matching string show."
       (prodigy-reset)
       (prodigy-repaint)
       (ignore-errors
-        (prodigy-goto-line 1)))
+        (prodigy-goto-first-line)))
     (prodigy-highlight)))
 
 (provide 'prodigy)
