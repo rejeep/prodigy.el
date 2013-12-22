@@ -180,11 +180,8 @@ Supported filters:
 (defun prodigy-goto-line (line)
   "Go to LINE."
   (cond ((prodigy-service-at-line-p line)
-         (when (prodigy-service-at-line-p)
-           (prodigy-service-set (prodigy-service-at-line) :highlighted nil))
          (goto-char (point-min))
-         (forward-line (1- line))
-         (prodigy-service-set (prodigy-service-at-line) :highlighted t))
+         (forward-line (1- line)))
         (t
          (error "No service at line %s" line))))
 
@@ -226,10 +223,7 @@ Supported filters:
     (move-to-column 60 t)
     (-when-let (tags (plist-get service :tags))
       (insert " [" (s-join ", " (-map 'symbol-name tags)) "]"))
-    (put-text-property (line-beginning-position) (line-end-position) 'service-name service-name)
-    (if (plist-get service :highlighted)
-        (put-text-property (line-beginning-position) (line-beginning-position 2) 'face 'prodigy-line-face)
-      (put-text-property (line-beginning-position) (line-beginning-position 2) 'face nil))))
+    (put-text-property (line-beginning-position) (line-end-position) 'service-name service-name)))
 
 (defun prodigy-service-set (service key value)
   "Set SERVICE KEY to VALUE.
@@ -250,17 +244,15 @@ representing SERVICE."
     (-each
      (prodigy-services)
      (lambda (service)
-       (plist-put service :highlighted nil)
        (prodigy-write-service-at-line service)
        (insert "\n")))))
 
 (defun prodigy-reset ()
-  "Reset state such as marked and highlighted for all services."
+  "Reset state for all services."
   (-each
    prodigy-services
    (lambda (service)
-     (plist-put service :marked nil)
-     (plist-put service :highlighted nil))))
+     (plist-put service :marked nil))))
 
 (defun prodigy-tags ()
   "Return uniq list of tags."
@@ -384,6 +376,18 @@ PROCESS is the service process that the OUTPUT is associated to."
    (lambda (service)
      (equal (plist-get service :name) name))
    prodigy-services))
+
+(defun prodigy-highlight ()
+  "Highlight current line."
+  (when (eq major-mode 'prodigy-mode)
+    (let ((inhibit-read-only t))
+      (put-text-property (line-beginning-position) (line-beginning-position 2) 'face 'prodigy-line-face))))
+
+(defun prodigy-unhighlight ()
+  "Unhighlight current line."
+  (when (eq major-mode 'prodigy-mode)
+    (let ((inhibit-read-only t))
+      (put-text-property (line-beginning-position) (line-beginning-position 2) 'face nil))))
 
 
 ;;;; User functions
@@ -560,6 +564,8 @@ matching string show."
   (setq mode-name "Prodigy")
   (setq major-mode 'prodigy-mode)
   (use-local-map prodigy-mode-map)
+  (add-hook 'pre-command-hook 'prodigy-unhighlight)
+  (add-hook 'post-command-hook 'prodigy-highlight)
   (run-mode-hooks 'prodigy-mode-hook))
 
 ;;;###autoload
@@ -570,11 +576,12 @@ matching string show."
         (buffer (get-buffer-create prodigy-buffer-name)))
     (pop-to-buffer buffer)
     (unless buffer-p
+      (prodigy-mode)
       (prodigy-reset)
       (prodigy-repaint)
       (ignore-errors
         (prodigy-goto-line 1)))
-    (prodigy-mode)))
+    (prodigy-highlight)))
 
 (provide 'prodigy)
 
