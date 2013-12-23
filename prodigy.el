@@ -108,7 +108,8 @@
 :path         - List of directories added to PATH when command runs
 :env          - List of lists (with two items).  First item is the name
                 of an environment variable and second item is the
-                value of the variable")
+                value of the variable
+:url          - Url to use for browsing")
 
 (defvar prodigy-filters nil
   "List of filters.
@@ -386,6 +387,13 @@ PROCESS is the service process that the OUTPUT is associated to."
   "Find service by identifier ID."
   (--first (eq (prodigy-service-id it) id) prodigy-services))
 
+(defun prodigy-url (service)
+  "Return SERVICE url."
+  (or
+   (plist-get service :url)
+   (-when-let (port (prodigy-service-port service))
+     (format "http://localhost:%d" port))))
+
 (defmacro prodigy-with-refresh (&rest body)
   "Execute BODY and then refresh."
   `(progn ,@body (prodigy-refresh)))
@@ -496,8 +504,8 @@ PROCESS is the service process that the OUTPUT is associated to."
   "Browse service url at point if possible to figure out."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
-    (-if-let (port (prodigy-service-port service))
-        (browse-url (format "http://localhost:%d" port))
+    (-if-let (url (prodigy-url service))
+        (browse-url url)
       (message "Could not determine port"))))
 
 (defun prodigy-refresh ()
