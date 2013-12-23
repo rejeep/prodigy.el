@@ -57,9 +57,6 @@
   "Face to indicate starting service was successful."
   :group 'prodigy)
 
-(defconst prodigy-buffer-name "*prodigy*"
-  "Name of Prodigy mode buffer.")
-
 (defcustom prodigy-completion-system 'ido
   "The completion system to be used by Prodigy."
   :group 'prodigy
@@ -122,6 +119,9 @@ Supported filters:
 
 :tag  - name of tag that service must include
 :name - string that service name must contain")
+
+(defconst prodigy-buffer-name "*prodigy*"
+  "Name of Prodigy mode buffer.")
 
 
 ;;;; Internal functions
