@@ -28,7 +28,7 @@
  (-each (process-list)
         (lambda (buffer)
           (signal-process buffer 'int)))
-  (-each (buffer-list)
+ (-each (buffer-list)
         (lambda (buffer)
           (unless (-contains? prodigy-buffer-list buffer)
             (kill-buffer buffer))))
