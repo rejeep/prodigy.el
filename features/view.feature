@@ -6,9 +6,9 @@ Feature: View
       | append | append | server  | ("append") | (("PORT" "6001")) |
     And I start prodigy
 
-  # Scenario: Not started
-  #   When I press "$"
-  #   Then I should see message "Nothing to show for foo"
+  Scenario: Not started
+    When I press "$"
+    Then I should see message "Nothing to show for append"
 
   Scenario: View mode
     When I start service
