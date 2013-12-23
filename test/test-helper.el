@@ -8,9 +8,7 @@
 
 (defun make-service (&rest args)
   (let ((plist '(:name "name" :command "command" :cwd "cwd")))
-    (plist-put plist :init (plist-get args :init))
-    (plist-put plist :init-async (plist-get args :init-async))
-    plist))
+    (append plist args)))
 
 (defmacro with-sandbox (&rest body)
   `(with-mock
