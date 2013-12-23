@@ -33,10 +33,30 @@ Feature: Stop
       | name | highlighted | marked | started |
       | bar  | t           | t      | t       |
       | foo  | nil         | t      | t       |
-    When I press "S"
+    And I stop services
     Then requesting "http://127.0.0.1:6001" should not respond
     And requesting "http://127.0.0.1:6002" should not respond
     And I should see services:
       | name | highlighted | marked | started |
       | bar  | t           | t      | nil     |
       | foo  | nil         | t      | nil     |
+
+  Scenario: Kill process buffer globally
+    Given I turn on kill process buffer on stop
+    When I start service
+    Then requesting "http://127.0.0.1:6002" should respond with "BAR"
+    And the buffer "*prodigy-bar*" should exist
+    And I stop services
+    Then the buffer "*prodigy-bar*" should not exist
+
+  Scenario: Kill process buffer locally
+    When I press "M"
+    And I press "s"
+    And I start services
+    Then requesting "http://127.0.0.1:6001" should respond with "FOO"
+    And requesting "http://127.0.0.1:6002" should respond with "BAR"
+    And the buffer "*prodigy-foo*" should exist
+    And the buffer "*prodigy-bar*" should exist
+    And I stop services
+    Then the buffer "*prodigy-foo*" should not exist
+    But the buffer "*prodigy-bar*" should exist
