@@ -26,7 +26,7 @@ Feature: Tags
       | baz  | (tag-2)       |
     When I start prodigy
     Then I should see services:
-      | name | tags           |
-      | bar  | ()             |
-      | baz  | (tag-2)        |
-      | foo  | (tag-1 tag-2 ) |
+      | name | tags          |
+      | bar  | ()            |
+      | baz  | (tag-2)       |
+      | foo  | (tag-1 tag-2) |
