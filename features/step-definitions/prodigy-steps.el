@@ -42,7 +42,8 @@
            (init-index (-elem-index "init" head))
            (init-async-index (-elem-index "init-async" head))
            (path-index (-elem-index "path" head))
-           (env-index (-elem-index "env" head)))
+           (env-index (-elem-index "env" head))
+           (kill-process-buffer-on-stop-index (-elem-index "kill-process-buffer-on-stop" head)))
       (mapc
        (lambda (row)
          (prodigy-define-service
@@ -54,7 +55,8 @@
            :init (and init-index (read (nth init-index row)))
            :init-async (and init-async-index (read (nth init-async-index row)))
            :path (and path-index (--map (f-expand it prodigy-servers-path) (read (nth path-index row))))
-           :env (and env-index (read (nth env-index row)))))
+           :env (and env-index (read (nth env-index row)))
+           :kill-process-buffer-on-stop (and kill-process-buffer-on-stop-index (read (nth kill-process-buffer-on-stop-index row)))))
        rows))))
 
 (Then "^I should see services:$"
@@ -143,6 +145,10 @@
   (lambda (buffer-name)
     (should (get-buffer buffer-name))))
 
+(Then "^the buffer \"\\([^\"]+\\)\" should not exist$"
+  (lambda (buffer-name)
+    (should-not (get-buffer buffer-name))))
+
 (When "^I kill the prodigy buffer$"
   (lambda ()
     (kill-buffer prodigy-buffer-name)))
@@ -184,3 +190,7 @@
 (Then "^I should be in dired mode$"
   (lambda ()
     (should (eq major-mode 'dired-mode))))
+
+(Then "^I turn on kill process buffer on stop$"
+  (lambda ()
+    (setq prodigy-kill-process-buffer-on-stop t)))

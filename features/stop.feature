@@ -2,9 +2,9 @@ Feature: Stop
 
   Background:
     Given I add the following services:
-      | name | cwd | command | path    | env               |
-      | foo  | foo | server  | ("foo") | (("PORT" "6001")) |
-      | bar  | bar | server  | ("bar") | (("PORT" "6002")) |
+      | name | cwd | command | path    | env               | kill-process-buffer-on-stop |
+      | foo  | foo | server  | ("foo") | (("PORT" "6001")) | t                           |
+      | bar  | bar | server  | ("bar") | (("PORT" "6002")) | nil                         |
     And I start prodigy
 
   Scenario: Not started

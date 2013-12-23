@@ -69,6 +69,11 @@
   :group 'prodigy
   :type 'number)
 
+(defcustom prodigy-kill-process-buffer-on-stop nil
+  "Will kill process buffer on stop if this is true."
+  :group 'prodigy
+  :type 'boolean)
+
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
 
@@ -288,7 +293,11 @@ The completion system used is determined by
   (-when-let (process (plist-get service :process))
     (when (process-live-p process)
       (signal-process process (or (plist-get service :stop-signal) 'int)))
-    (plist-put service :process nil)))
+    (plist-put service :process nil))
+  (let ((kill-process-buffer-on-stop (plist-get service :kill-process-buffer-on-stop)))
+    (when (or kill-process-buffer-on-stop prodigy-kill-process-buffer-on-stop)
+      (-when-let (buffer (get-buffer (prodigy-buffer-name service)))
+        (kill-buffer buffer)))))
 
 (defun prodigy-apply (fn)
   "Apply FN to service at line or marked services."
