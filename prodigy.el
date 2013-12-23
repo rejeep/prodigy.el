@@ -108,7 +108,7 @@
 :init-async   - Function called before process is started with async callback
 :stop-signal  - Signal to send to processes to stop (defaults to 'int)
 :path         - List of directories added to PATH when command runs
-:env          - List of lists (with two items). First item is the name
+:env          - List of lists (with two items).  First item is the name
                 of an environment variable and second item is the
                 value of the variable")
 
