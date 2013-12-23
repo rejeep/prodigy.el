@@ -90,6 +90,8 @@
     (define-key map (kbd "f t") 'prodigy-add-tag-filter)
     (define-key map (kbd "f n") 'prodigy-add-name-filter)
     (define-key map (kbd "F") 'prodigy-clear-filters)
+    (define-key map (kbd "j m") 'prodigy-jump-magit)
+    (define-key map (kbd "j d") 'prodigy-jump-dired)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -537,6 +539,18 @@ PROCESS is the service process that the OUTPUT is associated to."
   (prodigy-with-refresh
    (setq prodigy-filters nil))
   (prodigy-goto-first-line))
+
+(defun prodigy-jump-magit ()
+  "Jump to magit status mode for service at point."
+  (interactive)
+  (-when-let (service (prodigy-service-at-pos))
+    (magit-status (plist-get service :cwd))))
+
+(defun prodigy-jump-dired ()
+  "Jump to dired mode for service at point."
+  (interactive)
+  (-when-let (service (prodigy-service-at-pos))
+    (dired (plist-get service :cwd))))
 
 
 ;;;; Misc

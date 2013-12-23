@@ -176,3 +176,11 @@
 (Then "^I should be on line \"\\([^\"]+\\)\"$"
   (lambda (line)
     (should (= (line-number-at-pos) (read line)))))
+
+(Then "^I should be in magit status mode$"
+  (lambda ()
+    (should (eq major-mode 'magit-status-mode))))
+
+(Then "^I should be in dired mode$"
+  (lambda ()
+    (should (eq major-mode 'dired-mode))))

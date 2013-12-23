@@ -18,6 +18,8 @@
 (require 'espuds)
 (require 'async)
 (require 'ert)
+(require 'magit)
+(require 'dired)
 
 (Before
  (setq prodigy-services nil)

@@ -145,6 +145,14 @@ Read string and show only services with name that contains string.
 
 Clear all filters.
 
+### Jump - Magit (`j m`)
+
+Jump to Magit.
+
+### Jump - Dired (`j d`)
+
+Jump to Dired.
+
 ## Examples
 
 Start simple Python server:
