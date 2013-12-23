@@ -163,7 +163,9 @@ Start simple Python server:
   :command "python"
   :cwd "/path/to/my/project"
   :args '("-m" "SimpleHTTPServer" "6001")
-  :tags '(work))
+  :tags '(work)
+  :kill-signal 'sigint
+  :kill-process-buffer-on-stop t)
 ```
 
 Start Node server:
@@ -176,7 +178,9 @@ Start Node server:
   :cwd "/path/to/my/project"
   :args '("app.coffee")
   :port 6002
-  :tags '(work node))
+  :tags '(work node)
+  :init-async (lambda (done)
+                (nvm-use-for "/path/to/my/project" done)))
 ```
 
 Start Sinatra server:
