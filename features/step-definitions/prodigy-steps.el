@@ -59,49 +59,45 @@
 
 (Then "^I should see services:$"
   (lambda (table)
-    (let* ((head (car table))
-           (name-index (-elem-index "name" head))
-           (highlighted-index (-elem-index "highlighted" head))
-           (marked-index (-elem-index "marked" head))
-           (tags-index (-elem-index "tags" head))
-           (started-index (-elem-index "started" head))
-           (rows (cdr table)))
-      (should (= (length rows)
-                 (- (line-number-at-pos (point-max))
-                    (line-number-at-pos (point-min)))))
-      (save-excursion
+    (save-excursion
+      (let* ((overlays (overlays-in (line-beginning-position) (line-end-position)))
+             (highlighted-line
+              (and
+               (eq 'prodigy-line-face (car (--map (overlay-get it 'face) overlays)))
+               (line-number-at-pos)))
+             (head (car table))
+             (rows (cdr table))
+             (name-index (-elem-index "name" head))
+             (marked-index (-elem-index "marked" head))
+             (highlighted-index (-elem-index "highlighted" head))
+             (started-index (-elem-index "started" head))
+             (tags-index (-elem-index "tags" head)))
         (goto-char (point-min))
         (-each
          rows
          (lambda (row)
-           (let ((name (nth name-index row))
-                 (highlighted
-                  (when highlighted-index
-                    (read (nth highlighted-index row))))
-                 (marked
-                  (when marked-index
-                    (read (nth marked-index row))))
-                 (tags
-                  (when tags-index
-                    (read (nth tags-index row))))
-                 (started
-                  (when started-index
-                    (read (nth started-index row)))))
-             (let ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
-               (if marked
-                   (should (s-starts-with? (concat "* " name) line))
-                 (should (s-starts-with? (concat "  " name) line)))
-               (if started
-                   (should (s-contains? "Running" line))
-                 (should-not (s-contains? "Running" line)))
-               (let ((match (s-matches? (format "\\[%s\\]" (s-join ", " (-map 'symbol-name tags))) line)))
-                 (if tags
-                     (should match)
-                   (should-not match))))
-             (when highlighted
-               (should (eq (get-text-property (1+ (line-beginning-position)) 'face) 'prodigy-line-face))
-               (should (eq (get-text-property (line-end-position) 'face) 'prodigy-line-face)))
-             (forward-line 1))))))))
+           (let* ((expected-name        (and name-index (nth name-index row)))
+                  (expected-marked      (and marked-index (read (nth marked-index row))))
+                  (expected-highlighted (and highlighted-index (read (nth highlighted-index row))))
+                  (expected-started     (and started-index (read (nth started-index row))))
+                  (expected-tags        (and tags-index (read (nth tags-index row))))
+                  (entry (tabulated-list-get-entry))
+                  (actual-name (aref entry 1))
+                  (actual-marked (aref entry 0))
+                  (actual-started (aref entry 2))
+                  (actual-tags
+                   (-map 'intern (s-split ", " (aref entry 3) 'omit-nulls))))
+             (when expected-name
+               (should (string= expected-name actual-name)))
+             (when expected-marked
+               (should (string= "*" actual-marked)))
+             (when expected-highlighted
+               (should (= (line-number-at-pos) highlighted-line)))
+             (when expected-started
+               (should actual-started))
+             (when expected-tags
+               (should (equal expected-tags actual-tags))))
+           (forward-line 1)))))))
 
 (Then "^requesting \"\\([^\"]+\\)\" should respond with \"\\([^\"]+\\)\"$"
   (lambda (url response callback)

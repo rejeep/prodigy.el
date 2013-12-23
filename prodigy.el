@@ -35,6 +35,7 @@
 (require 'dash)
 (require 'f)
 (require 'ansi-color)
+(require 'tabulated-list)
 
 (defgroup prodigy nil
   "Manage external services from within Emacs."
@@ -123,11 +124,22 @@ Supported filters:
 (defconst prodigy-buffer-name "*prodigy*"
   "Name of Prodigy mode buffer.")
 
+(defconst prodigy-list-format
+  [("Marked" 6 t :right-align t)
+   ("Name" 40 t)
+   ("Status" 10 t)
+   ("Tags" 30 nil)]
+  "List format.")
+
+(defconst prodigy-list-sort-key
+  '("Name" . nil)
+  "Sort table on this key.")
+
 
 ;;;; Internal functions
 
 (defun prodigy-services ()
-  "Return list of services, with applied filters, sorted by name."
+  "Return list of services, with applied filters."
   (let ((services (-clone prodigy-services)))
     (-each
      prodigy-filters
@@ -144,20 +156,11 @@ Supported filters:
                                 (lambda (service)
                                   (s-contains? value (plist-get service :name) 'ignore-case))
                                 services)))))))
-    (-sort
-     (lambda (service-1 service-2)
-       (string<
-        (plist-get service-1 :name)
-        (plist-get service-2 :name)))
-     services)))
+    services))
 
 (defun prodigy-service-at-pos (&optional pos)
   "Return service at POS or current position."
-  (unless pos (setq pos (point)))
-  (when (and (>= pos (point-min))
-             (<= pos (point-max)))
-    (-when-let (service-name (get-text-property pos 'service-name))
-      (prodigy-find-service service-name))))
+  (prodigy-find-by-id (tabulated-list-get-id pos)))
 
 (defun prodigy-service-at-pos-p (&optional pos)
   "Return true if there is a service at POS or current position."
@@ -201,54 +204,6 @@ Supported filters:
     (if (eq status 'run)
         'prodigy-success-face
       'prodigy-fail-face)))
-
-(defun prodigy-write-service-at-line (service)
-  "Remove service at line and insert SERVICE."
-  (let ((inhibit-read-only t) (service-name (plist-get service :name)))
-    (delete-region (line-beginning-position) (line-end-position))
-    (if (plist-get service :marked)
-        (insert "* ")
-      (insert "  "))
-    (insert service-name)
-    (move-to-column 30 t)
-    (-when-let (process (plist-get service :process))
-      (insert " ")
-      (let ((beg (point)))
-        (insert (prodigy-status-name process))
-        (overlay-put (make-overlay beg (point)) 'face (prodigy-status-face process))))
-    (move-to-column 60 t)
-    (-when-let (tags (plist-get service :tags))
-      (insert " [" (s-join ", " (-map 'symbol-name tags)) "]"))
-    (put-text-property (line-beginning-position) (line-end-position) 'service-name service-name)))
-
-(defun prodigy-service-set (service key value)
-  "Set SERVICE KEY to VALUE.
-
-This will update the SERVICE object, but also update the line
-representing SERVICE."
-  (plist-put service key value)
-  (save-excursion
-    (goto-char (point-min))
-    (while (not (eq (prodigy-service-at-pos) service))
-      (forward-line 1))
-    (prodigy-write-service-at-line service)))
-
-(defun prodigy-repaint ()
-  "Clear buffer and repaint all services."
-  (let ((inhibit-read-only t))
-    (erase-buffer)
-    (-each
-     (prodigy-services)
-     (lambda (service)
-       (prodigy-write-service-at-line service)
-       (insert "\n")))))
-
-(defun prodigy-reset ()
-  "Reset state for all services."
-  (-each
-   prodigy-services
-   (lambda (service)
-     (plist-put service :marked nil))))
 
 (defun prodigy-tags ()
   "Return uniq list of tags."
@@ -323,14 +278,14 @@ The completion system used is determined by
         (funcall create-process)
         (set-process-filter process 'prodigy-process-filter)
         (set-process-query-on-exit-flag process nil)
-        (prodigy-service-set service :process process)))))
+        (plist-put service :process process)))))
 
 (defun prodigy-stop-service (service)
   "Stop process associated with SERVICE."
   (-when-let (process (plist-get service :process))
     (when (process-live-p process)
       (signal-process process (or (plist-get service :stop-signal) 'int)))
-    (prodigy-service-set service :process nil)))
+    (plist-put service :process nil)))
 
 (defun prodigy-apply (fn)
   "Apply FN to service at line or marked services."
@@ -376,14 +331,64 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-highlight ()
   "Highlight current line."
   (when (eq major-mode 'prodigy-mode)
-    (let ((inhibit-read-only t))
-      (put-text-property (line-beginning-position) (line-beginning-position 2) 'face 'prodigy-line-face))))
+    (let ((beg (line-beginning-position))
+          (end (line-beginning-position 2))
+          (inhibit-read-only t))
+      (overlay-put (make-overlay beg end) 'face 'prodigy-line-face))))
 
 (defun prodigy-unhighlight ()
   "Unhighlight current line."
   (when (eq major-mode 'prodigy-mode)
     (let ((inhibit-read-only t))
-      (put-text-property (line-beginning-position) (line-beginning-position 2) 'face nil))))
+      (remove-overlays (line-beginning-position) (line-beginning-position 2)))))
+
+(defun prodigy-service-id (service)
+  "Return SERVICE identifier."
+  (let* ((name (plist-get service :name))
+         (name (s-downcase name))
+         (name (s-replace " " "-" name)))
+    (intern name)))
+
+(defun prodigy-marked-col (service)
+  "Return SERVICE marked column."
+  (if (plist-get service :marked) "*" ""))
+
+(defun prodigy-name-col (service)
+  "Return SERVICE name column."
+  (plist-get service :name))
+
+(defun prodigy-status-col (service)
+  "Return SERVICE status column."
+  (-if-let (process (plist-get service :process))
+      (propertize (prodigy-status-name process) 'face (prodigy-status-face process))
+    ""))
+
+(defun prodigy-tags-col (service)
+  "Return SERVICE tags column."
+  (s-join ", " (-map 'symbol-name (plist-get service :tags))))
+
+(defun prodigy-list-entries ()
+  "Create the entries for the service list."
+  (-map
+   (lambda (service)
+     (list
+      (prodigy-service-id service)
+      (apply 'vector
+             (--map
+              (funcall it service)
+              '(prodigy-marked-col
+                prodigy-name-col
+                prodigy-status-col
+                prodigy-tags-col)))))
+   (prodigy-services)))
+
+(defun prodigy-find-by-id (id)
+  "Find service by identifier ID."
+  (--first (eq (prodigy-service-id it) id) prodigy-services))
+
+(defmacro prodigy-with-refresh (&rest body)
+  "Execute BODY and then refresh."
+  `(progn ,@body (prodigy-refresh)))
 
 
 ;;;; User functions
@@ -407,68 +412,77 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-mark ()
   "Mark service at point."
   (interactive)
-  (-when-let (service (prodigy-service-at-pos))
-    (prodigy-service-set service :marked t)
-    (ignore-errors
-      (prodigy-goto-next-line))))
+  (prodigy-with-refresh
+   (-when-let (service (prodigy-service-at-pos))
+     (plist-put service :marked t)
+     (ignore-errors
+       (prodigy-goto-next-line)))))
 
 (defun prodigy-mark-tag ()
   "Mark all services with tag."
   (interactive)
-  (let ((tag (prodigy-read-tag)))
-    (-each
-     (prodigy-services-tagged-with tag)
-     (lambda (service)
-       (prodigy-service-set service :marked t)))))
+  (prodigy-with-refresh
+   (let ((tag (prodigy-read-tag)))
+     (-each
+      (prodigy-services-tagged-with tag)
+      (lambda (service)
+        (plist-put service :marked t))))))
 
 (defun prodigy-mark-all ()
   "Mark all services."
   (interactive)
-  (-each
-   prodigy-services
-   (lambda (service)
-     (prodigy-service-set service :marked t))))
+  (prodigy-with-refresh
+   (-each
+    prodigy-services
+    (lambda (service)
+      (plist-put service :marked t)))))
 
 (defun prodigy-unmark ()
   "Unmark service at point."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
-    (prodigy-service-set service :marked nil)
-    (ignore-errors
-      (prodigy-goto-next-line))))
+    (prodigy-with-refresh
+     (plist-put service :marked nil)
+     (ignore-errors
+       (prodigy-goto-next-line)))))
 
 (defun prodigy-unmark-tag ()
   "Unmark all services with tag."
   (interactive)
-  (let ((tag (prodigy-read-tag)))
-    (-each
-     (prodigy-services-tagged-with tag)
-     (lambda (service)
-       (prodigy-service-set service :marked nil)))))
+  (prodigy-with-refresh
+   (let ((tag (prodigy-read-tag)))
+     (-each
+      (prodigy-services-tagged-with tag)
+      (lambda (service)
+        (plist-put service :marked nil))))))
 
 (defun prodigy-unmark-all ()
   "Unmark all services."
   (interactive)
-  (-each
-   prodigy-services
-   (lambda (service)
-     (prodigy-service-set service :marked nil))))
+  (prodigy-with-refresh
+   (-each
+    prodigy-services
+    (lambda (service)
+      (plist-put service :marked nil)))))
 
 (defun prodigy-start ()
   "Start service at line or marked services."
   (interactive)
-  (prodigy-apply 'prodigy-start-service))
+  (prodigy-with-refresh
+   (prodigy-apply 'prodigy-start-service)))
 
 (defun prodigy-stop ()
   "Stop service at line or marked services."
   (interactive)
-  (prodigy-apply 'prodigy-stop-service))
+  (prodigy-with-refresh
+   (prodigy-apply 'prodigy-stop-service)))
 
 (defun prodigy-restart ()
   "Restart service at line or marked services."
   (interactive)
-  (prodigy-apply 'prodigy-stop-service)
-  (prodigy-apply 'prodigy-start-service))
+  (prodigy-with-refresh
+   (prodigy-apply 'prodigy-stop-service)
+   (prodigy-apply 'prodigy-start-service)))
 
 (defun prodigy-display-process ()
   "Switch to process buffer for service at current line."
@@ -486,46 +500,45 @@ PROCESS is the service process that the OUTPUT is associated to."
         (browse-url (format "http://localhost:%d" port))
       (message "Could not determine port"))))
 
-(defun prodigy-refresh (ignore-auto noconfirm)
-  "Refresh GUI."
+(defun prodigy-refresh ()
+  "Refresh list of services."
   (interactive)
-  (let ((pos (point)))
-    (prodigy-repaint)
-    (prodigy-goto-pos pos)))
+  (tabulated-list-print :remember-pos))
 
 (defun prodigy-add-tag-filter ()
   "Read tag and add filter so that only services with that tag show."
   (interactive)
-  (let ((tag (prodigy-read-tag)))
-    (prodigy-add-filter :tag tag)
-    (prodigy-repaint)
-    (ignore-errors
-      (prodigy-goto-first-line))))
+  (prodigy-with-refresh
+   (let ((tag (prodigy-read-tag)))
+     (prodigy-add-filter :tag tag)))
+  (ignore-errors
+    (prodigy-goto-first-line)))
 
 (defun prodigy-add-name-filter ()
-  "Read string and add filter so that only services with name
-matching string show."
+  "Read string and add filter for name."
   (interactive)
-  (let ((string (read-string "string: ")))
-    (prodigy-add-filter :name string)
-    (prodigy-repaint)
-    (ignore-errors
-      (prodigy-goto-first-line))))
+  (prodigy-with-refresh
+   (let ((string (read-string "string: ")))
+     (prodigy-add-filter :name string))
+   (ignore-errors
+     (prodigy-goto-first-line))))
 
 (defun prodigy-clear-filters ()
   "Clear all filters."
   (interactive)
-  (setq prodigy-filters nil)
-  (prodigy-repaint)
-  (ignore-errors
-    (prodigy-goto-first-line)))
+  (prodigy-with-refresh
+   (setq prodigy-filters nil))
+  (prodigy-goto-first-line))
+
+
+;;;; Misc
 
 (defun prodigy-add-filter (type value)
   "Add filter TYPE, that filters for VALUE."
   (push (list type value) prodigy-filters))
 
 (defun prodigy-define-service (&rest args)
-  "Define a new service."
+  "Define a new service with ARGS."
   (-when-let (service-name (plist-get args :name))
     (setq
      prodigy-services
@@ -551,9 +564,8 @@ matching string show."
                 (1 font-lock-keyword-face nil t))))))
 
 ;;;###autoload
-(define-derived-mode prodigy-mode special-mode "Prodigy"
+(define-derived-mode prodigy-mode tabulated-list-mode "Prodigy"
   "Special mode for prodigy buffers."
-  (set (make-local-variable 'revert-buffer-function) 'prodigy-refresh)
   (buffer-disable-undo)
   (kill-all-local-variables)
   (setq truncate-lines t)
@@ -562,6 +574,11 @@ matching string show."
   (use-local-map prodigy-mode-map)
   (add-hook 'pre-command-hook 'prodigy-unhighlight)
   (add-hook 'post-command-hook 'prodigy-highlight)
+  (setq tabulated-list-format prodigy-list-format)
+  (setq tabulated-list-entries 'prodigy-list-entries)
+  (setq tabulated-list-sort-key prodigy-list-sort-key)
+  (tabulated-list-init-header)
+  (tabulated-list-print)
   (run-mode-hooks 'prodigy-mode-hook))
 
 ;;;###autoload
@@ -572,11 +589,7 @@ matching string show."
         (buffer (get-buffer-create prodigy-buffer-name)))
     (pop-to-buffer buffer)
     (unless buffer-p
-      (prodigy-mode)
-      (prodigy-reset)
-      (prodigy-repaint)
-      (ignore-errors
-        (prodigy-goto-first-line)))
+      (prodigy-mode))
     (prodigy-highlight)))
 
 (provide 'prodigy)
