@@ -6,7 +6,7 @@
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
 ;; Version: 0.1.0
 ;; URL: http://github.com/rejeep/prodigy.el
-;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (f "0.14.0"))
+;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (f "0.14.0") (emacs "24"))
 
 ;; This file is NOT part of GNU Emacs.
 
