@@ -9,7 +9,7 @@ Feature: Prev
     Given I add the following services:
       | name |
       | foo  |
-    Given I start prodigy
+    And I start prodigy
     When I press "p"
     Then I should see services:
       | name | highlighted |
@@ -21,7 +21,7 @@ Feature: Prev
       | name |
       | foo  |
       | bar  |
-    Given I start prodigy
+    And I start prodigy
     Then I should see services:
       | name | highlighted |
       | bar  | t           |

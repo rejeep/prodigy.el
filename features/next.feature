@@ -21,7 +21,7 @@ Feature: Next
       | name |
       | foo  |
       | bar  |
-    Given I start prodigy
+    And I start prodigy
     Then I should see services:
       | name | highlighted |
       | bar  | t           |
