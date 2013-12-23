@@ -22,7 +22,6 @@ Feature: Mark
       | bar  |
     And I start prodigy
     When I press "m"
-    When I press "n"
     And I press "m"
     Then I should see services:
       | name | highlighted | marked |
