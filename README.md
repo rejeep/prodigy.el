@@ -85,6 +85,14 @@ Go to next service.
 
 Go to previous service.
 
+### First service (`M-<`)
+
+Go to first service.
+
+### Last service (`M->`)
+
+Go to last service.
+
 ### Start service (`s`)
 
 Start service at line or marked services.

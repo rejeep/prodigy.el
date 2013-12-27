@@ -81,6 +81,8 @@
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "n") 'prodigy-next)
     (define-key map (kbd "p") 'prodigy-prev)
+    (define-key map (kbd "M-<") 'prodigy-first)
+    (define-key map (kbd "M->") 'prodigy-last)
     (define-key map (kbd "m") 'prodigy-mark)
     (define-key map (kbd "t") 'prodigy-mark-tag)
     (define-key map (kbd "M") 'prodigy-mark-all)
@@ -185,6 +187,13 @@ Supported filters:
 (defun prodigy-goto-first-line ()
   "Go to first line."
   (prodigy-goto-pos (point-min)))
+
+(defun prodigy-goto-last-line ()
+  "Go to first line."
+  (prodigy-goto-pos
+   (save-excursion
+     (goto-char (point-max))
+     (line-beginning-position 0))))
 
 (defun prodigy-goto-pos (pos)
   "Go to POS."
@@ -427,6 +436,16 @@ PROCESS is the service process that the OUTPUT is associated to."
       (prodigy-goto-prev-line)
     (error
      (message "Cannot move further up"))))
+
+(defun prodigy-first ()
+  "Go to first service."
+  (interactive)
+  (prodigy-goto-first-line))
+
+(defun prodigy-last ()
+  "Go to lsat service."
+  (interactive)
+  (prodigy-goto-last-line))
 
 (defun prodigy-mark ()
   "Mark service at point."
