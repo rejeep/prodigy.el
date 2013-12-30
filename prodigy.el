@@ -36,6 +36,7 @@
 (require 'f)
 (require 'ansi-color)
 (require 'tabulated-list)
+(require 'easymenu)
 
 (defgroup prodigy nil
   "Manage external services from within Emacs."
@@ -144,6 +145,32 @@ Supported filters:
 (defconst prodigy-list-sort-key
   '("Name" . nil)
   "Sort table on this key.")
+
+(easy-menu-define prodigy-mode-menu prodigy-mode-map
+  "Prodigy menu"
+  '("Prodigy"
+    ["Next service" prodigy-next t]
+    ["Previous service" prodigy-prev t]
+    ["First service" prodigy-first t]
+    ["Last service" prodigy-last t]
+    "---"
+    ["Mark service" prodigy-mark]
+    ["Mark services with tag" prodigy-mark-tag]
+    ["Mark all services" prodigy-mark-all]
+    ["Unmark service" prodigy-unmark]
+    ["Unmark services with tag" prodigy-unmark-tag]
+    ["Unmark all services" prodigy-unmark-all]
+    "---"
+    ["Start service" prodigy-start]
+    ["Stop service" prodigy-stop]
+    ["Restart service" prodigy-restart]
+    ["Display service process buffer" prodigy-display-process]
+    "---"
+    ["Add tag filter" prodigy-add-tag-filter]
+    ["Add name filter" prodigy-add-name-filter]
+    ["Clear all filters" prodigy-clear-filters]
+    "---"
+    ["Open in browser" prodigy-browse]))
 
 
 ;;;; Internal functions
