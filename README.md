@@ -11,6 +11,8 @@ plugin. Prodigy provides a
 [Magit](https://github.com/magit/magit)-like GUI to manage services in
 a simple way.
 
+![Prodigy](/prodigy.png)
+
 ## Installation
 
 Add `prodigy` to your [Cask](https://github.com/cask/cask) file:
