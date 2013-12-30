@@ -145,6 +145,34 @@ Supported filters:
   '("Name" . nil)
   "Sort table on this key.")
 
+(defconst prodigy-discover-context-menu
+  '(prodigy
+    (actions
+     ("Navigation"
+      ("n" "next service" prodigy-next)
+      ("p" "prev service" prodigy-prev)
+      ("M-<" "first service" prodigy-first)
+      ("M->" "last service" prodigy-last))
+     ("Marking"
+      ("m" "mark service" prodigy-mark)
+      ("t" "mark services with tag" prodigy-mark-tag)
+      ("M" "mark all services" prodigy-mark-all)
+      ("u" "unmark service" prodigy-unmark)
+      ("T" "unmark services with tag" prodigy-unmark-tag)
+      ("U" "unmark all services" prodigy-unmark-all))
+     ("Process"
+      ("s" "start service" prodigy-start)
+      ("S" "stop service" prodigy-stop)
+      ("r" "restart service" prodigy-restart)
+      ("$" "display service process buffer" prodigy-display-process))
+     ("Filters"
+      ("f t" "add tag filter" prodigy-add-tag-filter)
+      ("f n" "add name filter" prodigy-add-name-filter)
+      ("F" "clear all filters" prodigy-clear-filters))
+     ("Misc"
+      ("o" "open in browser" prodigy-browse))))
+  "The discover context menu.")
+
 
 ;;;; Internal functions
 
@@ -418,6 +446,14 @@ PROCESS is the service process that the OUTPUT is associated to."
   "Execute BODY and then refresh."
   `(progn ,@body (prodigy-refresh)))
 
+(defun prodigy-discover-initialize ()
+  "Initialize discover by adding prodigy context menu."
+  (discover-add-context-menu
+   :context-menu prodigy-discover-context-menu
+   :bind "?"
+   :mode 'prodigy-mode
+   :mode-hook 'prodigy-mode-hook))
+
 
 ;;;; User functions
 
@@ -629,6 +665,8 @@ PROCESS is the service process that the OUTPUT is associated to."
   (setq tabulated-list-sort-key prodigy-list-sort-key)
   (tabulated-list-init-header)
   (tabulated-list-print)
+  (when (featurep 'discover)
+    (prodigy-discover-initialize))
   (run-mode-hooks 'prodigy-mode-hook))
 
 ;;;###autoload
