@@ -194,3 +194,7 @@
 (Then "^I turn on kill process buffer on stop$"
   (lambda ()
     (setq prodigy-kill-process-buffer-on-stop t)))
+
+(Then "^default directory should be \"\\([^\"]+\\)\"$"
+  (lambda (dir)
+    (should (f-same? (f-expand dir prodigy-servers-path) default-directory))))

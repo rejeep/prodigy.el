@@ -491,6 +491,12 @@ PROCESS is the service process that the OUTPUT is associated to."
    :mode 'prodigy-mode
    :mode-hook 'prodigy-mode-hook))
 
+(defun prodigy-set-default-directory ()
+  "Set default directory to :cwd for service at point."
+  (when (eq major-mode 'prodigy-mode)
+    (-when-let (service (prodigy-service-at-pos))
+      (setq default-directory (plist-get service :cwd)))))
+
 
 ;;;; User functions
 
@@ -697,11 +703,13 @@ PROCESS is the service process that the OUTPUT is associated to."
   (use-local-map prodigy-mode-map)
   (add-hook 'pre-command-hook 'prodigy-unhighlight)
   (add-hook 'post-command-hook 'prodigy-highlight)
+  (add-hook 'post-command-hook 'prodigy-set-default-directory)
   (setq tabulated-list-format prodigy-list-format)
   (setq tabulated-list-entries 'prodigy-list-entries)
   (setq tabulated-list-sort-key prodigy-list-sort-key)
   (tabulated-list-init-header)
   (tabulated-list-print)
+  (prodigy-set-default-directory)
   (when (featurep 'discover)
     (prodigy-discover-initialize))
   (run-mode-hooks 'prodigy-mode-hook))
