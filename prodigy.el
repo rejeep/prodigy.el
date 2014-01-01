@@ -237,11 +237,17 @@ Supported filters:
 
 (defun prodigy-goto-next-line ()
   "Go to next line."
-  (prodigy-goto-pos (line-beginning-position 2)))
+  (if (= (line-beginning-position 1)
+         (line-beginning-position 2))
+      (error "No next line")
+    (prodigy-goto-pos (line-beginning-position 2))))
 
 (defun prodigy-goto-prev-line ()
   "Go to previous line."
-  (prodigy-goto-pos (line-beginning-position 0)))
+  (if (= (line-beginning-position 0)
+         (line-beginning-position 1))
+      (error "No previous line")
+    (prodigy-goto-pos (line-beginning-position 0))))
 
 (defun prodigy-goto-first-line ()
   "Go to first line."
