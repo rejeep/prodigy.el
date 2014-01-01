@@ -682,9 +682,6 @@ PROCESS is the service process that the OUTPUT is associated to."
 (put 'prodigy-define-service 'lisp-indent-function 'defun)
 
 ;;;###autoload
-(put 'prodigy-define-service 'doc-string-elt 1)
-
-;;;###autoload
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
             (font-lock-add-keywords
