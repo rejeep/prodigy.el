@@ -38,6 +38,10 @@
 (require 'tabulated-list)
 (require 'easymenu)
 
+(eval-when-compile
+  (declare-function discover-add-context-menu "discover")
+  (declare-function magit-status "magit"))
+
 (defgroup prodigy nil
   "Manage external services from within Emacs."
   :prefix "prodigy-"
