@@ -682,14 +682,6 @@ PROCESS is the service process that the OUTPUT is associated to."
 (put 'prodigy-define-service 'lisp-indent-function 'defun)
 
 ;;;###autoload
-(add-hook 'emacs-lisp-mode-hook
-          (lambda ()
-            (font-lock-add-keywords
-             nil
-             '(("(\\(\\<prodigy-define-service\\)\\>"
-                (1 font-lock-keyword-face nil t))))))
-
-;;;###autoload
 (define-derived-mode prodigy-mode tabulated-list-mode "Prodigy"
   "Special mode for prodigy buffers."
   (buffer-disable-undo)
