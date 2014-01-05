@@ -162,6 +162,27 @@ Using tags you can avoid repeating common tasks such as setting up Bundler:
   :tags '(rvm))
 ```
 
+## Troubleshoot
+
+### Jekyll
+
+For some unknown reason, Jekyll fail with this error:
+
+```
+error: invalid byte sequence in US-ASCII. Use --trace to view backtrace
+```
+
+This can be solved by adding a `jekyll` tag, like this:
+
+```lisp
+(prodigy-define-tag
+  :name 'jekyll
+  :env '(("LANG" "en_US.UTF-8")
+         ("LC_ALL" "en_US.UTF-8")))
+```
+
+Then tag your services with the `jekyll` tag.
+
 ## Contribution
 
 Contribution is much welcome!
