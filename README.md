@@ -182,7 +182,6 @@ Start Node server:
 
 ```lisp
 (prodigy-define-service
-  "My awesome Node app."
   :name "Node app"
   :command "nodemon"
   :cwd "/path/to/my/project"
