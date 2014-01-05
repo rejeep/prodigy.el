@@ -110,20 +110,50 @@
 (defvar prodigy-services nil
   "List of services.
 
-:name         - Name of service
-:command      - Command to run
-:args         - Arguments passed to command
-:cwd          - Run command with this as `default-directory'
-:port         - Specify service port for use with open function
-:tags         - List of tags
-:init         - Function called before process is started
-:init-async   - Function called before process is started with async callback
-:stop-signal  - Signal to send to processes to stop (defaults to 'int)
-:path         - List of directories added to PATH when command runs
-:env          - List of lists (with two items).  First item is the name
-                of an environment variable and second item is the
-                value of the variable
-:url          - Url to use for browsing")
+The list is a property list with the following properties:
+
+`name'
+  Name of service.
+
+`command'
+  Command to run.
+
+`args'
+  Arguments passed to command.
+
+`cwd'
+  Run command with this as `default-directory'.
+
+`port'
+  Specify service port for use with open function.
+
+`tags'
+  List of tags.
+
+`init'
+  Function called before process is started.
+
+`init-async'
+  Function called before process is started with async callback.
+
+`stop-signal'
+  Signal to send to processes to stop (defaults to 'int).
+
+`path'
+  List of directories added to PATH when command runs.
+
+`env'
+  List of lists (with two items).  First item is the name of an
+  environment variable and second item is the value of the variable.
+
+`url'
+  Url to use for browsing.
+
+`kill-process-buffer-on-stop'
+  Kill associated process buffer when process stops.")
+
+(defvar prodigy-tags nil
+  "TODO")
 
 (defvar prodigy-filters nil
   "List of filters.
