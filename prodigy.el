@@ -698,6 +698,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 
 (defun prodigy-define-service (&rest args)
   "Define a new service with ARGS."
+  (declare (indent defun))
   (-when-let (service-name (plist-get args :name))
     (setq
      prodigy-services
@@ -708,8 +709,6 @@ PROCESS is the service process that the OUTPUT is associated to."
   (push args prodigy-services)
   nil)
 
-;;;###autoload
-(put 'prodigy-define-service 'lisp-indent-function 'defun)
 
 ;;;###autoload
 (define-derived-mode prodigy-mode tabulated-list-mode "Prodigy"
