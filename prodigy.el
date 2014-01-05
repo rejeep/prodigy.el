@@ -153,7 +153,12 @@ The list is a property list with the following properties:
   Kill associated process buffer when process stops.")
 
 (defvar prodigy-tags nil
-  "TODO")
+  "List of tags.
+
+The list is a property list.  The allowed properties are:
+`command', `args', `cwd', `init', `init-async', `stop-signal',
+`path', `env', `url' and `kill-process-buffer-on-stop'.  For doc
+strings on these properties, see variable `prodigy-services'.")
 
 (defvar prodigy-filters nil
   "List of filters.
@@ -235,7 +240,130 @@ Supported filters:
     ["Open in browser" prodigy-browse]))
 
 
+;;;; Service accessors
+
+(defun prodigy-service-tags (service)
+  "Return list of SERVICE tags.
+
+Note that the list is not a simple list with the tag names, the
+list contains the real objects.
+
+If SERVICE has a tag, that is not defined, it is not returned in the list."
+  (-reject
+   'null
+   (-map
+    (lambda (tag-name)
+      (-first
+       (lambda (tag)
+         (eq (plist-get tag :name) tag-name))
+       prodigy-tags))
+    (plist-get service :tags))))
+
+(defun prodigy-service-port (service)
+  "Find something that look like a port in SERVICE arguments.
+
+If PORT is specified, use that.  If not, try to find something
+that looks like a port in the ARGS list."
+  (or
+   (plist-get service :port)
+   (-when-let (port (-first
+                     (lambda (arg)
+                       (s-matches? "^\\([0-9]\\)\\{4,5\\}$" arg))
+                     (prodigy-service-args service)))
+     (string-to-number port))))
+
+(defun prodigy-service-command (service)
+  "Return SERVICE command.
+
+If SERVICE command exists, use that.  If not, find the first
+SERVICE tag that has a command and return that."
+  (prodigy-service-first-tag-with service :command))
+
+(defun prodigy-service-args (service)
+  "Return SERVICE args list.
+
+If SERVICE args exists, use that.  If not, find the first SERVICE
+tag that has and return that."
+  (prodigy-service-first-tag-with service :args))
+
+(defun prodigy-service-cwd (service)
+  "Return SERVICE current working directory.
+
+If SERVICE cwd exists, use that.  If not, find the first SERVICE
+tag that has and return that."
+  (prodigy-service-first-tag-with service :cwd))
+
+(defun prodigy-service-init (service)
+  "Return SERVICE init callback function.
+
+If SERVICE init exists, use that.  If not, find the first SERVICE
+tag that has and return that."
+  (prodigy-service-first-tag-with service :init))
+
+(defun prodigy-service-init-async (service)
+  "Return SERVICE init async callback function.
+
+If SERVICE init exists, use that.  If not, find the first SERVICE
+tag that has and return that."
+  (prodigy-service-first-tag-with service :init-async))
+
+(defun prodigy-service-stop-signal (service)
+  "Return SERVICE stop signal.
+
+If SERVICE stop-signal exists, use that.  If not, find the first
+SERVICE tag that has and return that."
+  (prodigy-service-first-tag-with service :stop-signal))
+
+(defun prodigy-service-kill-process-buffer-on-stop (service)
+  "Return weather SERVICE should kill process buffer on stop or not.
+
+If SERVICE kill-process-buffer-on-stop exists, use that.  If not, find the first
+SERVICE tag that has and return that."
+  (prodigy-service-first-tag-with service :kill-process-buffer-on-stop))
+
+(defun prodigy-service-path (service)
+  "Return list of SERVICE path extended with all tags path."
+  (-uniq
+   (append
+    (plist-get service :path)
+    (-flatten
+     (-map (lambda (tag)
+             (plist-get tag :path))
+           (prodigy-service-tags service))))))
+
+(defun prodigy-service-env (service)
+  "Return list of SERVICE env extended with all tags env."
+  (let ((compare-fn
+         (lambda (a b)
+           (string< (car a) (car b)))))
+    (-uniq
+     (append
+      (plist-get service :env)
+      (apply 'append (-map (lambda (tag)
+                             (plist-get tag :env))
+                           (prodigy-service-tags service)))))))
+
+(defun prodigy-service-url (service)
+  "Return SERVICE url.
+
+If SERVICE url exists, use that.  If not, find the first SERVICE
+tag that has and return that."
+  (prodigy-service-first-tag-with service :url))
+
+
 ;;;; Internal functions
+
+(defun prodigy-service-first-tag-with (service property)
+  "Return SERVICE PROPERTY or tag with PROPERTY.
+
+If SERVICE has PROPERTY, return the value of that property.  Not
+that '(:foo nil) means that the list has the property :foo.  If
+SERVICE does not have property, find the first SERVICE tag that
+has that property and return its value."
+  (if (plist-member service property)
+      (plist-get service property)
+    (-when-let (tag (--first (plist-member it property) (prodigy-service-tags service)))
+      (plist-get tag property))))
 
 (defun prodigy-services ()
   "Return list of services, with applied filters."
@@ -362,20 +490,20 @@ The completion system used is determined by
   (let ((process (plist-get service :process)))
     (unless (and process (process-live-p process))
       (let* ((name (plist-get service :name))
-             (command (plist-get service :command))
-             (args (plist-get service :args))
-             (default-directory (f-full (plist-get service :cwd)))
-             (exec-path (append (plist-get service :path) exec-path))
-             (env (--map (s-join "=" it) (plist-get service :env)))
+             (command (prodigy-service-command service))
+             (args (prodigy-service-args service))
+             (default-directory (f-full (prodigy-service-cwd service)))
+             (exec-path (append (prodigy-service-path service) exec-path))
+             (env (--map (s-join "=" it) (prodigy-service-env service)))
              (process-environment (append env process-environment))
              (process nil)
              (create-process
               (lambda ()
                 (unless process
                   (setq process (apply 'start-process (append (list name nil command) args)))))))
-        (-when-let (init (plist-get service :init))
+        (-when-let (init (prodigy-service-init service))
           (funcall init))
-        (-when-let (init-async (plist-get service :init-async))
+        (-when-let (init-async (prodigy-service-init-async service))
           (let (callbacked)
             (funcall
              init-async
@@ -396,9 +524,9 @@ The completion system used is determined by
   "Stop process associated with SERVICE."
   (-when-let (process (plist-get service :process))
     (when (process-live-p process)
-      (signal-process process (or (plist-get service :stop-signal) 'int)))
+      (signal-process process (or (prodigy-service-stop-signal service) 'int)))
     (plist-put service :process nil))
-  (let ((kill-process-buffer-on-stop (plist-get service :kill-process-buffer-on-stop)))
+  (let ((kill-process-buffer-on-stop (prodigy-service-kill-process-buffer-on-stop service)))
     (when (or kill-process-buffer-on-stop prodigy-kill-process-buffer-on-stop)
       (-when-let (buffer (get-buffer (prodigy-buffer-name service)))
         (kill-buffer buffer)))))
@@ -410,16 +538,6 @@ The completion system used is determined by
         (-each services fn)
       (-when-let (service (prodigy-service-at-pos))
         (funcall fn service)))))
-
-(defun prodigy-service-port (service)
-  "Find something that look like a port in SERVICE arguments."
-  (or
-   (plist-get service :port)
-   (-when-let (port (-first
-                     (lambda (arg)
-                       (s-matches? "^\\([0-9]\\)\\{4,5\\}$" arg))
-                     (plist-get service :args)))
-     (string-to-number port))))
 
 (defun prodigy-process-filter (process output)
   "Process filter for service processes.
@@ -525,7 +643,7 @@ PROCESS is the service process that the OUTPUT is associated to."
   "Set default directory to :cwd for service at point."
   (when (eq major-mode 'prodigy-mode)
     (-when-let (service (prodigy-service-at-pos))
-      (setq default-directory (plist-get service :cwd)))))
+      (setq default-directory (prodigy-service-cwd service)))))
 
 
 ;;;; User functions
@@ -681,13 +799,13 @@ PROCESS is the service process that the OUTPUT is associated to."
   "Jump to magit status mode for service at point."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
-    (magit-status (plist-get service :cwd))))
+    (magit-status (prodigy-service-cwd service))))
 
 (defun prodigy-jump-dired ()
   "Jump to dired mode for service at point."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
-    (dired (plist-get service :cwd))))
+    (dired (prodigy-service-cwd service))))
 
 
 ;;;; Misc
@@ -698,6 +816,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 
 (defun prodigy-define-service (&rest args)
   "Define a new service with ARGS."
+  (declare (indent defun))
   (-when-let (service-name (plist-get args :name))
     (setq
      prodigy-services
@@ -708,8 +827,17 @@ PROCESS is the service process that the OUTPUT is associated to."
   (push args prodigy-services)
   nil)
 
-;;;###autoload
-(put 'prodigy-define-service 'lisp-indent-function 'defun)
+(defun prodigy-define-tag (&rest args)
+  "Define a new tag with ARGS."
+  (declare (indent defun))
+  (-when-let (tag-name (plist-get args :name))
+    (setq
+     prodigy-tags
+     (-reject
+      (lambda (tag)
+        (string= (plist-get tag :name) tag-name))
+      prodigy-tags)))
+  (push args prodigy-tags))
 
 ;;;###autoload
 (define-derived-mode prodigy-mode tabulated-list-mode "Prodigy"

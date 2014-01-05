@@ -5,6 +5,47 @@
 ;; compiled with network support". That however only is an issue
 ;; inside the step.
 
+(defun prodigy-test/parse-table (table)
+  "Return list of services/tags from TABLE."
+  (let ((head (car table))
+        (rows (cdr table)))
+    (let ((name-index (-elem-index "name" head))
+          (tags-index (-elem-index "tags" head))
+          (cwd-index (-elem-index "cwd" head))
+          (command-index (-elem-index "command" head))
+          (args-index (-elem-index "args" head))
+          (init-index (-elem-index "init" head))
+          (init-async-index (-elem-index "init-async" head))
+          (path-index (-elem-index "path" head))
+          (env-index (-elem-index "env" head))
+          (kill-process-buffer-on-stop-index (-elem-index "kill-process-buffer-on-stop" head)))
+      (mapcar
+       (lambda (row)
+         (let ((result (list :name (nth name-index row))))
+           (-when-let (tags (and tags-index (read (nth tags-index row))))
+             (plist-put result :tags tags))
+           (-when-let (cwd (and cwd-index (f-expand (nth cwd-index row) prodigy-servers-path)))
+             (plist-put result :cwd cwd))
+           (-when-let (command (and command-index (nth command-index row)))
+             (plist-put result :command command))
+           (-when-let (args (and args-index (read (nth args-index row))))
+             (plist-put result :args args))
+           (-when-let (init (and init-index (read (nth init-index row))))
+             (plist-put result :init init))
+           (-when-let (init-async (and init-async-index (read (nth init-async-index row))))
+             (plist-put result :init-async init-async))
+           (-when-let (path (and path-index (-map (lambda (path)
+                                                    (f-expand path prodigy-servers-path))
+                                                  (read (nth path-index row)))))
+             (plist-put result :path path))
+           (-when-let (env (and env-index (read (nth env-index row))))
+             (plist-put result :env env))
+           (-when-let (kill-process-buffer-on-stop (and kill-process-buffer-on-stop-index
+                                                        (read (nth kill-process-buffer-on-stop-index row))))
+             (plist-put result :kill-process-buffer-on-stop kill-process-buffer-on-stop-index))
+           result))
+       rows))))
+
 (Given "^I start prodigy$"
   (lambda ()
     (call-interactively 'prodigy)))
@@ -32,32 +73,17 @@
 
 (Given "^I add the following services:$"
   (lambda (table)
-    (let* ((head (car table))
-           (rows (cdr table))
-           (name-index (-elem-index "name" head))
-           (tags-index (-elem-index "tags" head))
-           (cwd-index (-elem-index "cwd" head))
-           (command-index (-elem-index "command" head))
-           (args-index (-elem-index "args" head))
-           (init-index (-elem-index "init" head))
-           (init-async-index (-elem-index "init-async" head))
-           (path-index (-elem-index "path" head))
-           (env-index (-elem-index "env" head))
-           (kill-process-buffer-on-stop-index (-elem-index "kill-process-buffer-on-stop" head)))
-      (mapc
-       (lambda (row)
-         (prodigy-define-service
-           :name (nth name-index row)
-           :tags (and tags-index (read (nth tags-index row)))
-           :cwd (or (and cwd-index (f-expand (nth cwd-index row) prodigy-servers-path)) "cwd")
-           :command (or (and command-index (nth command-index row)) "command")
-           :args (and args-index (read (nth args-index row)))
-           :init (and init-index (read (nth init-index row)))
-           :init-async (and init-async-index (read (nth init-async-index row)))
-           :path (and path-index (--map (f-expand it prodigy-servers-path) (read (nth path-index row))))
-           :env (and env-index (read (nth env-index row)))
-           :kill-process-buffer-on-stop (and kill-process-buffer-on-stop-index (read (nth kill-process-buffer-on-stop-index row)))))
-       rows))))
+    (-each (prodigy-test/parse-table table)
+           (lambda (service)
+             (apply 'prodigy-define-service service)))))
+
+(Given "^I add the following tags:$"
+  (lambda (table)
+    (-each (prodigy-test/parse-table table)
+           (lambda (tag)
+             ;; Euww...
+             (plist-put tag :name (intern (plist-get tag :name)))
+             (apply 'prodigy-define-tag tag)))))
 
 (Then "^I should see services:$"
   (lambda (table)

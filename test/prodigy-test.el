@@ -1,14 +1,4 @@
 
-;;;; prodigy-service-port
-
-(ert-deftest prodigy-service-port-test ()
-  (should (= (prodigy-service-port '(:port 1234)) 1234))
-  (should (= (prodigy-service-port '(:args ("-p" "1234"))) 1234))
-  (should (= (prodigy-service-port '(:args ("-p" "12345"))) 12345))
-  (should-not (prodigy-service-port '(:args ("-p" "123456"))))
-  (should-not (prodigy-service-port ())))
-
-
 ;;;; prodigy-start-service
 
 (ert-deftest prodigy-start-service-test/init-no-callback ()
@@ -67,6 +57,27 @@
      :name "name"
      :command "foo"
      :cwd "/path/to/name")))
+
+
+;;;; prodigy-define-tag
+
+(ert-deftest prodigy-define-tag-test/new-tag ()
+  (prodigy-define-tag
+    :name "name"
+    :command "foo"
+    :cwd "/path/to/name")
+  (should (equal prodigy-tags '((:name "name" :command "foo" :cwd "/path/to/name")))))
+
+(ert-deftest prodigy-define-tag-test/override-tag-by-name ()
+  (prodigy-define-tag
+    :name "name"
+    :command "foo"
+    :cwd "/path/to/name")
+  (prodigy-define-tag
+    :name "name"
+    :command "bar"
+    :cwd "/path/to/name")
+  (should (equal prodigy-tags '((:name "name" :command "bar" :cwd "/path/to/name")))))
 
 
 ;;;; prodigy-url

@@ -23,11 +23,16 @@ Add `prodigy` to your [Cask](https://github.com/cask/cask) file:
 
 ## Usage
 
+Start Prodigy with `M-x prodigy`. You should see a list of all defined
+services.
+
+### Services
+
 Services can be defined in a few different ways. See doc-string for
 information about available properties to specify: `M-x
 describe-variable RET prodigy-services`.
 
-### prodigy-define-service (`&rest args`)
+#### prodigy-define-service (`&rest args`)
 
 Services can be defined using the function `prodigy-define-service`:
 
@@ -35,7 +40,7 @@ Services can be defined using the function `prodigy-define-service`:
 (prodigy-define-service :prop value ...)
 ```
 
-### prodigy-services
+#### prodigy-services
 
 Services can be defined by setting the variable `prodigy-services`:
 
@@ -45,11 +50,32 @@ Services can be defined by setting the variable `prodigy-services`:
    (:prop value ...)))
 ```
 
-### customize
+### Tags
 
-TODO
+Services can have any number of tags. Tags does not have to be pre
+defined. If they are, the service will inherit all the tags
+properties. See doc-string for information about available properties
+to specify: `M-x describe-variable RET prodigy-tags`.
 
-## Filters
+#### prodigy-define-tag (`&rest args`)
+
+Tags can be defined using the function `prodigy-define-tag`:
+
+```lisp
+(prodigy-define-tag :prop value ...)
+```
+
+#### prodigy-tags
+
+Tags can be defined by setting the variable `prodigy-tags`:
+
+```lisp
+(setq prodigy-tags
+ '((:prop value ...)
+   (:prop value ...)))
+```
+
+### Filters
 
 Filters is a way to show only specific services in the Prodigy
 buffer. For example services with specific tag or with a name matching
@@ -69,99 +95,6 @@ You can also set the variable `prodigy-filters` directly:
       '((:tag foo)
         (:name "bar")))
 ```
-
-## Commands
-
-Start Prodigy with `M-x prodigy`. You should see a list of all defined
-services.
-
-### Quit (`q`)
-
-Quit Prodigy.
-
-### Next service (`n`)
-
-Go to next service.
-
-### Prev service (`p`)
-
-Go to previous service.
-
-### First service (`M-<`)
-
-Go to first service.
-
-### Last service (`M->`)
-
-Go to last service.
-
-### Start service (`s`)
-
-Start service at line or marked services.
-
-### Stop service (`S`)
-
-Stop service at line or marked services.
-
-### Restart service (`r`)
-
-Restart service at line or marked services.
-
-### Display service process output (`$`)
-
-Switch to buffer for service at line.
-
-### Open in browser (`o`)
-
-Open service at line in browser.
-
-### Mark service (`m`)
-
-Mark service at line.
-
-### Mark services with tag (`t`)
-
-Mark services with tag.
-
-### Mark all services (`M`)
-
-Mark all services.
-
-### Unmark service (`u`)
-
-Unmark service at line.
-
-### Unmark services with tag (`t`)
-
-Unmark services with tag.
-
-### Unmark all services (`U`)
-
-Unmark all services.
-
-### Refresh GUI (`g`)
-
-Refresh GUI.
-
-### Add tag filter (`f t`)
-
-Read tag and show only services with that tag.
-
-### Add name filter (`f n`)
-
-Read string and show only services with name that contains string.
-
-### Clear filters (`F`)
-
-Clear all filters.
-
-### Jump - Magit (`j m`)
-
-Jump to Magit.
-
-### Jump - Dired (`j d`)
-
-Jump to Dired.
 
 ## Examples
 
@@ -204,6 +137,29 @@ Start Sinatra server:
   :tags '(work ruby)
   :init-async (lambda (done)
                 (rvm-activate-ruby-for "/path/to/my/project" done)))
+```
+
+Using tags you can avoid repeating common tasks such as setting up Bundler:
+
+```lisp
+(prodigy-define-tag
+  :name 'rvm
+  :init-async (lambda (done)
+                (rvm-activate-ruby-for default-directory done)))
+
+(prodigy-define-service
+  :name "Rails"
+  :command "bundle"
+  :args '("exec" "rails" "server")
+  :cwd "/path/to/my/project"
+  :tags '(rvm))
+
+(prodigy-define-service
+  :name "Sinatra"
+  :command "bundle"
+  :args '("exec" "rackup")
+  :cwd "/path/to/my/project"
+  :tags '(rvm))
 ```
 
 ## Contribution
