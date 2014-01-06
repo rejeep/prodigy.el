@@ -172,8 +172,11 @@ type of filter and the value is what should be filtered.
 
 Supported filters:
 
-:tag  - name of tag that service must include
-:name - string that service name must contain")
+`tag'
+  Name of tag that service must include.
+
+`name'
+  String that service name must contain.")
 
 (defconst prodigy-buffer-name "*prodigy*"
   "Name of Prodigy mode buffer.")
