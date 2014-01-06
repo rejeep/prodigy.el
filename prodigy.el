@@ -198,7 +198,7 @@ Supported filters:
   "List of statues.
 
 `id'
-  Status identifier. This is a symbol value.
+  Status identifier.  This is a symbol value.
 
 `name'
   The default string representation of the status is by default the id
