@@ -177,8 +177,9 @@ The list is a property list with the following properties:
 
 The list is a property list.  The allowed properties are:
 `command', `args', `cwd', `init', `init-async', `stop-signal',
-`path', `env', `url' and `kill-process-buffer-on-stop'.  For doc
-strings on these properties, see variable `prodigy-services'.")
+`path', `env', `url', `kill-process-buffer-on-stop' and
+`on-output'.  For doc strings on these properties, see variable
+`prodigy-services'.")
 
 (defvar prodigy-filters nil
   "List of filters.
