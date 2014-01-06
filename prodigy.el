@@ -719,6 +719,14 @@ PROCESS is the service process that the OUTPUT is associated to."
     (-when-let (service (prodigy-service-at-pos))
       (setq default-directory (prodigy-service-cwd service)))))
 
+(defun prodigy-define-default-status-list ()
+  "Define the default status list."
+  (prodigy-define-status :id 'stopped :name "")
+  (prodigy-define-status :id 'running :face 'prodigy-green-face)
+  (prodigy-define-status :id 'ready :face 'prodigy-green-face)
+  (prodigy-define-status :id 'restarting :face 'prodigy-orange-face)
+  (prodigy-define-status :id 'failed :face 'prodigy-red-face))
+
 
 ;;;; User functions
 
@@ -948,12 +956,6 @@ The old service process is transfered to the new service."
       prodigy-status-list)))
   (push args prodigy-status-list))
 
-(prodigy-define-status :id 'stopped :name "")
-(prodigy-define-status :id 'running :face 'prodigy-green-face)
-(prodigy-define-status :id 'ready :face 'prodigy-green-face)
-(prodigy-define-status :id 'restarting :face 'prodigy-orange-face)
-(prodigy-define-status :id 'failed :face 'prodigy-red-face)
-
 ;;;###autoload
 (define-derived-mode prodigy-mode tabulated-list-mode "Prodigy"
   "Special mode for prodigy buffers."
@@ -972,6 +974,7 @@ The old service process is transfered to the new service."
   (tabulated-list-init-header)
   (tabulated-list-print)
   (prodigy-set-default-directory)
+  (prodigy-define-default-status-list)
   (when (featurep 'discover)
     (prodigy-discover-initialize))
   (run-mode-hooks 'prodigy-mode-hook))
