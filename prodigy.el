@@ -810,10 +810,12 @@ PROCESS is the service process that the OUTPUT is associated to."
 
 ;;;; Misc
 
+;;;###autoload
 (defun prodigy-add-filter (type value)
   "Add filter TYPE, that filters for VALUE."
   (push (list type value) prodigy-filters))
 
+;;;###autoload
 (defun prodigy-define-service (&rest args)
   "Define a new service with ARGS."
   (declare (indent defun))
@@ -826,6 +828,7 @@ PROCESS is the service process that the OUTPUT is associated to."
       prodigy-services)))
   (push args prodigy-services))
 
+;;;###autoload
 (defun prodigy-define-tag (&rest args)
   "Define a new tag with ARGS."
   (declare (indent defun))
