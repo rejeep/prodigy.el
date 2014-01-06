@@ -9,4 +9,5 @@
  (depends-on "async")
  (depends-on "el-mock")
  (depends-on "ert-runner")
+ (depends-on "ert-async")
  (depends-on "magit"))

@@ -166,3 +166,20 @@
     (should (equal (prodigy-service-url service-2) "http://baz"))
     (should (equal (prodigy-service-url service-3) "http://bar"))
     (should-not (prodigy-service-url service-4))))
+
+
+;;;; prodigy-service-on-output
+
+(ert-deftest prodigy-service-on-output-test ()
+  (let* ((bar (lambda (service output) "bar"))
+         (baz (lambda (service output) "baz"))
+         (prodigy-tags `((:name foo)
+                         (:name bar :on-output ,bar)))
+         (service-1 `(:name "service-1" :on-output ,baz))
+         (service-2 `(:name "service-2" :on-output ,baz :tags (foo bar)))
+         (service-3 '(:name "service-3" :tags (foo bar)))
+         (service-4 '(:name "service-4")))
+    (should (equal (prodigy-service-on-output service-1) (list baz)))
+    (should (equal (prodigy-service-on-output service-2) (list baz bar)))
+    (should (equal (prodigy-service-on-output service-3) (list bar)))
+    (should-not (prodigy-service-on-output service-4))))

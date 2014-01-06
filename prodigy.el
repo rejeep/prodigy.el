@@ -150,7 +150,11 @@ The list is a property list with the following properties:
   Url to use for browsing.
 
 `kill-process-buffer-on-stop'
-  Kill associated process buffer when process stops.")
+  Kill associated process buffer when process stops.
+
+`on-output'
+  Call this function with (service, output), each time process gets
+  new output.")
 
 (defvar prodigy-tags nil
   "List of tags.
@@ -350,6 +354,16 @@ If SERVICE url exists, use that.  If not, find the first SERVICE
 tag that has and return that."
   (prodigy-service-first-tag-with service :url))
 
+(defun prodigy-service-on-output (service)
+  "Return SERVICE and its tags on-output functions as list.
+
+First item in the list is the SERVICE on-output function, then
+comes the SERVICE tags on-output functions."
+  (-reject
+   'null
+   (cons (plist-get service :on-output)
+         (--map (plist-get it :on-output) (prodigy-service-tags service)))))
+
 
 ;;;; Internal functions
 
@@ -548,6 +562,8 @@ PROCESS is the service process that the OUTPUT is associated to."
                (lambda (service)
                  (eq (plist-get service :process) process))
                prodigy-services))
+    (-when-let (on-output (prodigy-service-on-output service))
+      (--each on-output (funcall it service output)))
     (let ((buffer (get-buffer-create (prodigy-buffer-name service))))
       (with-current-buffer buffer
         (let ((inhibit-read-only t))

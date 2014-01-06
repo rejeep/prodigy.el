@@ -11,16 +11,13 @@
     (append plist args)))
 
 (defmacro with-sandbox (&rest body)
-  `(with-mock
-    (stub start-process => "PROCESS")
-    (stub set-process-filter)
-    (stub set-process-query-on-exit-flag)
-    (stub with-timeout)
-    (stub prodigy-service-set)
-    (let ((prodigy-init-async-timeout 1))
-      ,@body)))
+  `(progn
+     (setq prodigy-tags nil)
+     (setq prodigy-services nil)
+     ,@body))
 
 (require 'ert)
+(require 'ert-async)
 (require 'el-mock)
 (require 'cl) ;; for el-mock
 (require 'prodigy (f-expand "prodigy" prodigy-test/root-path))
