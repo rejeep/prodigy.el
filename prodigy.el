@@ -827,7 +827,7 @@ PROCESS is the service process that the OUTPUT is associated to."
     (dired (prodigy-service-cwd service))))
 
 
-;;;; Misc
+;;;; Public API functions
 
 ;;;###autoload
 (defun prodigy-add-filter (type value)
