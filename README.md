@@ -96,6 +96,36 @@ You can also set the variable `prodigy-filters` directly:
         (:name "bar")))
 ```
 
+### Status
+
+Each service is associated with a status. The built in statuses are:
+
+* `stopped` (default) - The process is not running.
+* `running` - The process is running. If the process status is `run`,
+  this status will be used.
+* `ready` - The process is "actually" ready. Not managed by Prodigy.
+* `restarting` - Set when restarting a service.
+* `failed` - The process failed. Not managed by Prodigy.
+
+The only way Prodigy has an idea of the service status, is to look at
+the process status (note the difference between service and process
+status). The process status is however not always a very good
+indication of the service "actual" status. For example, it takes about
+five seconds to start a Rails server, but the process status will be
+`run` almost instantly after started.
+
+To improve the service status, there is a function called
+`prodigy-set-status`, that can change the status of a service. The
+function takes two arguments: The `service` and the `status-id`. The
+status id has to be one of the statuses in `prodigy-status-list`.
+
+You can create your own status with the function
+`prodigy-define-status`. See doc-string for information about
+available properties to specify: `M-x describe-variable RET
+prodigy-status-list`.
+
+For more information, se status example below!
+
 ## Examples
 
 Start simple Python server:
@@ -160,6 +190,31 @@ Using tags you can avoid repeating common tasks such as setting up Bundler:
   :args '("exec" "rackup")
   :cwd "/path/to/my/project"
   :tags '(rvm))
+```
+
+Manually setting status to `ready` when the service is actually ready:
+
+```lisp
+(prodigy-define-tag
+  :name 'rails
+  :on-output (lambda (service output)
+               (when (or (s-matches? "Listening on 0\.0\.0\.0:[0-9]+, CTRL\\+C to stop" output)
+                         (s-matches? "Ctrl-C to shutdown server" output))
+                 (prodigy-set-status service 'ready))))
+
+(prodigy-define-service
+  :name "Rails"
+  :command "bundle"
+  :args '("exec" "rails" "server")
+  :cwd "/path/to/my/project"
+  :tags '(rvm rails))
+
+(prodigy-define-service
+  :name "Sinatra"
+  :command "bundle"
+  :args '("exec" "rackup")
+  :cwd "/path/to/my/project"
+  :tags '(rvm rails))
 ```
 
 ## Troubleshoot

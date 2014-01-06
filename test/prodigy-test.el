@@ -1,45 +1,3 @@
-;;;; prodigy-define-service
-
-(ert-deftest prodigy-define-service-test/new-service ()
-  (prodigy-define-service
-    :name "name"
-    :command "foo"
-    :cwd "/path/to/name")
-  (should (equal prodigy-services '((:name "name" :command "foo" :cwd "/path/to/name")))))
-
-(ert-deftest prodigy-define-service-test/override-service-by-name ()
-  (prodigy-define-service
-    :name "name"
-    :command "foo"
-    :cwd "/path/to/name")
-  (prodigy-define-service
-    :name "name"
-    :command "bar"
-    :cwd "/path/to/name")
-  (should (equal prodigy-services '((:name "name" :command "bar" :cwd "/path/to/name")))))
-
-
-;;;; prodigy-define-tag
-
-(ert-deftest prodigy-define-tag-test/new-tag ()
-  (prodigy-define-tag
-    :name "name"
-    :command "foo"
-    :cwd "/path/to/name")
-  (should (equal prodigy-tags '((:name "name" :command "foo" :cwd "/path/to/name")))))
-
-(ert-deftest prodigy-define-tag-test/override-tag-by-name ()
-  (prodigy-define-tag
-    :name "name"
-    :command "foo"
-    :cwd "/path/to/name")
-  (prodigy-define-tag
-    :name "name"
-    :command "bar"
-    :cwd "/path/to/name")
-  (should (equal prodigy-tags '((:name "name" :command "bar" :cwd "/path/to/name")))))
-
-
 ;;;; prodigy-url
 
 (ert-deftest prodigy-url-test/with-url ()

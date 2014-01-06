@@ -53,14 +53,19 @@
   "Color of current line."
   :group 'prodigy)
 
-(defface prodigy-fail-face
+(defface prodigy-red-face
   '((((class color)) :foreground "firebrick"))
-  "Face to indicate starting service failed."
+  "Red color indicating failure."
   :group 'prodigy)
 
-(defface prodigy-success-face
+(defface prodigy-green-face
   '((((class color)) :foreground "SeaGreen"))
-  "Face to indicate starting service was successful."
+  "Green color indicating success."
+  :group 'prodigy)
+
+(defface prodigy-orange-face
+  '((((class color)) :foreground "DarkOrange"))
+  "Orange color used to indicate something that is not success of failure."
   :group 'prodigy)
 
 (defcustom prodigy-completion-system 'ido
@@ -78,6 +83,11 @@
   "Will kill process buffer on stop if this is true."
   :group 'prodigy
   :type 'boolean)
+
+(defcustom prodigy-timer-interval 1
+  "How often to check for process changes, in seconds."
+  :group 'prodigy
+  :type 'number)
 
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
@@ -106,6 +116,12 @@
     (define-key map (kbd "j d") 'prodigy-jump-dired)
     map)
   "Keymap for `prodigy-mode'.")
+
+(defvar prodigy-timer nil
+  "Timer object checking for process changes.
+
+Do not use or modify this variable, this is purely internal and
+only used for caching.")
 
 (defvar prodigy-services nil
   "List of services.
@@ -177,6 +193,19 @@ Supported filters:
 
 `name'
   String that service name must contain.")
+
+(defvar prodigy-status-list nil
+  "List of statues.
+
+`id'
+  Status identifier. This is a symbol value.
+
+`name'
+  The default string representation of the status is by default the id
+  capitalized.  If name is set, this is used instead.
+
+`face'
+  The face to use for the status.")
 
 (defconst prodigy-buffer-name "*prodigy*"
   "Name of Prodigy mode buffer.")
@@ -441,26 +470,50 @@ has that property and return its value."
       (goto-char pos)
     (error "No service at point %s" pos)))
 
-(defun prodigy-status-name (process)
-  "Return PROCESS status name."
-  (let ((status (process-status process)))
-    (cond ((eq status 'run) "Running")
-          ((eq status 'stop) "Stopped")
-          ((eq status 'exit) "Exit")
-          ((eq status 'signal) "Signal")
-          ((eq status 'open) "Open")
-          ((eq status 'closed) "Closed")
-          ((eq status 'connect) "Connect")
-          ((eq status 'failed) "Failed")
-          ((eq status 'listen) "Listen")
-          (t "Unknown"))))
+(defun prodigy-find-status (id)
+  "Find status by with ID.
 
-(defun prodigy-status-face (process)
-  "Return face depending on PROCESS state."
-  (let ((status (process-status process)))
-    (if (eq status 'run)
-        'prodigy-success-face
-      'prodigy-fail-face)))
+If ID is nil, use id stopped, which is the default service
+status."
+  (unless id (setq id 'stopped))
+  (-first
+   (lambda (status)
+     (eq id (plist-get status :id)))
+   prodigy-status-list))
+
+(defun prodigy-status-name (service)
+  "Return string representation of SERVICE status."
+  (let* ((status-id (plist-get service :status))
+         (status (prodigy-find-status status-id)))
+    (or (plist-get status :name)
+        (s-capitalize (symbol-name status-id)))))
+
+(defun prodigy-status-face (service)
+  "Return SERVICE status face."
+  (let ((status (prodigy-find-status (plist-get service :status))))
+    (plist-get status :face)))
+
+(defun prodigy-start-timer ()
+  "Start timer and call `prodigy-timer-tick' for each time.
+
+The timer is not created if already exists."
+  (or prodigy-timer (setq prodigy-timer (run-at-time 0 prodigy-timer-interval 'prodigy-timer-tick))))
+
+(defun prodigy-timer-tick ()
+  "Check for service process change and update service status.
+
+If status has been changed since last time, update the service
+status."
+  (when (eq major-mode 'prodigy-mode)
+    (-each prodigy-services
+           (lambda (service)
+             (-when-let (process (plist-get service :process))
+               (let ((last-process-status (plist-get service :process-status))
+                     (this-process-status (process-status process)))
+                 (unless (eq last-process-status this-process-status)
+                   (plist-put service :process-status this-process-status)
+                   (let ((status (if (eq this-process-status 'run) 'running 'stopped)))
+                     (prodigy-set-status service status)))))))))
 
 (defun prodigy-tags ()
   "Return uniq list of tags."
@@ -542,7 +595,8 @@ The completion system used is determined by
   (-when-let (process (plist-get service :process))
     (when (process-live-p process)
       (signal-process process (or (prodigy-service-stop-signal service) 'int)))
-    (plist-put service :process nil))
+    (plist-put service :process nil)
+    (plist-put service :process-status nil))
   (let ((kill-process-buffer-on-stop (prodigy-service-kill-process-buffer-on-stop service)))
     (when (or kill-process-buffer-on-stop prodigy-kill-process-buffer-on-stop)
       (-when-let (buffer (get-buffer (prodigy-buffer-name service)))
@@ -613,7 +667,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-status-col (service)
   "Return SERVICE status column."
   (-if-let (process (plist-get service :process))
-      (propertize (prodigy-status-name process) 'face (prodigy-status-face process))
+      (propertize (prodigy-status-name service) 'face (prodigy-status-face service))
     ""))
 
 (defun prodigy-tags-col (service)
@@ -765,6 +819,7 @@ PROCESS is the service process that the OUTPUT is associated to."
   "Restart service at line or marked services."
   (interactive)
   (prodigy-with-refresh
+   (prodigy-set-status (prodigy-service-at-pos) 'restarting)
    (prodigy-apply 'prodigy-stop-service)
    (prodigy-apply 'prodigy-start-service)))
 
@@ -787,7 +842,8 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-refresh ()
   "Refresh list of services."
   (interactive)
-  (tabulated-list-print :remember-pos))
+  (tabulated-list-print :remember-pos)
+  (prodigy-highlight))
 
 (defun prodigy-add-tag-filter ()
   "Read tag and add filter so that only services with that tag show."
@@ -829,6 +885,19 @@ PROCESS is the service process that the OUTPUT is associated to."
 
 ;;;; Public API functions
 
+(defun prodigy-set-status (service status)
+  "Set SERVICE status to STATUS.
+
+STATUS is the id of a status that has been defined (see
+`prodigy-status-list' for a list of defined statuses).  If status
+is not defined an error is raised.
+
+This function will refresh the Prodigy buffer."
+  (if (prodigy-find-status status)
+      (prodigy-with-refresh
+       (plist-put service :status status))
+    (error "Status %s not defined" status)))
+
 ;;;###autoload
 (defun prodigy-add-filter (type value)
   "Add filter TYPE, that filters for VALUE."
@@ -861,6 +930,25 @@ PROCESS is the service process that the OUTPUT is associated to."
   (push args prodigy-tags))
 
 ;;;###autoload
+(defun prodigy-define-status (&rest args)
+  "Define a new status with ARGS."
+  (declare (indent defun))
+  (-when-let (id (plist-get args :id))
+    (setq
+     prodigy-status-list
+     (-reject
+      (lambda (status)
+        (string= (plist-get status :id) id))
+      prodigy-status-list)))
+  (push args prodigy-status-list))
+
+(prodigy-define-status :id 'stopped :name "")
+(prodigy-define-status :id 'running :face 'prodigy-green-face)
+(prodigy-define-status :id 'ready :face 'prodigy-green-face)
+(prodigy-define-status :id 'restarting :face 'prodigy-orange-face)
+(prodigy-define-status :id 'failed :face 'prodigy-red-face)
+
+;;;###autoload
 (define-derived-mode prodigy-mode tabulated-list-mode "Prodigy"
   "Special mode for prodigy buffers."
   (buffer-disable-undo)
@@ -891,6 +979,7 @@ PROCESS is the service process that the OUTPUT is associated to."
     (pop-to-buffer buffer)
     (unless buffer-p
       (prodigy-mode))
+    (prodigy-start-timer)
     (prodigy-highlight)))
 
 (provide 'prodigy)

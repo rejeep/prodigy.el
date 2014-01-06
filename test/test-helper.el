@@ -14,6 +14,7 @@
   `(progn
      (setq prodigy-tags nil)
      (setq prodigy-services nil)
+     (setq prodigy-status-list nil)
      ,@body))
 
 (require 'ert)
