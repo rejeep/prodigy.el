@@ -27,6 +27,11 @@
     :cwd "/path/to/name")
   (should (equal prodigy-services '((:name "name" :command "bar" :cwd "/path/to/name")))))
 
+(ert-deftest prodigy-define-service-test/preserve-process ()
+  (prodigy-define-service :name "name" :process "process")
+  (prodigy-define-service :name "name")
+  (should (equal prodigy-services '((:name "name" :process "process")))))
+
 
 ;;;; prodigy-define-tag
 

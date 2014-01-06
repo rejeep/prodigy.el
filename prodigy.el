@@ -905,16 +905,21 @@ This function will refresh the Prodigy buffer."
 
 ;;;###autoload
 (defun prodigy-define-service (&rest args)
-  "Define a new service with ARGS."
+  "Define a new service with ARGS.
+
+If service with that name already exists, the service is updated.
+The old service process is transfered to the new service."
   (declare (indent defun))
-  (-when-let (service-name (plist-get args :name))
-    (setq
-     prodigy-services
-     (-reject
-      (lambda (service)
-        (string= (plist-get service :name) service-name))
-      prodigy-services)))
-  (push args prodigy-services))
+  (let* ((service-name (plist-get args :name))
+         (fn
+          (lambda (service)
+            (string= (plist-get service :name) service-name)))
+         (service (-first fn prodigy-services)))
+    (when service
+      (-when-let (process (plist-get service :process))
+        (plist-put args :process process))
+      (setq prodigy-services (-reject fn prodigy-services)))
+    (push args prodigy-services)))
 
 ;;;###autoload
 (defun prodigy-define-tag (&rest args)
