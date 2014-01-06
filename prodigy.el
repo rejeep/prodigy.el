@@ -824,8 +824,7 @@ PROCESS is the service process that the OUTPUT is associated to."
       (lambda (service)
         (string= (plist-get service :name) service-name))
       prodigy-services)))
-  (push args prodigy-services)
-  nil)
+  (push args prodigy-services))
 
 (defun prodigy-define-tag (&rest args)
   "Define a new tag with ARGS."
