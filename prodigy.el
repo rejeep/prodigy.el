@@ -183,9 +183,9 @@ Supported filters:
 
 (defconst prodigy-list-format
   [("Marked" 6 t :right-align t)
-   ("Name" 40 t)
-   ("Status" 10 t)
-   ("Tags" 30 nil)]
+   ("Name" 35 t)
+   ("Status" 15 t)
+   ("Tags" 25 nil)]
   "List format.")
 
 (defconst prodigy-list-sort-key
