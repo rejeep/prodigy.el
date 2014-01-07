@@ -6,4 +6,4 @@ Feature: Browse
       | foo  |
     And I start prodigy
     When I press "o"
-    Then I should see message "Could not determine port"
+    Then I should see message "Service does not specify url or port, cannot determine url"

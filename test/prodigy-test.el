@@ -14,3 +14,27 @@
   (with-mock
    (stub prodigy-service-port)
    (should-not (prodigy-url (make-service)))))
+
+
+;;;; prodigy-browse
+
+(ert-deftest prodigy-browse-test/no-url ()
+  (with-mock
+   (stub prodigy-service-at-pos)
+   (stub message)
+   (not-called browse-url)
+   (prodigy-browse)))
+
+(ert-deftest prodigy-browse-test/single-url ()
+  (with-mock
+   (stub prodigy-service-at-pos => '(:url "http://localhost:3000"))
+   (mock (browse-url "http://localhost:3000"))
+   (prodigy-browse)))
+
+(ert-deftest prodigy-browse-test/multiple-url ()
+  (with-mock
+   (stub prodigy-service-at-pos => '(:url ("http://localhost:3000"
+                                           "http://localhost:3000/foo")))
+   (stub prodigy-completing-read => "http://localhost:3000/foo")
+   (mock (browse-url "http://localhost:3000/foo"))
+   (prodigy-browse)))

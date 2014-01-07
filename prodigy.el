@@ -161,7 +161,9 @@ The list is a property list with the following properties:
   environment variable and second item is the value of the variable.
 
 `url'
-  Url to use for browsing.
+  Single url or list of urls to use for browsing.  If single url is
+  specified, use that.  If a list of urls are specified, ask for what
+  url to browse.
 
 `kill-process-buffer-on-stop'
   Kill associated process buffer when process stops.
@@ -843,8 +845,11 @@ PROCESS is the service process that the OUTPUT is associated to."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
     (-if-let (url (prodigy-url service))
-        (browse-url url)
-      (message "Could not determine port"))))
+        (progn
+          (when (listp url)
+            (setq url (prodigy-completing-read "URL: " url)))
+          (browse-url url))
+      (message "Service does not specify url or port, cannot determine url"))))
 
 (defun prodigy-refresh ()
   "Refresh list of services."
