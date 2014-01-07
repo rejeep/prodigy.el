@@ -132,20 +132,27 @@ For more information, see status example below!
 
 ## Examples
 
-Start simple Python server:
+### Python Simple HTTP Server
+
+This service start a Python Simple HTTP Server on port `6001`. When
+stopping the service, the `sigkill` signal is used.
 
 ```lisp
 (prodigy-define-service
   :name "Python app"
   :command "python"
-  :cwd "/path/to/my/project"
   :args '("-m" "SimpleHTTPServer" "6001")
+  :cwd "/path/to/my/project"
   :tags '(work)
   :kill-signal 'sigkill
   :kill-process-buffer-on-stop t)
 ```
 
-Start Node server:
+### Nodemon Server
+
+This service starts a Nodemon serveron port `6002`. The project is
+using NVM (Node Version Manager), so before the process starts, NVM is
+set up.
 
 ```lisp
 (prodigy-define-service
@@ -159,7 +166,11 @@ Start Node server:
                 (nvm-use-for "/path/to/my/project" done)))
 ```
 
-Start Sinatra server:
+### Sinatra Server
+
+This service starts a Sinatra server on port `6003`. The project is
+using RVM (Ruby Version Manager), so before the process starts, RVM is
+set up.
 
 ```lisp
 (prodigy-define-service
@@ -173,7 +184,13 @@ Start Sinatra server:
                 (rvm-activate-ruby-for "/path/to/my/project" done)))
 ```
 
-Using tags you can avoid repeating common tasks such as setting up Bundler:
+### Tag inheritance
+
+Almost all Ruby projects use RVM or a similar project. It would be a
+waste to duplicate that information for each Ruby project. By creating
+the tag `rvm` and tagging services with that, the properties of the
+tag is inherited to the services. That means that both the Rails and
+Sinatra services below, will set up RVM before starting the process.
 
 ```lisp
 (prodigy-define-tag
@@ -196,7 +213,15 @@ Using tags you can avoid repeating common tasks such as setting up Bundler:
   :tags '(rvm))
 ```
 
-Manually setting status to `ready` when the service is actually ready:
+### Fine Tuning Status
+
+Prodigy can only look at the *process* status to determine the
+*service* status. To make status even more useful, you can set status
+manually. Prodigy provides the function `prodigy-set-status` for
+this. In this example, we create a tag `rails` that will set the
+status to `ready` when the server is actually ready.
+
+The services that are tagged with `rails` will all inherit this.
 
 ```lisp
 (prodigy-define-tag
