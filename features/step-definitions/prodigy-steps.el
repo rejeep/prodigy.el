@@ -91,7 +91,7 @@
       (let* ((overlays (overlays-in (line-beginning-position) (line-end-position)))
              (highlighted-line
               (and
-               (eq 'prodigy-line-face (car (--map (overlay-get it 'face) overlays)))
+               (eq 'hl-line (car (--map (overlay-get it 'face) overlays)))
                (line-number-at-pos)))
              (head (car table))
              (rows (cdr table))
