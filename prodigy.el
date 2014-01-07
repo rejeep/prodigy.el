@@ -398,6 +398,11 @@ comes the SERVICE tags on-output functions."
 
 ;;;; Internal functions
 
+(defun prodigy-service-started-p (service)
+  "Return true if SERVICE is started, false otherwise."
+  (-when-let (process (plist-get service :process))
+    (process-live-p process)))
+
 (defun prodigy-service-first-tag-with (service property)
   "Return SERVICE PROPERTY or tag with PROPERTY.
 
@@ -560,39 +565,38 @@ The completion system used is determined by
   (concat "*prodigy-" (s-dashed-words (s-downcase (plist-get service :name))) "*"))
 
 (defun prodigy-start-service (service)
-  "Start process associated with SERVICE."
-  (let ((process (plist-get service :process)))
-    (unless (and process (process-live-p process))
-      (let* ((name (plist-get service :name))
-             (command (prodigy-service-command service))
-             (args (prodigy-service-args service))
-             (default-directory (f-full (prodigy-service-cwd service)))
-             (exec-path (append (prodigy-service-path service) exec-path))
-             (env (--map (s-join "=" it) (prodigy-service-env service)))
-             (process-environment (append env process-environment))
-             (process nil)
-             (create-process
-              (lambda ()
-                (unless process
-                  (setq process (apply 'start-process (append (list name nil command) args)))))))
-        (-when-let (init (prodigy-service-init service))
-          (funcall init))
-        (-when-let (init-async (prodigy-service-init-async service))
-          (let (callbacked)
-            (funcall
-             init-async
-             (lambda ()
-               (setq callbacked t)
-               (funcall create-process)))
-            (with-timeout
-                (prodigy-init-async-timeout
-                 (error "Did not callback async callback within %s seconds"
-                        prodigy-init-async-timeout))
-              (while (not callbacked) (accept-process-output nil 0.005)))))
-        (funcall create-process)
-        (set-process-filter process 'prodigy-process-filter)
-        (set-process-query-on-exit-flag process nil)
-        (plist-put service :process process)))))
+  "Start process associated with SERVICE unless already started."
+  (unless (prodigy-service-started-p service)
+    (let* ((name (plist-get service :name))
+           (command (prodigy-service-command service))
+           (args (prodigy-service-args service))
+           (default-directory (f-full (prodigy-service-cwd service)))
+           (exec-path (append (prodigy-service-path service) exec-path))
+           (env (--map (s-join "=" it) (prodigy-service-env service)))
+           (process-environment (append env process-environment))
+           (process nil)
+           (create-process
+            (lambda ()
+              (unless process
+                (setq process (apply 'start-process (append (list name nil command) args)))))))
+      (-when-let (init (prodigy-service-init service))
+        (funcall init))
+      (-when-let (init-async (prodigy-service-init-async service))
+        (let (callbacked)
+          (funcall
+           init-async
+           (lambda ()
+             (setq callbacked t)
+             (funcall create-process)))
+          (with-timeout
+              (prodigy-init-async-timeout
+               (error "Did not callback async callback within %s seconds"
+                      prodigy-init-async-timeout))
+            (while (not callbacked) (accept-process-output nil 0.005)))))
+      (funcall create-process)
+      (set-process-filter process 'prodigy-process-filter)
+      (set-process-query-on-exit-flag process nil)
+      (plist-put service :process process))))
 
 (defun prodigy-stop-service (service)
   "Stop process associated with SERVICE."
@@ -804,21 +808,26 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-start ()
   "Start service at line or marked services."
   (interactive)
-  (prodigy-with-refresh
-   (prodigy-apply 'prodigy-start-service)))
+  (if (prodigy-service-started-p (prodigy-service-at-pos))
+      (message "Service already started")
+    (prodigy-with-refresh
+     (prodigy-apply 'prodigy-start-service))))
 
 (defun prodigy-stop ()
   "Stop service at line or marked services."
   (interactive)
-  (prodigy-with-refresh
-   (prodigy-apply 'prodigy-stop-service)))
+  (if (prodigy-service-started-p (prodigy-service-at-pos))
+      (prodigy-with-refresh
+       (prodigy-apply 'prodigy-stop-service))
+    (message "Service is not running")))
 
 (defun prodigy-restart ()
   "Restart service at line or marked services."
   (interactive)
   (prodigy-with-refresh
    (prodigy-set-status (prodigy-service-at-pos) 'restarting)
-   (prodigy-apply 'prodigy-stop-service)
+   (when (prodigy-service-started-p (prodigy-service-at-pos))
+     (prodigy-apply 'prodigy-stop-service))
    (prodigy-apply 'prodigy-start-service)))
 
 (defun prodigy-display-process ()

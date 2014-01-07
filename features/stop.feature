@@ -9,10 +9,7 @@ Feature: Stop
 
   Scenario: Not started
     When I stop service
-    Then I should see services:
-      | name | highlighted | marked | started |
-      | bar  | t           | nil    | nil     |
-      | foo  | nil         | nil    | nil     |
+    Then I should see message "Service is not running"
 
   Scenario: Stop process at line
     When I start service
