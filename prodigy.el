@@ -511,7 +511,12 @@ status."
                      (this-process-status (process-status process)))
                  (unless (eq last-process-status this-process-status)
                    (plist-put service :process-status this-process-status)
-                   (let ((status (if (eq this-process-status 'run) 'running 'stopped)))
+                   (let ((status
+                          (if (eq this-process-status 'run)
+                              'running
+                            (if (= (process-exit-status process) 0)
+                                'stopped
+                              'failed))))
                      (prodigy-set-status service status)))))))))
 
 (defun prodigy-tags ()
