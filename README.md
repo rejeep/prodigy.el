@@ -81,12 +81,16 @@ Filters is a way to show only specific services in the Prodigy
 buffer. For example services with specific tag or with a name matching
 a string.
 
+#### prodigy-add-filter (`&rest args`)
+
 To add a filter, use `prodigy-add-filter`:
 
 ```lisp
 (prodigy-add-filter :tag 'foo)
 (prodigy-add-filter :name "bar")
 ```
+
+#### prodigy-filters
 
 You can also set the variable `prodigy-filters` directly:
 
