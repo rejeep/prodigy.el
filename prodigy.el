@@ -50,18 +50,20 @@
   :link '(url-link :tag "Github" "https://github.com/rejeep/prodigy.el"))
 
 (defface prodigy-red-face
-  '((((class color)) :foreground "firebrick"))
+  '((((class color)) :foreground "#cd4d40"))
   "Red color indicating failure."
   :group 'prodigy)
 
 (defface prodigy-green-face
-  '((((class color)) :foreground "SeaGreen"))
+  '((((class color)) :foreground "#61b361"))
   "Green color indicating success."
   :group 'prodigy)
 
-(defface prodigy-orange-face
-  '((((class color)) :foreground "DarkOrange"))
-  "Orange color used to indicate something that is not success of failure."
+(defface prodigy-yellow-face
+  '((((class color)) :foreground "#e7e24c"))
+  "Yellow color used to indicate something that is not success of failure.
+
+An example is restarting a service."
   :group 'prodigy)
 
 (defcustom prodigy-completion-system 'ido
@@ -706,7 +708,7 @@ PROCESS is the service process that the OUTPUT is associated to."
   (prodigy-define-status :id 'stopped :name "")
   (prodigy-define-status :id 'running :face 'prodigy-green-face)
   (prodigy-define-status :id 'ready :face 'prodigy-green-face)
-  (prodigy-define-status :id 'restarting :face 'prodigy-orange-face)
+  (prodigy-define-status :id 'restarting :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'failed :face 'prodigy-red-face))
 
 
