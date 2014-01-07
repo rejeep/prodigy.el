@@ -137,7 +137,7 @@ Start simple Python server:
   :cwd "/path/to/my/project"
   :args '("-m" "SimpleHTTPServer" "6001")
   :tags '(work)
-  :kill-signal 'sigint
+  :kill-signal 'sigkill
   :kill-process-buffer-on-stop t)
 ```
 
