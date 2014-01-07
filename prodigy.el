@@ -37,6 +37,7 @@
 (require 'ansi-color)
 (require 'tabulated-list)
 (require 'easymenu)
+(require 'hl-line)
 
 (eval-when-compile
   (declare-function discover-add-context-menu "discover")
@@ -47,11 +48,6 @@
   :prefix "prodigy-"
   :group 'tools
   :link '(url-link :tag "Github" "https://github.com/rejeep/prodigy.el"))
-
-(defface prodigy-line-face
-  '((((class color)) :background "#4A708B"))
-  "Color of current line."
-  :group 'prodigy)
 
 (defface prodigy-red-face
   '((((class color)) :foreground "firebrick"))
@@ -636,20 +632,6 @@ PROCESS is the service process that the OUTPUT is associated to."
      (equal (plist-get service :name) name))
    prodigy-services))
 
-(defun prodigy-highlight ()
-  "Highlight current line."
-  (when (eq major-mode 'prodigy-mode)
-    (let ((beg (line-beginning-position))
-          (end (line-beginning-position 2))
-          (inhibit-read-only t))
-      (overlay-put (make-overlay beg end) 'face 'prodigy-line-face))))
-
-(defun prodigy-unhighlight ()
-  "Unhighlight current line."
-  (when (eq major-mode 'prodigy-mode)
-    (let ((inhibit-read-only t))
-      (remove-overlays (line-beginning-position) (line-beginning-position 2)))))
-
 (defun prodigy-service-id (service)
   "Return SERVICE identifier."
   (let* ((name (plist-get service :name))
@@ -851,8 +833,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-refresh ()
   "Refresh list of services."
   (interactive)
-  (tabulated-list-print :remember-pos)
-  (prodigy-highlight))
+  (tabulated-list-print :remember-pos))
 
 (defun prodigy-add-tag-filter ()
   "Read tag and add filter so that only services with that tag show."
@@ -965,8 +946,6 @@ The old service process is transfered to the new service."
   (setq mode-name "Prodigy")
   (setq major-mode 'prodigy-mode)
   (use-local-map prodigy-mode-map)
-  (add-hook 'pre-command-hook 'prodigy-unhighlight)
-  (add-hook 'post-command-hook 'prodigy-highlight)
   (add-hook 'post-command-hook 'prodigy-set-default-directory)
   (setq tabulated-list-format prodigy-list-format)
   (setq tabulated-list-entries 'prodigy-list-entries)
@@ -975,6 +954,7 @@ The old service process is transfered to the new service."
   (tabulated-list-print)
   (prodigy-set-default-directory)
   (prodigy-define-default-status-list)
+  (hl-line-mode 1)
   (when (featurep 'discover)
     (prodigy-discover-initialize))
   (run-mode-hooks 'prodigy-mode-hook))
@@ -988,8 +968,7 @@ The old service process is transfered to the new service."
     (pop-to-buffer buffer)
     (unless buffer-p
       (prodigy-mode))
-    (prodigy-start-timer)
-    (prodigy-highlight)))
+    (prodigy-start-timer)))
 
 (provide 'prodigy)
 
