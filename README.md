@@ -128,7 +128,7 @@ You can create your own status with the function
 available properties to specify: `M-x describe-variable RET
 prodigy-status-list`.
 
-For more information, se status example below!
+For more information, see status example below!
 
 ## Examples
 
