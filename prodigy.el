@@ -833,7 +833,8 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-refresh ()
   "Refresh list of services."
   (interactive)
-  (tabulated-list-print :remember-pos))
+  (tabulated-list-print :remember-pos)
+  (hl-line-highlight))
 
 (defun prodigy-add-tag-filter ()
   "Read tag and add filter so that only services with that tag show."
