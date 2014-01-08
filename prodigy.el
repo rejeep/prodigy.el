@@ -405,6 +405,10 @@ comes the SERVICE tags on-output functions."
 
 ;;;; Internal functions
 
+(defun prodigy-service-stopping-p (service)
+  "Return true if SERVICE is currently stopping, false otherwise."
+  (eq (plist-get service :status) 'stopping))
+
 (defun prodigy-maybe-kill-process-buffer (service)
   "Kill SERVICE buffer if kill-process-buffer-on-stop is t."
   (let ((kill-process-buffer-on-stop (prodigy-service-kill-process-buffer-on-stop service)))
@@ -612,11 +616,16 @@ The completion system used is determined by
       (set-process-query-on-exit-flag process nil)
       (plist-put service :process process))))
 
-(defun prodigy-stop-service (service &optional force)
+(defun prodigy-stop-service (service &optional force callback)
   "Stop process associated with SERVICE.
 
 If FORCE is t, the process will be killed instead of signaled
 with a SIGKILL signal.
+
+When CALLBACK function is specified, that is called when the
+process has been stopped or when it was not possible to stop the
+process and the number of retries for the status check has
+exceeded.
 
 When the process has been signaled/killed, a timer starts and
 checks every second for `prodigy-stop-tryouts' times if the
@@ -626,36 +635,43 @@ status.  If the process is successfully stopped, the process is
 put in stopped status."
   (-when-let (process (plist-get service :process))
     (when (process-live-p process)
-      (prodigy-set-status service 'stopping)
-      (if force
-          (kill-process process)
-        (signal-process process (or (prodigy-service-stop-signal service) 'int)))
-      (let (timer (tryout 0))
-        (setq
-         timer
-         (run-at-time
-          0
-          1
-          (lambda ()
-            (setq tryout (1+ tryout))
-            (unless (process-live-p process)
-              (plist-put service :process nil)
-              (plist-put service :process-status nil)
-              (prodigy-set-status service 'stopped))
-            (when (= tryout prodigy-stop-tryouts)
-              (prodigy-set-status service 'failed))
-            (when (or (= tryout prodigy-stop-tryouts) (not (process-live-p process)))
+      (unless (prodigy-service-stopping-p service) ; Weird things can
+                                        ; happen with
+                                        ; timers if already
+                                        ; running.
+        (prodigy-set-status service 'stopping)
+        (if force
+            (kill-process process)
+          (signal-process process (or (prodigy-service-stop-signal service) 'int)))
+        (let (timer (tryout 0))
+          (setq
+           timer
+           (run-at-time
+            0
+            1
+            (lambda ()
+              (setq tryout (1+ tryout))
               (unless (process-live-p process)
-                (prodigy-maybe-kill-process-buffer service))
-              (cancel-timer timer)))))))))
+                (plist-put service :process nil)
+                (plist-put service :process-status nil)
+                (prodigy-set-status service 'stopped))
+              (when (= tryout prodigy-stop-tryouts)
+                (prodigy-set-status service 'failed))
+              (when (or (= tryout prodigy-stop-tryouts) (not (process-live-p process)))
+                (unless (process-live-p process)
+                  (prodigy-maybe-kill-process-buffer service))
+                (cancel-timer timer)
+                (when callback
+                  (funcall callback)))))))))))
 
-(defun prodigy-apply (fn &rest args)
-  "Apply FN with ARGS to service at line or marked services."
-  (let ((services (prodigy-marked-services)))
-    (if services
-        (-each services fn)
-      (-when-let (service (prodigy-service-at-pos))
-        (apply fn (cons service args))))))
+(defun prodigy-relevant-services ()
+  "Return list of relevant services.
+
+If there are any marked services, those are returned.  Otherwise,
+the service at pos is returned.
+
+Note that the return value is always a list."
+  (or (prodigy-marked-services) (list (prodigy-service-at-pos))))
 
 (defun prodigy-process-filter (process output)
   "Process filter for service processes.
@@ -849,7 +865,7 @@ PROCESS is the service process that the OUTPUT is associated to."
   "Start service at line or marked services."
   (interactive)
   (prodigy-with-refresh
-   (prodigy-apply 'prodigy-start-service)))
+   (-each (prodigy-relevant-services) 'prodigy-start-service)))
 
 (defun prodigy-stop (&optional force)
   "Stop service at line or marked services.
@@ -858,16 +874,23 @@ If prefix argument (or FORCE is t), force kill the process with a
 SIGNINT signal."
   (interactive "P")
   (prodigy-with-refresh
-   (prodigy-apply 'prodigy-stop-service force)))
+   (-each (prodigy-relevant-services) 'prodigy-stop-service)))
 
 (defun prodigy-restart ()
   "Restart service at line or marked services."
   (interactive)
-  (prodigy-with-refresh
-   (prodigy-set-status (prodigy-service-at-pos) 'restarting)
-   (when (prodigy-service-started-p (prodigy-service-at-pos))
-     (prodigy-apply 'prodigy-stop-service))
-   (prodigy-apply 'prodigy-start-service)))
+  (-each (prodigy-relevant-services)
+         (lambda (service)
+           (prodigy-with-refresh
+            (prodigy-set-status service 'restarting)
+            (if (prodigy-service-started-p service)
+                (prodigy-stop-service
+                 service
+                 nil
+                 (lambda ()
+                   (prodigy-with-refresh
+                    (prodigy-start-service service))))
+              (prodigy-start-service service))))))
 
 (defun prodigy-display-process ()
   "Switch to process buffer for service at current line."
