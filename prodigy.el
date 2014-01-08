@@ -887,7 +887,9 @@ If prefix argument (or FORCE is t), force kill the process with a
 SIGNINT signal."
   (interactive "P")
   (prodigy-with-refresh
-   (-each (prodigy-relevant-services) 'prodigy-stop-service)))
+   (-each (prodigy-relevant-services)
+          (lambda (service)
+            (prodigy-stop-service service force)))))
 
 (defun prodigy-restart ()
   "Restart service at line or marked services."
