@@ -120,10 +120,10 @@
 
 ;;;; prodigy-service-path
 
-(ert-deftest prodigy-service-path-test ()
-  (let ((prodigy-tags '((:name foo :path ("foo"))
+(ert-deftest prodigy-service-path-test/combine-service-path-and-tags-path ()
+  (let ((prodigy-tags '((:name foo :path (lambda () "foo"))
                         (:name bar :path ("bar" "baz"))))
-        (service-1 '(:name "service-1" :path ("baz")))
+        (service-1 '(:name "service-1" :path "baz"))
         (service-2 '(:name "service-2" :path ("baz" "qux") :tags (foo bar)))
         (service-3 '(:name "service-3" :tags (foo bar)))
         (service-4 '(:name "service-4")))
@@ -131,6 +131,14 @@
     (should (equal (prodigy-service-path service-2) '("baz" "qux" "foo" "bar")))
     (should (equal (prodigy-service-path service-3) '("foo" "bar" "baz")))
     (should (equal (prodigy-service-path service-4) '()))))
+
+(ert-deftest prodigy-service-path-test/string-list-and-lambda ()
+  (let ((service '(:name "service" :path ("/path/to/foo"
+                                          ("/path/to/bar")
+                                          (lambda () "/path/to/baz")
+                                          (lambda () (list "/path/to/qux"))))))
+    (should (equal (prodigy-service-path service)
+                   '("/path/to/foo" "/path/to/bar" "/path/to/baz" "/path/to/qux")))))
 
 
 ;;;; prodigy-service-env

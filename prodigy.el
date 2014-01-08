@@ -159,7 +159,9 @@ The list is a property list with the following properties:
   Signal to send to processes to stop (defaults to 'int).
 
 `path'
-  List of directories added to PATH when command runs.
+  Use this to add directories to PATH when starting service process.
+  This can be a string, a list or a function.  For more information
+  see doc-string for `prodigy-service-path'.
 
 `env'
   List of lists (with two items).  First item is the name of an
@@ -366,11 +368,11 @@ SERVICE tag that has and return that."
 (defun prodigy-service-path (service)
   "Return list of SERVICE path extended with all tags path."
   (-uniq
-   (append
-    (plist-get service :path)
-    (-flatten
+   (-flatten
+    (append
+     (prodigy-resolve-pathy (plist-get service :path))
      (-map (lambda (tag)
-             (plist-get tag :path))
+             (prodigy-resolve-pathy (plist-get tag :path)))
            (prodigy-service-tags service))))))
 
 (defun prodigy-service-env (service)
@@ -404,6 +406,27 @@ comes the SERVICE tags on-output functions."
 
 
 ;;;; Internal functions
+
+(defun prodigy-resolve-pathy (pathy)
+  "Resolve PATHY to a string path.
+
+PATHY can be either of:
+
+`string'
+  String path.
+
+`list'
+  List of string paths.
+
+`lambda'
+  A lambda function that return either a string path or a list of
+  string paths."
+  (cond ((functionp pathy)
+         (prodigy-resolve-pathy (funcall pathy)))
+        ((listp pathy)
+         (-map 'prodigy-resolve-pathy pathy))
+        ((stringp pathy)
+         (list pathy))))
 
 ;; In Emacs < 24.4, there is a (known) bug with `run-at-time'. If the
 ;; callback takes longer than the REPEAT time, the timer could not be
