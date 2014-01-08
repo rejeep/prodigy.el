@@ -537,10 +537,17 @@ status."
   "Start timer and call `prodigy-timer-tick' for each time.
 
 The timer is not created if already exists."
-  (or prodigy-timer (setq prodigy-timer (run-at-time 0 prodigy-timer-interval 'prodigy-timer-tick))))
+  (or prodigy-timer
+      (setq prodigy-timer
+            (prog1
+                (prodigy-every prodigy-timer-interval 'prodigy-timer-tick)
+              (prodigy-timer-tick)))))
 
-(defun prodigy-timer-tick ()
+(defun prodigy-timer-tick (&optional next)
   "Check for service process change and update service status.
+
+When NEXT is specifed, call that to start a new timer.  See
+`prodigy-every'.
 
 If status has been changed since last time, update the service
 status."
@@ -558,7 +565,8 @@ status."
                             (if (= (process-exit-status process) 0)
                                 'stopped
                               'failed))))
-                     (prodigy-set-status service status)))))))))
+                     (prodigy-set-status service status)))))))
+    (when next (funcall next))))
 
 (defun prodigy-tags ()
   "Return uniq list of tags."
