@@ -546,11 +546,11 @@ The timer is not created if already exists."
 (defun prodigy-service-status-check (&optional next)
   "Check for service process change and update service status.
 
-When NEXT is specifed, call that to start a new timer.  See
-`prodigy-every'.
-
 If status has been changed since last time, update the service
-status."
+status.
+
+When NEXT is specifed, call that to start a new timer.  See
+`prodigy-every'."
   (when (eq major-mode 'prodigy-mode)
     (-each prodigy-services
            (lambda (service)
