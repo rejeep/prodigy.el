@@ -1,6 +1,3 @@
-(eval-when-compile
-  (defvar prodigy-test/test-path))
-
 (defun make-server-service (&rest args)
   (plist-put args :name "Foo")
   (plist-put args :command "server")
