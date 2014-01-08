@@ -42,21 +42,23 @@
 ;;;; init-async
 
 (ert-deftest-async prodigy-init-async-test/callbacked ()
-  (let (foo)
-    (let ((service
-           (make-server-service
-            :init-async (lambda (done)
-                          (setq foo "bar")
-                          (funcall done)))))
-      (prodigy-start-service service)
-      (prodigy-stop-service service)
-      (should (string= foo "bar")))))
+  (with-sandbox
+   (let (foo)
+     (let ((service
+            (make-server-service
+             :init-async (lambda (done)
+                           (setq foo "bar")
+                           (funcall done)))))
+       (prodigy-start-service service)
+       (prodigy-stop-service service)
+       (should (string= foo "bar"))))))
 
 (ert-deftest-async prodigy-init-async-test/not-callbacked ()
-  (should-error
-   (let ((prodigy-init-async-timeout 1)
-         (service
-          (make-server-service
-           :init-async (lambda (done)))))
-     (prodigy-start-service service)
-     (prodigy-stop-service service))))
+  (with-sandbox
+   (should-error
+    (let ((prodigy-init-async-timeout 1)
+          (service
+           (make-server-service
+            :init-async (lambda (done)))))
+      (prodigy-start-service service)
+      (prodigy-stop-service service)))))
