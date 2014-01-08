@@ -77,6 +77,11 @@ An example is restarting a service."
   :group 'prodigy
   :type 'number)
 
+(defcustom prodigy-stop-tryouts 10
+  "Number of times to check for service being stopped."
+  :group 'prodigy
+  :type 'number)
+
 (defcustom prodigy-kill-process-buffer-on-stop nil
   "Will kill process buffer on stop if this is true."
   :group 'prodigy
@@ -400,6 +405,13 @@ comes the SERVICE tags on-output functions."
 
 ;;;; Internal functions
 
+(defun prodigy-maybe-kill-process-buffer (service)
+  "Kill SERVICE buffer if kill-process-buffer-on-stop is t."
+  (let ((kill-process-buffer-on-stop (prodigy-service-kill-process-buffer-on-stop service)))
+    (when (or kill-process-buffer-on-stop prodigy-kill-process-buffer-on-stop)
+      (-when-let (buffer (get-buffer (prodigy-buffer-name service)))
+        (kill-buffer buffer)))))
+
 (defun prodigy-service-started-p (service)
   "Return true if SERVICE is started, false otherwise."
   (-when-let (process (plist-get service :process))
@@ -600,25 +612,50 @@ The completion system used is determined by
       (set-process-query-on-exit-flag process nil)
       (plist-put service :process process))))
 
-(defun prodigy-stop-service (service)
-  "Stop process associated with SERVICE."
+(defun prodigy-stop-service (service &optional force)
+  "Stop process associated with SERVICE.
+
+If FORCE is t, the process will be killed instead of signaled
+with a SIGKILL signal.
+
+When the process has been signaled/killed, a timer starts and
+checks every second for `prodigy-stop-tryouts' times if the
+process is live.  If the process lives after
+`prodigy-stop-tryouts' seconds, the process is put in failed
+status.  If the process is successfully stopped, the process is
+put in stopped status."
   (-when-let (process (plist-get service :process))
     (when (process-live-p process)
-      (signal-process process (or (prodigy-service-stop-signal service) 'int)))
-    (plist-put service :process nil)
-    (plist-put service :process-status nil))
-  (let ((kill-process-buffer-on-stop (prodigy-service-kill-process-buffer-on-stop service)))
-    (when (or kill-process-buffer-on-stop prodigy-kill-process-buffer-on-stop)
-      (-when-let (buffer (get-buffer (prodigy-buffer-name service)))
-        (kill-buffer buffer)))))
+      (prodigy-set-status service 'stopping)
+      (if force
+          (kill-process process)
+        (signal-process process (or (prodigy-service-stop-signal service) 'int)))
+      (let (timer (tryout 0))
+        (setq
+         timer
+         (run-at-time
+          0
+          1
+          (lambda ()
+            (setq tryout (1+ tryout))
+            (unless (process-live-p process)
+              (plist-put service :process nil)
+              (plist-put service :process-status nil)
+              (prodigy-set-status service 'stopped))
+            (when (= tryout prodigy-stop-tryouts)
+              (prodigy-set-status service 'failed))
+            (when (or (= tryout prodigy-stop-tryouts) (not (process-live-p process)))
+              (unless (process-live-p process)
+                (prodigy-maybe-kill-process-buffer service))
+              (cancel-timer timer)))))))))
 
-(defun prodigy-apply (fn)
-  "Apply FN to service at line or marked services."
+(defun prodigy-apply (fn &rest args)
+  "Apply FN with ARGS to service at line or marked services."
   (let ((services (prodigy-marked-services)))
     (if services
         (-each services fn)
       (-when-let (service (prodigy-service-at-pos))
-        (funcall fn service)))))
+        (apply fn (cons service args))))))
 
 (defun prodigy-process-filter (process output)
   "Process filter for service processes.
@@ -720,6 +757,7 @@ PROCESS is the service process that the OUTPUT is associated to."
   (prodigy-define-status :id 'running :face 'prodigy-green-face)
   (prodigy-define-status :id 'ready :face 'prodigy-green-face)
   (prodigy-define-status :id 'restarting :face 'prodigy-yellow-face)
+  (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'failed :face 'prodigy-red-face))
 
 
@@ -813,11 +851,14 @@ PROCESS is the service process that the OUTPUT is associated to."
   (prodigy-with-refresh
    (prodigy-apply 'prodigy-start-service)))
 
-(defun prodigy-stop ()
-  "Stop service at line or marked services."
-  (interactive)
+(defun prodigy-stop (&optional force)
+  "Stop service at line or marked services.
+
+If prefix argument (or FORCE is t), force kill the process with a
+SIGNINT signal."
+  (interactive "P")
   (prodigy-with-refresh
-   (prodigy-apply 'prodigy-stop-service)))
+   (prodigy-apply 'prodigy-stop-service force)))
 
 (defun prodigy-restart ()
   "Restart service at line or marked services."
