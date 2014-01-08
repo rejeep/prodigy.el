@@ -7,10 +7,6 @@ Feature: Stop
       | bar  | bar | server  | ("bar") | (("PORT" "6002")) | nil                         |
     And I start prodigy
 
-  Scenario: Not started
-    When I stop service
-    Then I should see message "Service is not running"
-
   Scenario: Stop process at line
     When I start service
     Then requesting "http://127.0.0.1:6002" should respond with "BAR"

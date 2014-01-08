@@ -810,18 +810,14 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-start ()
   "Start service at line or marked services."
   (interactive)
-  (if (prodigy-service-started-p (prodigy-service-at-pos))
-      (message "Service already started")
-    (prodigy-with-refresh
-     (prodigy-apply 'prodigy-start-service))))
+  (prodigy-with-refresh
+   (prodigy-apply 'prodigy-start-service)))
 
 (defun prodigy-stop ()
   "Stop service at line or marked services."
   (interactive)
-  (if (prodigy-service-started-p (prodigy-service-at-pos))
-      (prodigy-with-refresh
-       (prodigy-apply 'prodigy-stop-service))
-    (message "Service is not running")))
+  (prodigy-with-refresh
+   (prodigy-apply 'prodigy-stop-service)))
 
 (defun prodigy-restart ()
   "Restart service at line or marked services."
