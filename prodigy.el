@@ -588,8 +588,8 @@ When NEXT is specifed, call that to start a new timer.  See
                             (if (= (process-exit-status process) 0)
                                 'stopped
                               'failed))))
-                     (prodigy-set-status service status)))))))
-    (when next (funcall next))))
+                     (prodigy-set-status service status))))))))
+  (when next (funcall next)))
 
 (defun prodigy-tags ()
   "Return uniq list of tags."
