@@ -533,17 +533,17 @@ status."
   (let ((status (prodigy-find-status (plist-get service :status))))
     (plist-get status :face)))
 
-(defun prodigy-start-timer ()
-  "Start timer and call `prodigy-timer-tick' for each time.
+(defun prodigy-start-status-check-timer ()
+  "Start timer and call `prodigy-service-status-check' for each time.
 
 The timer is not created if already exists."
   (or prodigy-timer
       (setq prodigy-timer
             (prog1
-                (prodigy-every prodigy-timer-interval 'prodigy-timer-tick)
-              (prodigy-timer-tick)))))
+                (prodigy-every prodigy-timer-interval 'prodigy-service-status-check)
+              (prodigy-service-status-check)))))
 
-(defun prodigy-timer-tick (&optional next)
+(defun prodigy-service-status-check (&optional next)
   "Check for service process change and update service status.
 
 When NEXT is specifed, call that to start a new timer.  See
@@ -1072,7 +1072,7 @@ The old service process is transfered to the new service."
     (pop-to-buffer buffer)
     (unless buffer-p
       (prodigy-mode))
-    (prodigy-start-timer)))
+    (prodigy-start-status-check-timer)))
 
 (provide 'prodigy)
 
