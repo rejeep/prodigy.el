@@ -562,9 +562,9 @@ status."
 The timer is not created if already exists."
   (or prodigy-timer
       (setq prodigy-timer
-            (prog1
-                (prodigy-every prodigy-timer-interval 'prodigy-service-status-check)
-              (prodigy-service-status-check)))))
+            (progn
+              (prodigy-service-status-check)
+              (prodigy-every prodigy-timer-interval 'prodigy-service-status-check)))))
 
 (defun prodigy-service-status-check (&optional next)
   "Check for service process change and update service status.
