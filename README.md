@@ -108,7 +108,6 @@ Each service is associated with a status. The built in statuses are:
 * `running` - The process is running. If the process status is `run`,
   this status will be used.
 * `ready` - The process is "actually" ready. Not managed by Prodigy.
-* `restarting` - Set when restarting a service.
 * `stopping` - Set when a service is stopping.
 * `failed` - The process failed. Not managed by Prodigy.
 

@@ -405,6 +405,24 @@ comes the SERVICE tags on-output functions."
 
 ;;;; Internal functions
 
+;; In Emacs < 24.4, there is a (known) bug with `run-at-time'. If the
+;; callback takes longer than the REPEAT time, the timer could not be
+;; cleared.
+(defun prodigy-every (seconds callback)
+  "Every SECONDS, run CALLBACK.
+
+CALLBACK is called with a function that must be called in order
+for this function to continue.  If that function is not called,
+the timeouts stop."
+  (declare (indent 2))
+  (run-at-time
+   seconds
+   nil
+   (lambda ()
+     (funcall callback
+              (lambda ()
+                (prodigy-every seconds callback))))))
+
 (defun prodigy-service-stopping-p (service)
   "Return true if SERVICE is currently stopping, false otherwise."
   (eq (plist-get service :status) 'stopping))
@@ -633,12 +651,9 @@ process is live.  If the process lives after
 `prodigy-stop-tryouts' seconds, the process is put in failed
 status.  If the process is successfully stopped, the process is
 put in stopped status."
-  (-when-let (process (plist-get service :process))
-    (when (process-live-p process)
-      (unless (prodigy-service-stopping-p service) ; Weird things can
-                                        ; happen with
-                                        ; timers if already
-                                        ; running.
+  (unless (prodigy-service-stopping-p service)
+    (-when-let (process (plist-get service :process))
+      (when (process-live-p process)
         (prodigy-set-status service 'stopping)
         (if force
             (kill-process process)
@@ -646,23 +661,22 @@ put in stopped status."
         (let (timer (tryout 0))
           (setq
            timer
-           (run-at-time
-            0
-            1
-            (lambda ()
-              (setq tryout (1+ tryout))
-              (unless (process-live-p process)
-                (plist-put service :process nil)
-                (plist-put service :process-status nil)
-                (prodigy-set-status service 'stopped))
-              (when (= tryout prodigy-stop-tryouts)
-                (prodigy-set-status service 'failed))
-              (when (or (= tryout prodigy-stop-tryouts) (not (process-live-p process)))
-                (unless (process-live-p process)
-                  (prodigy-maybe-kill-process-buffer service))
-                (cancel-timer timer)
-                (when callback
-                  (funcall callback)))))))))))
+           (prodigy-every 1
+                          (lambda (next)
+                            (setq tryout (1+ tryout))
+                            (unless (process-live-p process)
+                              (plist-put service :process nil)
+                              (plist-put service :process-status nil)
+                              (prodigy-set-status service 'stopped))
+                            (when (= tryout prodigy-stop-tryouts)
+                              (prodigy-set-status service 'failed))
+                            (if (or (= tryout prodigy-stop-tryouts) (not (process-live-p process)))
+                                (progn
+                                  (unless (process-live-p process)
+                                    (prodigy-maybe-kill-process-buffer service))
+                                  (when (and callback (not (process-live-p process)))
+                                    (funcall callback)))
+                              (funcall next))))))))))
 
 (defun prodigy-relevant-services ()
   "Return list of relevant services.
@@ -772,7 +786,6 @@ PROCESS is the service process that the OUTPUT is associated to."
   (prodigy-define-status :id 'stopped :name "")
   (prodigy-define-status :id 'running :face 'prodigy-green-face)
   (prodigy-define-status :id 'ready :face 'prodigy-green-face)
-  (prodigy-define-status :id 'restarting :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'failed :face 'prodigy-red-face))
 
@@ -882,7 +895,6 @@ SIGNINT signal."
   (-each (prodigy-relevant-services)
          (lambda (service)
            (prodigy-with-refresh
-            (prodigy-set-status service 'restarting)
             (if (prodigy-service-started-p service)
                 (prodigy-stop-service
                  service
