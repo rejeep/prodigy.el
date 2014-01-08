@@ -28,8 +28,8 @@
      :name 'tag
      :on-output (lambda (service output)
                   (when (string= output "Ready!\n")
-                    (funcall done-tag)
-                    (prodigy-stop-service service))))
+                    (prodigy-stop-service service)
+                    (funcall done-tag))))
    (let ((service
           (make-server-service
            :tags '(tag)
