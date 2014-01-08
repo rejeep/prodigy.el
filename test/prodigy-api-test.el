@@ -58,25 +58,27 @@
 
 (ert-deftest prodigy-define-status-test/new-status ()
   (with-sandbox
-   (prodigy-define-status
-     :id 'foo
-     :name "Foo"
-     :face 'foo-face)
-   (let ((status '((:id foo :name "Foo" :face foo-face))))
-     (should (equal prodigy-status-list status)))))
+   (let (prodigy-status-list)
+     (prodigy-define-status
+       :id 'foo
+       :name "Foo"
+       :face 'foo-face)
+     (let ((status '((:id foo :name "Foo" :face foo-face))))
+       (should (equal prodigy-status-list status))))))
 
 (ert-deftest prodigy-define-status-test/override-tag-by-name ()
   (with-sandbox
-   (prodigy-define-status
-     :id 'foo
-     :name "Foo"
-     :face 'foo-face)
-   (prodigy-define-status
-     :id 'foo
-     :name "Bar"
-     :face 'foo-face)
-   (let ((status '((:id foo :name "Bar" :face foo-face))))
-     (should (equal prodigy-status-list status)))))
+   (let (prodigy-status-list)
+     (prodigy-define-status
+       :id 'foo
+       :name "Foo"
+       :face 'foo-face)
+     (prodigy-define-status
+       :id 'foo
+       :name "Bar"
+       :face 'foo-face)
+     (let ((status '((:id foo :name "Bar" :face foo-face))))
+       (should (equal prodigy-status-list status))))))
 
 
 ;;;; prodigy-set-status

@@ -15,6 +15,7 @@
      (setq prodigy-tags nil)
      (setq prodigy-services nil)
      (setq prodigy-status-list nil)
+     (prodigy-define-default-status-list)
      ,@body))
 
 (require 'ert)
