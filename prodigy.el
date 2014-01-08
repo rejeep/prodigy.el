@@ -662,21 +662,21 @@ put in stopped status."
           (setq
            timer
            (prodigy-every 1
-                          (lambda (next)
-                            (setq tryout (1+ tryout))
-                            (unless (process-live-p process)
-                              (plist-put service :process nil)
-                              (plist-put service :process-status nil)
-                              (prodigy-set-status service 'stopped))
-                            (when (= tryout prodigy-stop-tryouts)
-                              (prodigy-set-status service 'failed))
-                            (if (or (= tryout prodigy-stop-tryouts) (not (process-live-p process)))
-                                (progn
-                                  (unless (process-live-p process)
-                                    (prodigy-maybe-kill-process-buffer service))
-                                  (when (and callback (not (process-live-p process)))
-                                    (funcall callback)))
-                              (funcall next))))))))))
+               (lambda (next)
+                 (setq tryout (1+ tryout))
+                 (unless (process-live-p process)
+                   (plist-put service :process nil)
+                   (plist-put service :process-status nil)
+                   (prodigy-set-status service 'stopped))
+                 (when (= tryout prodigy-stop-tryouts)
+                   (prodigy-set-status service 'failed))
+                 (if (or (= tryout prodigy-stop-tryouts) (not (process-live-p process)))
+                     (progn
+                       (unless (process-live-p process)
+                         (prodigy-maybe-kill-process-buffer service))
+                       (when (and callback (not (process-live-p process)))
+                         (funcall callback)))
+                   (funcall next))))))))))
 
 (defun prodigy-relevant-services ()
   "Return list of relevant services.
