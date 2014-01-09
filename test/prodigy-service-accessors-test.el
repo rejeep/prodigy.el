@@ -66,7 +66,7 @@
 
 ;;;; prodigy-service-command
 
-(ert-deftest prodigy-service-command-test ()
+(ert-deftest prodigy-service-command-test/use-service-or-first-tag-command ()
   (let ((prodigy-tags '((:name foo)
                         (:name bar :command "bar")))
         (service-1 '(:name "service-1" :command "cmd"))
@@ -77,6 +77,14 @@
     (should (string= (prodigy-service-command service-2) "cmd"))
     (should (string= (prodigy-service-command service-3) "bar"))
     (should-not (prodigy-service-command service-4))))
+
+(ert-deftest prodigy-service-command-test/string ()
+  (let ((service '(:name "service" :command "command")))
+    (should (string= (prodigy-service-command service) "command"))))
+
+(ert-deftest prodigy-service-command-test/lambda ()
+  (let ((service '(:name "service" :command (lambda () "command"))))
+    (should (string= (prodigy-service-command service) "command"))))
 
 
 ;;;; prodigy-service-args

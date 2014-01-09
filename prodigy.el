@@ -135,7 +135,8 @@ The list is a property list with the following properties:
   Name of service.
 
 `command'
-  Command to run.
+  Command to run.  This can be either a string or a lambda that return
+  a string.
 
 `args'
   Arguments passed to command.
@@ -316,7 +317,10 @@ that looks like a port in the ARGS list."
 
 If SERVICE command exists, use that.  If not, find the first
 SERVICE tag that has a command and return that."
-  (prodigy-service-first-tag-with service :command))
+  (let ((command (prodigy-service-first-tag-with service :command)))
+    (if (functionp command)
+        (funcall command)
+      command)))
 
 (defun prodigy-service-args (service)
   "Return SERVICE args list.
