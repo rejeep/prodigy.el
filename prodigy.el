@@ -184,11 +184,26 @@ The list is a property list with the following properties:
 (defvar prodigy-tags nil
   "List of tags.
 
-The list is a property list.  The allowed properties are:
-`command', `args', `cwd', `tags', `init', `init-async',
-`stop-signal', `path', `env', `url',
-`kill-process-buffer-on-stop' and `on-output'.  For doc strings
-on these properties, see variable `prodigy-services'.")
+The list is a property list.  The allowed properties are
+these (see `prodigy-services' doc-string for more information):
+
+ * `command'
+ * `args'
+ * `cwd'
+ * `tags'
+ * `init'
+ * `init-async',
+ * `stop-signal'
+ * `path'
+ * `env'
+ * `url'
+ * `kill-process-buffer-on-stop'
+ * `on-output'
+
+These properties are also valid for a tag:
+
+`hide'
+  If set to true, the tag will not show up in the tags column.")
 
 (defvar prodigy-filters nil
   "List of filters.
@@ -777,7 +792,10 @@ PROCESS is the service process that the OUTPUT is associated to."
 
 (defun prodigy-tags-col (service)
   "Return SERVICE tags column."
-  (s-join ", " (-map 'symbol-name (plist-get service :tags))))
+  (s-join ", " (-map 'symbol-name
+                     (--reject
+                      (plist-get (prodigy-find-tag it) :hide)
+                      (plist-get service :tags)))))
 
 (defun prodigy-list-entries ()
   "Create the entries for the service list."
