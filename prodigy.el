@@ -139,7 +139,8 @@ The list is a property list with the following properties:
   a string.
 
 `args'
-  Arguments passed to command.
+  Arguments passed to command.  This can be either a list of strings or
+  a lambda that return a list of strings.
 
 `cwd'
   Run command with this as `default-directory'.
@@ -327,7 +328,10 @@ SERVICE tag that has a command and return that."
 
 If SERVICE args exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (prodigy-service-first-tag-with service :args))
+  (let ((args (prodigy-service-first-tag-with service :args)))
+    (if (functionp args)
+        (funcall args)
+      args)))
 
 (defun prodigy-service-cwd (service)
   "Return SERVICE current working directory.

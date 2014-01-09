@@ -89,7 +89,7 @@
 
 ;;;; prodigy-service-args
 
-(ert-deftest prodigy-service-args-test ()
+(ert-deftest prodigy-service-args-test/use-service-or-first-tag-command ()
   (let ((prodigy-tags '((:name foo)
                         (:name bar :args ("bar"))))
         (service-1 '(:name "service-1" :args ("baz")))
@@ -100,6 +100,14 @@
     (should (equal (prodigy-service-args service-2) '("baz")))
     (should (equal (prodigy-service-args service-3) '("bar")))
     (should (equal (prodigy-service-args service-4) '()))))
+
+(ert-deftest prodigy-service-args-test/string ()
+  (let ((service '(:name "service" :args ("foo" "bar"))))
+    (should (equal (prodigy-service-args service) '("foo" "bar")))))
+
+(ert-deftest prodigy-service-args-test/lambda ()
+  (let ((service '(:name "service" :args (lambda () (list "foo" "bar")))))
+    (should (equal (prodigy-service-args service) '("foo" "bar")))))
 
 
 ;;;; prodigy-service-cwd
