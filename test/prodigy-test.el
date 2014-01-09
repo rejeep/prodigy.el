@@ -1,74 +1,33 @@
-
-;;;; prodigy-service-port
+;;; prodigy-api.el --- Prodigy: Misc tests -*- lexical-binding: t; -*-
 
-(ert-deftest prodigy-service-port-test ()
-  (should (= (prodigy-service-port '(:port 1234)) 1234))
-  (should (= (prodigy-service-port '(:args ("-p" "1234"))) 1234))
-  (should (= (prodigy-service-port '(:args ("-p" "12345"))) 12345))
-  (should-not (prodigy-service-port '(:args ("-p" "123456"))))
-  (should-not (prodigy-service-port ())))
+;; Copyright (C) 2014 Johan Andersson
 
-
-;;;; prodigy-start-service
+;; Author: Johan Andersson <johan.rejeep@gmail.com>
+;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
 
-(ert-deftest prodigy-start-service-test/init-no-callback ()
-  (with-sandbox
-   (mock (start-process) => "PROCESS" :times 1)
-   (let (foo)
-     (prodigy-start-service
-      (make-service
-       :init (lambda ()
-               (setq foo "bar"))))
-     (should (equal foo "bar")))))
+;; This file is NOT part of GNU Emacs.
 
-(ert-deftest prodigy-start-service-test/init-with-callback-callbacked ()
-  (with-sandbox
-   (mock (start-process) => "PROCESS" :times 1)
-   (let (foo)
-     (prodigy-start-service
-      (make-service
-       :init-async (lambda (callback)
-                     (setq foo "bar")
-                     (funcall callback))))
-     (should (equal foo "bar")))))
+;;; License:
 
-(ert-deftest prodigy-start-service-test/init-with-callback-not-callbacked ()
-  (should-error
-   (with-sandbox
-    (not-called start-process)
-    (let (foo)
-      (prodigy-start-service
-       (make-service :init-async (lambda (callback))))))))
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
 
-
-;;;; prodigy-define-service
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
-(ert-deftest prodigy-define-service-test/new-service ()
-  (prodigy-define-service
-    :name "name"
-    :command "foo"
-    :cwd "/path/to/name")
-  (should (equal prodigy-services '((:name "name" :command "foo" :cwd "/path/to/name")))))
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
-(ert-deftest prodigy-define-service-test/override-service-by-name ()
-  (prodigy-define-service
-    :name "name"
-    :command "foo"
-    :cwd "/path/to/name")
-  (prodigy-define-service
-    :name "name"
-    :command "bar"
-    :cwd "/path/to/name")
-  (should (equal prodigy-services '((:name "name" :command "bar" :cwd "/path/to/name")))))
+;;; Commentary:
 
-(ert-deftest prodigy-define-service-test/returns-nil ()
-  (should-not
-   (prodigy-define-service
-     :name "name"
-     :command "foo"
-     :cwd "/path/to/name")))
+;;; Code:
 
-
 ;;;; prodigy-url
 
 (ert-deftest prodigy-url-test/with-url ()
@@ -85,3 +44,31 @@
   (with-mock
    (stub prodigy-service-port)
    (should-not (prodigy-url (make-service)))))
+
+
+;;;; prodigy-browse
+
+(ert-deftest prodigy-browse-test/no-url ()
+  (with-mock
+   (stub prodigy-service-at-pos)
+   (stub message)
+   (not-called browse-url)
+   (prodigy-browse)))
+
+(ert-deftest prodigy-browse-test/single-url ()
+  (with-mock
+   (stub prodigy-service-at-pos => '(:url "http://localhost:3000"))
+   (mock (browse-url "http://localhost:3000"))
+   (prodigy-browse)))
+
+(ert-deftest prodigy-browse-test/multiple-url ()
+  (with-mock
+   (stub prodigy-service-at-pos => '(:url ("http://localhost:3000"
+                                           "http://localhost:3000/foo")))
+   (stub prodigy-completing-read => "http://localhost:3000/foo")
+   (mock (browse-url "http://localhost:3000/foo"))
+   (prodigy-browse)))
+
+(provide 'prodigy-api)
+
+;;; prodigy-api.el ends here

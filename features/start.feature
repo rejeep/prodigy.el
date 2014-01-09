@@ -7,16 +7,6 @@ Feature: Start
       | bar  | bar | server  | ("bar") | (("PORT" "6002")) |
     And I start prodigy
 
-  Scenario: Already started
-    When I start service
-    Then requesting "http://127.0.0.1:6002" should respond with "BAR"
-    When I start service
-    Then requesting "http://127.0.0.1:6002" should respond with "BAR"
-    And I should see services:
-      | name | highlighted | marked | started |
-      | bar  | t           | nil    | t       |
-      | foo  | nil         | nil    | nil     |
-
   Scenario: Start process at line
     When I start service
     Then requesting "http://127.0.0.1:6002" should respond with "BAR"

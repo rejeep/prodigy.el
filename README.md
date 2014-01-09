@@ -23,11 +23,16 @@ Add `prodigy` to your [Cask](https://github.com/cask/cask) file:
 
 ## Usage
 
+Start Prodigy with `M-x prodigy`. You should see a list of all defined
+services.
+
+### Services
+
 Services can be defined in a few different ways. See doc-string for
 information about available properties to specify: `M-x
 describe-variable RET prodigy-services`.
 
-### prodigy-define-service (`&rest args`)
+#### prodigy-define-service (`&rest args`)
 
 Services can be defined using the function `prodigy-define-service`:
 
@@ -35,7 +40,7 @@ Services can be defined using the function `prodigy-define-service`:
 (prodigy-define-service :prop value ...)
 ```
 
-### prodigy-services
+#### prodigy-services
 
 Services can be defined by setting the variable `prodigy-services`:
 
@@ -45,15 +50,41 @@ Services can be defined by setting the variable `prodigy-services`:
    (:prop value ...)))
 ```
 
-### customize
+### Tags
 
-TODO
+Services can have any number of tags. Tags does not have to be pre
+defined. If they are, the service will inherit all the tags
+properties. Tags can also have tags. A service will inherit all tags
+recursively.
 
-## Filters
+See doc-string for information about available properties to specify:
+`M-x describe-variable RET prodigy-tags`.
+
+#### prodigy-define-tag (`&rest args`)
+
+Tags can be defined using the function `prodigy-define-tag`:
+
+```lisp
+(prodigy-define-tag :prop value ...)
+```
+
+#### prodigy-tags
+
+Tags can be defined by setting the variable `prodigy-tags`:
+
+```lisp
+(setq prodigy-tags
+ '((:prop value ...)
+   (:prop value ...)))
+```
+
+### Filters
 
 Filters is a way to show only specific services in the Prodigy
 buffer. For example services with specific tag or with a name matching
 a string.
+
+#### prodigy-add-filter (`&rest args`)
 
 To add a filter, use `prodigy-add-filter`:
 
@@ -61,6 +92,8 @@ To add a filter, use `prodigy-add-filter`:
 (prodigy-add-filter :tag 'foo)
 (prodigy-add-filter :name "bar")
 ```
+
+#### prodigy-filters
 
 You can also set the variable `prodigy-filters` directly:
 
@@ -70,115 +103,59 @@ You can also set the variable `prodigy-filters` directly:
         (:name "bar")))
 ```
 
-## Commands
+### Status
 
-Start Prodigy with `M-x prodigy`. You should see a list of all defined
-services.
+Each service is associated with a status. The built in statuses are:
 
-### Quit (`q`)
+* `stopped` (default) - The process is not running.
+* `running` - The process is running. If the process status is `run`,
+  this status will be used.
+* `ready` - The process is "actually" ready. Not managed by Prodigy.
+* `stopping` - Set when a service is stopping.
+* `failed` - The process failed. Not managed by Prodigy.
 
-Quit Prodigy.
+The only way Prodigy has an idea of the service status, is to look at
+the process status (note the difference between service and process
+status). The process status is however not always a very good
+indication of the service "actual" status. For example, it takes about
+five seconds to start a Rails server, but the process status will be
+`run` almost instantly after started.
 
-### Next service (`n`)
+To improve the service status, there is a function called
+`prodigy-set-status`, that can change the status of a service. The
+function takes two arguments: The `service` and the `status-id`. The
+status id has to be one of the statuses in `prodigy-status-list`.
 
-Go to next service.
+You can create your own status with the function
+`prodigy-define-status`. See doc-string for information about
+available properties to specify: `M-x describe-variable RET
+prodigy-status-list`.
 
-### Prev service (`p`)
-
-Go to previous service.
-
-### First service (`M-<`)
-
-Go to first service.
-
-### Last service (`M->`)
-
-Go to last service.
-
-### Start service (`s`)
-
-Start service at line or marked services.
-
-### Stop service (`S`)
-
-Stop service at line or marked services.
-
-### Restart service (`r`)
-
-Restart service at line or marked services.
-
-### Display service process output (`$`)
-
-Switch to buffer for service at line.
-
-### Open in browser (`o`)
-
-Open service at line in browser.
-
-### Mark service (`m`)
-
-Mark service at line.
-
-### Mark services with tag (`t`)
-
-Mark services with tag.
-
-### Mark all services (`M`)
-
-Mark all services.
-
-### Unmark service (`u`)
-
-Unmark service at line.
-
-### Unmark services with tag (`t`)
-
-Unmark services with tag.
-
-### Unmark all services (`U`)
-
-Unmark all services.
-
-### Refresh GUI (`g`)
-
-Refresh GUI.
-
-### Add tag filter (`f t`)
-
-Read tag and show only services with that tag.
-
-### Add name filter (`f n`)
-
-Read string and show only services with name that contains string.
-
-### Clear filters (`F`)
-
-Clear all filters.
-
-### Jump - Magit (`j m`)
-
-Jump to Magit.
-
-### Jump - Dired (`j d`)
-
-Jump to Dired.
+For more information, see status example below!
 
 ## Examples
 
-Start simple Python server:
+### Python Simple HTTP Server
+
+This service start a Python Simple HTTP Server on port `6001`. When
+stopping the service, the `sigkill` signal is used.
 
 ```lisp
 (prodigy-define-service
   :name "Python app"
   :command "python"
-  :cwd "/path/to/my/project"
   :args '("-m" "SimpleHTTPServer" "6001")
+  :cwd "/path/to/my/project"
   :tags '(work)
-  :kill-signal 'sigint
+  :kill-signal 'sigkill
   :kill-process-buffer-on-stop t)
 ```
 
-Start Node server:
+### Nodemon Server
+
+This service starts a Nodemon serveron port `6002`. The project is
+using NVM (Node Version Manager), so before the process starts, NVM is
+set up.
 
 ```lisp
 (prodigy-define-service
@@ -192,7 +169,11 @@ Start Node server:
                 (nvm-use-for "/path/to/my/project" done)))
 ```
 
-Start Sinatra server:
+### Sinatra Server
+
+This service starts a Sinatra server on port `6003`. The project is
+using RVM (Ruby Version Manager), so before the process starts, RVM is
+set up.
 
 ```lisp
 (prodigy-define-service
@@ -205,6 +186,115 @@ Start Sinatra server:
   :init-async (lambda (done)
                 (rvm-activate-ruby-for "/path/to/my/project" done)))
 ```
+
+### Tag inheritance
+
+If a service has a tag and that tag is defined (see
+`prodigy-define-tag`), the service inherits the tag properties. The
+inheritance is recursive, so if any of the service tags has tags
+itself, the service will inherit those tag properties as well.
+
+This is best illustrated with an example. Rails can run with many
+different servers. Each server indicate that it's ready with a
+different log message. In the example code below, a tag is defined for
+each server and one for Rails that inherits all those servers.
+
+That means that a service that is tagged with `rails`, will be set to
+ready if it uses any of the three servers. But since there is a tag
+for each server, a non Rails service that uses any of the servers can
+simply use that tag.
+
+```lisp
+(prodigy-define-tag
+  :name 'thin
+  :on-output (lambda (service output)
+               (when (s-matches? "Listening on 0\\.0\\.0\\.0:[0-9]+, CTRL\\+C to stop" output)
+                 (prodigy-set-status service 'ready))))
+
+(prodigy-define-tag
+  :name 'webrick
+  :on-output (lambda (service output)
+               (when (s-matches? "WEBrick::HTTPServer#start: pid=[0-9]+ port=[0-9]+" output)
+                 (prodigy-set-status service 'ready))))
+
+(prodigy-define-tag
+  :name 'mongrel
+  :on-output (lambda (service output)
+               (when (s-matches? "Ctrl-C to shutdown server" output)
+                 (prodigy-set-status service 'ready))))
+
+(prodigy-define-tag
+  :name 'rails
+  :tags '(thin mongrel webrick))
+
+(prodigy-define-service
+  :name "Rails Project"
+  :command "bundle"
+  :args '("exec" "rails" "server")
+  :cwd "/path/to/my/project"
+  :tags '(rails))
+
+(prodigy-define-service
+  :name "Thin Project"
+  :command "bundle"
+  :args '("exec" "thin" "start")
+  :cwd "/path/to/my/project"
+  :tags '(thin))
+```
+
+### Fine Tuning Status
+
+Prodigy can only look at the *process* status to determine the
+*service* status. To make status even more useful, you can set status
+manually. Prodigy provides the function `prodigy-set-status` for
+this. In this example, we create a tag `rails` that will set the
+status to `ready` when the server is actually ready.
+
+The services that are tagged with `rails` will all inherit this.
+
+```lisp
+(prodigy-define-tag
+  :name 'rails
+  :on-output (lambda (service output)
+               (when (or (s-matches? "Listening on 0\.0\.0\.0:[0-9]+, CTRL\\+C to stop" output)
+                         (s-matches? "Ctrl-C to shutdown server" output))
+                 (prodigy-set-status service 'ready))))
+
+(prodigy-define-service
+  :name "Rails"
+  :command "bundle"
+  :args '("exec" "rails" "server")
+  :cwd "/path/to/my/project"
+  :tags '(rvm rails))
+
+(prodigy-define-service
+  :name "Sinatra"
+  :command "bundle"
+  :args '("exec" "rackup")
+  :cwd "/path/to/my/project"
+  :tags '(rvm rails))
+```
+
+## Troubleshoot
+
+### Jekyll
+
+For some unknown reason, Jekyll fail with this error:
+
+```
+error: invalid byte sequence in US-ASCII. Use --trace to view backtrace
+```
+
+This can be solved by adding a `jekyll` tag, like this:
+
+```lisp
+(prodigy-define-tag
+  :name 'jekyll
+  :env '(("LANG" "en_US.UTF-8")
+         ("LC_ALL" "en_US.UTF-8")))
+```
+
+Then tag your services with the `jekyll` tag.
 
 ## Contribution
 
