@@ -183,10 +183,10 @@ The list is a property list with the following properties:
   "List of tags.
 
 The list is a property list.  The allowed properties are:
-`command', `args', `cwd', `init', `init-async', `stop-signal',
-`path', `env', `url', `kill-process-buffer-on-stop' and
-`on-output'.  For doc strings on these properties, see variable
-`prodigy-services'.")
+`command', `args', `cwd', `tags', `init', `init-async',
+`stop-signal', `path', `env', `url',
+`kill-process-buffer-on-stop' and `on-output'.  For doc strings
+on these properties, see variable `prodigy-services'.")
 
 (defvar prodigy-filters nil
   "List of filters.
@@ -287,21 +287,16 @@ Supported filters:
 ;;;; Service accessors
 
 (defun prodigy-service-tags (service)
-  "Return list of SERVICE tags.
+  "Return list of SERVICE tag objects.
 
-Note that the list is not a simple list with the tag names, the
-list contains the real objects.
+This function will find SERVICE tags recursively.  So if SERVICE
+has a tag foo and tag foo has a tag bar, this function would
+return a list with both tags foo and bar.
 
-If SERVICE has a tag, that is not defined, it is not returned in the list."
-  (-reject
-   'null
-   (-map
-    (lambda (tag-name)
-      (-first
-       (lambda (tag)
-         (eq (plist-get tag :name) tag-name))
-       prodigy-tags))
-    (plist-get service :tags))))
+If SERVICE has a tag that is not defined, it is not returned in
+the list."
+  (let ((tags (prodigy-taggable-tags service)))
+    (apply 'append (--map (cons it (prodigy-taggable-tags it)) tags))))
 
 (defun prodigy-service-port (service)
   "Find something that look like a port in SERVICE arguments.
@@ -406,6 +401,14 @@ comes the SERVICE tags on-output functions."
 
 
 ;;;; Internal functions
+
+(defun prodigy-taggable-tags (taggable)
+  "Return list of tags objects for TAGGABLE."
+  (-reject 'null (-map 'prodigy-find-tag (plist-get taggable :tags))))
+
+(defun prodigy-find-tag (name)
+  "Return tag with NAME or nil if none."
+  (--first (eq (plist-get it :name) name) prodigy-tags))
 
 (defun prodigy-resolve-pathy (pathy)
   "Resolve PATHY to a string path.

@@ -28,6 +28,32 @@
 
 ;;; Code:
 
+;;;; prodigy-service-tags
+
+(ert-deftest prodigy-service-tags-test/no-tags ()
+  (let ((service '(:name "service")))
+    (should-not (prodigy-service-tags service))))
+
+(ert-deftest prodigy-service-tags-test/tags-does-not-exist ()
+  (let ((service '(:name "service" :tags (foo bar baz))))
+    (should-not (prodigy-service-tags service))))
+
+(ert-deftest prodigy-service-tags-test/with-tags ()
+  (let ((prodigy-tags
+         '((:name foo)
+           (:name baz)))
+        (service '(:name "service" :tags (foo bar baz))))
+    (should (equal (prodigy-service-tags service) '((:name foo) (:name baz))))))
+
+(ert-deftest prodigy-service-tags-test/with-tags-that-depends-on-tags ()
+  (let ((prodigy-tags
+         '((:name foo)
+           (:name bar :tags (baz qux))
+           (:name baz)))
+        (service '(:name "service" :tags (foo bar))))
+    (should (equal (prodigy-service-tags service) '((:name foo) (:name bar :tags (baz qux)) (:name baz))))))
+
+
 ;;;; prodigy-service-port
 
 (ert-deftest prodigy-service-port-test ()

@@ -54,8 +54,11 @@ Services can be defined by setting the variable `prodigy-services`:
 
 Services can have any number of tags. Tags does not have to be pre
 defined. If they are, the service will inherit all the tags
-properties. See doc-string for information about available properties
-to specify: `M-x describe-variable RET prodigy-tags`.
+properties. Tags can also have tags. A service will inherit all tags
+recursively.
+
+See doc-string for information about available properties to specify:
+`M-x describe-variable RET prodigy-tags`.
 
 #### prodigy-define-tag (`&rest args`)
 
@@ -186,31 +189,57 @@ set up.
 
 ### Tag inheritance
 
-Almost all Ruby projects use RVM or a similar project. It would be a
-waste to duplicate that information for each Ruby project. By creating
-the tag `rvm` and tagging services with that, the properties of the
-tag is inherited to the services. That means that both the Rails and
-Sinatra services below, will set up RVM before starting the process.
+If a service has a tag and that tag is defined (see
+`prodigy-define-tag`), the service inherits the tag properties. The
+inheritance is recursive, so if any of the service tags has tags
+itself, the service will inherit those tag properties as well.
+
+This is best illustrated with an example. Rails can run with many
+different servers. Each server indicate that it's ready with a
+different log message. In the example code below, a tag is defined for
+each server and one for Rails that inherits all those servers.
+
+That means that a service that is tagged with `rails`, will be set to
+ready if it uses any of the three servers. But since there is a tag
+for each server, a non Rails service that uses any of the servers can
+simply use that tag.
 
 ```lisp
 (prodigy-define-tag
-  :name 'rvm
-  :init-async (lambda (done)
-                (rvm-activate-ruby-for default-directory done)))
+  :name 'thin
+  :on-output (lambda (service output)
+               (when (s-matches? "Listening on 0\\.0\\.0\\.0:[0-9]+, CTRL\\+C to stop" output)
+                 (prodigy-set-status service 'ready))))
+
+(prodigy-define-tag
+  :name 'webrick
+  :on-output (lambda (service output)
+               (when (s-matches? "WEBrick::HTTPServer#start: pid=[0-9]+ port=[0-9]+" output)
+                 (prodigy-set-status service 'ready))))
+
+(prodigy-define-tag
+  :name 'mongrel
+  :on-output (lambda (service output)
+               (when (s-matches? "Ctrl-C to shutdown server" output)
+                 (prodigy-set-status service 'ready))))
+
+(prodigy-define-tag
+  :name 'rails
+  :tags '(thin mongrel webrick))
 
 (prodigy-define-service
-  :name "Rails"
+  :name "Rails Project"
   :command "bundle"
   :args '("exec" "rails" "server")
   :cwd "/path/to/my/project"
-  :tags '(rvm))
+  :tags '(rails))
 
 (prodigy-define-service
-  :name "Sinatra"
+  :name "Thin Project"
   :command "bundle"
-  :args '("exec" "rackup")
+  :args '("exec" "thin" "start")
   :cwd "/path/to/my/project"
-  :tags '(rvm))
+  :tags '(thin))
 ```
 
 ### Fine Tuning Status
