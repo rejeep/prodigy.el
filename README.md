@@ -300,6 +300,10 @@ Then tag your services with the `jekyll` tag.
 
 Contribution is much welcome!
 
+If your contribution is a bug fix, create your topic branch from
+`master`. If it is a new feature, check if there exists a WIP branch
+(`vMAJOR.MINOR-wip`). If it does, use that branch, otherwise use `master`.
+
 Install [Cask](https://github.com/cask/cask) if you haven't
 already, then:
 
