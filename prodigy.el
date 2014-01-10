@@ -425,6 +425,10 @@ comes the SERVICE tags on-output functions."
 
 ;;;; Internal functions
 
+(defmacro prodigy-with-refresh (&rest body)
+  "Execute BODY and then refresh."
+  `(progn ,@body (prodigy-refresh)))
+
 (defun prodigy-taggable-tags (taggable)
   "Return list of tags objects for TAGGABLE."
   (-reject 'null (-map 'prodigy-find-tag (plist-get taggable :tags))))
@@ -520,45 +524,6 @@ has that property and return its value."
                                 services)))))))
     services))
 
-(defun prodigy-service-at-pos (&optional pos)
-  "Return service at POS or current position."
-  (prodigy-find-by-id (tabulated-list-get-id pos)))
-
-(defun prodigy-service-at-pos-p (&optional pos)
-  "Return true if there is a service at POS or current position."
-  (not (null (prodigy-service-at-pos pos))))
-
-(defun prodigy-goto-next-line ()
-  "Go to next line."
-  (if (= (line-beginning-position 1)
-         (line-beginning-position 2))
-      (error "No next line")
-    (prodigy-goto-pos (line-beginning-position 2))))
-
-(defun prodigy-goto-prev-line ()
-  "Go to previous line."
-  (if (= (line-beginning-position 0)
-         (line-beginning-position 1))
-      (error "No previous line")
-    (prodigy-goto-pos (line-beginning-position 0))))
-
-(defun prodigy-goto-first-line ()
-  "Go to first line."
-  (prodigy-goto-pos (point-min)))
-
-(defun prodigy-goto-last-line ()
-  "Go to first line."
-  (prodigy-goto-pos
-   (save-excursion
-     (goto-char (point-max))
-     (line-beginning-position 0))))
-
-(defun prodigy-goto-pos (pos)
-  "Go to POS."
-  (if (prodigy-service-at-pos-p pos)
-      (goto-char pos)
-    (error "No service at point %s" pos)))
-
 (defun prodigy-find-status (id)
   "Find status by with ID.
 
@@ -569,18 +534,6 @@ status."
    (lambda (status)
      (eq id (plist-get status :id)))
    prodigy-status-list))
-
-(defun prodigy-status-name (service)
-  "Return string representation of SERVICE status."
-  (let* ((status-id (plist-get service :status))
-         (status (prodigy-find-status status-id)))
-    (or (plist-get status :name)
-        (s-capitalize (symbol-name status-id)))))
-
-(defun prodigy-status-face (service)
-  "Return SERVICE status face."
-  (let ((status (prodigy-find-status (plist-get service :status))))
-    (plist-get status :face)))
 
 (defun prodigy-start-status-check-timer ()
   "Start timer and call `prodigy-service-status-check' for each time.
@@ -656,6 +609,158 @@ The completion system used is determined by
 (defun prodigy-buffer-name (service)
   "Return name of process buffer for SERVICE."
   (concat "*prodigy-" (s-dashed-words (s-downcase (plist-get service :name))) "*"))
+
+(defun prodigy-find-service (name)
+  "Find service with NAME."
+  (-first
+   (lambda (service)
+     (equal (plist-get service :name) name))
+   prodigy-services))
+
+(defun prodigy-service-id (service)
+  "Return SERVICE identifier."
+  (let* ((name (plist-get service :name))
+         (name (s-downcase name))
+         (name (s-replace " " "-" name)))
+    (intern name)))
+
+(defun prodigy-find-by-id (id)
+  "Find service by identifier ID."
+  (--first (eq (prodigy-service-id it) id) prodigy-services))
+
+(defun prodigy-url (service)
+  "Return SERVICE url."
+  (or
+   (plist-get service :url)
+   (-when-let (port (prodigy-service-port service))
+     (format "http://localhost:%d" port))))
+
+(defun prodigy-discover-initialize ()
+  "Initialize discover by adding prodigy context menu."
+  (discover-add-context-menu
+   :context-menu prodigy-discover-context-menu
+   :bind "?"
+   :mode 'prodigy-mode
+   :mode-hook 'prodigy-mode-hook))
+
+(defun prodigy-define-default-status-list ()
+  "Define the default status list."
+  (prodigy-define-status :id 'stopped :name "")
+  (prodigy-define-status :id 'running :face 'prodigy-green-face)
+  (prodigy-define-status :id 'ready :face 'prodigy-green-face)
+  (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
+  (prodigy-define-status :id 'failed :face 'prodigy-red-face))
+
+
+;;;; GUI
+
+(defun prodigy-marked-col (service)
+  "Return SERVICE marked column."
+  (if (plist-get service :marked) "*" ""))
+
+(defun prodigy-name-col (service)
+  "Return SERVICE name column."
+  (plist-get service :name))
+
+(defun prodigy-status-col (service)
+  "Return SERVICE status column."
+  (-if-let (process (plist-get service :process))
+      (propertize (prodigy-status-name service) 'face (prodigy-status-face service))
+    ""))
+
+(defun prodigy-tags-col (service)
+  "Return SERVICE tags column."
+  (s-join ", " (-map 'symbol-name
+                     (--reject
+                      (plist-get (prodigy-find-tag it) :hide)
+                      (plist-get service :tags)))))
+
+(defun prodigy-list-entries ()
+  "Create the entries for the service list."
+  (-map
+   (lambda (service)
+     (list
+      (prodigy-service-id service)
+      (apply 'vector
+             (--map
+              (funcall it service)
+              '(prodigy-marked-col
+                prodigy-name-col
+                prodigy-status-col
+                prodigy-tags-col)))))
+   (prodigy-services)))
+
+(defun prodigy-service-at-pos (&optional pos)
+  "Return service at POS or current position."
+  (prodigy-find-by-id (tabulated-list-get-id pos)))
+
+(defun prodigy-service-at-pos-p (&optional pos)
+  "Return true if there is a service at POS or current position."
+  (not (null (prodigy-service-at-pos pos))))
+
+(defun prodigy-goto-next-line ()
+  "Go to next line."
+  (if (= (line-beginning-position 1)
+         (line-beginning-position 2))
+      (error "No next line")
+    (prodigy-goto-pos (line-beginning-position 2))))
+
+(defun prodigy-goto-prev-line ()
+  "Go to previous line."
+  (if (= (line-beginning-position 0)
+         (line-beginning-position 1))
+      (error "No previous line")
+    (prodigy-goto-pos (line-beginning-position 0))))
+
+(defun prodigy-goto-first-line ()
+  "Go to first line."
+  (prodigy-goto-pos (point-min)))
+
+(defun prodigy-goto-last-line ()
+  "Go to first line."
+  (prodigy-goto-pos
+   (save-excursion
+     (goto-char (point-max))
+     (line-beginning-position 0))))
+
+(defun prodigy-goto-pos (pos)
+  "Go to POS."
+  (if (prodigy-service-at-pos-p pos)
+      (goto-char pos)
+    (error "No service at point %s" pos)))
+
+(defun prodigy-status-name (service)
+  "Return string representation of SERVICE status."
+  (let* ((status-id (plist-get service :status))
+         (status (prodigy-find-status status-id)))
+    (or (plist-get status :name)
+        (s-capitalize (symbol-name status-id)))))
+
+(defun prodigy-status-face (service)
+  "Return SERVICE status face."
+  (let ((status (prodigy-find-status (plist-get service :status))))
+    (plist-get status :face)))
+
+(defun prodigy-relevant-services ()
+  "Return list of relevant services.
+
+If there are any marked services, those are returned.  Otherwise,
+the service at pos is returned.
+
+Note that the return value is always a list."
+  (or (prodigy-marked-services) (list (prodigy-service-at-pos))))
+
+(defun prodigy-set-default-directory ()
+  "Set default directory to :cwd for service at point."
+  (when (eq major-mode 'prodigy-mode)
+    (-when-let (service (prodigy-service-at-pos))
+      (setq default-directory
+            (-if-let (cwd (prodigy-service-cwd service))
+                cwd
+              (getenv "HOME"))))))
+
+
+;;;; Process handling
 
 (defun prodigy-start-service (service)
   "Start process associated with SERVICE unless already started."
@@ -738,15 +843,6 @@ put in stopped status."
                          (funcall callback)))
                    (funcall next))))))))))
 
-(defun prodigy-relevant-services ()
-  "Return list of relevant services.
-
-If there are any marked services, those are returned.  Otherwise,
-the service at pos is returned.
-
-Note that the return value is always a list."
-  (or (prodigy-marked-services) (list (prodigy-service-at-pos))))
-
 (defun prodigy-process-filter (process output)
   "Process filter for service processes.
 
@@ -764,96 +860,6 @@ PROCESS is the service process that the OUTPUT is associated to."
           (save-excursion
             (goto-char (point-max))
             (insert (ansi-color-apply output))))))))
-
-(defun prodigy-find-service (name)
-  "Find service with NAME."
-  (-first
-   (lambda (service)
-     (equal (plist-get service :name) name))
-   prodigy-services))
-
-(defun prodigy-service-id (service)
-  "Return SERVICE identifier."
-  (let* ((name (plist-get service :name))
-         (name (s-downcase name))
-         (name (s-replace " " "-" name)))
-    (intern name)))
-
-(defun prodigy-marked-col (service)
-  "Return SERVICE marked column."
-  (if (plist-get service :marked) "*" ""))
-
-(defun prodigy-name-col (service)
-  "Return SERVICE name column."
-  (plist-get service :name))
-
-(defun prodigy-status-col (service)
-  "Return SERVICE status column."
-  (-if-let (process (plist-get service :process))
-      (propertize (prodigy-status-name service) 'face (prodigy-status-face service))
-    ""))
-
-(defun prodigy-tags-col (service)
-  "Return SERVICE tags column."
-  (s-join ", " (-map 'symbol-name
-                     (--reject
-                      (plist-get (prodigy-find-tag it) :hide)
-                      (plist-get service :tags)))))
-
-(defun prodigy-list-entries ()
-  "Create the entries for the service list."
-  (-map
-   (lambda (service)
-     (list
-      (prodigy-service-id service)
-      (apply 'vector
-             (--map
-              (funcall it service)
-              '(prodigy-marked-col
-                prodigy-name-col
-                prodigy-status-col
-                prodigy-tags-col)))))
-   (prodigy-services)))
-
-(defun prodigy-find-by-id (id)
-  "Find service by identifier ID."
-  (--first (eq (prodigy-service-id it) id) prodigy-services))
-
-(defun prodigy-url (service)
-  "Return SERVICE url."
-  (or
-   (plist-get service :url)
-   (-when-let (port (prodigy-service-port service))
-     (format "http://localhost:%d" port))))
-
-(defmacro prodigy-with-refresh (&rest body)
-  "Execute BODY and then refresh."
-  `(progn ,@body (prodigy-refresh)))
-
-(defun prodigy-discover-initialize ()
-  "Initialize discover by adding prodigy context menu."
-  (discover-add-context-menu
-   :context-menu prodigy-discover-context-menu
-   :bind "?"
-   :mode 'prodigy-mode
-   :mode-hook 'prodigy-mode-hook))
-
-(defun prodigy-set-default-directory ()
-  "Set default directory to :cwd for service at point."
-  (when (eq major-mode 'prodigy-mode)
-    (-when-let (service (prodigy-service-at-pos))
-      (setq default-directory
-            (-if-let (cwd (prodigy-service-cwd service))
-                cwd
-              (getenv "HOME"))))))
-
-(defun prodigy-define-default-status-list ()
-  "Define the default status list."
-  (prodigy-define-status :id 'stopped :name "")
-  (prodigy-define-status :id 'running :face 'prodigy-green-face)
-  (prodigy-define-status :id 'ready :face 'prodigy-green-face)
-  (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
-  (prodigy-define-status :id 'failed :face 'prodigy-red-face))
 
 
 ;;;; User functions
