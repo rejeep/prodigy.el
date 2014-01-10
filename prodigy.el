@@ -660,10 +660,13 @@ The completion system used is determined by
 (defun prodigy-start-service (service)
   "Start process associated with SERVICE unless already started."
   (unless (prodigy-service-started-p service)
-    (let* ((name (plist-get service :name))
+    (let* ((default-directory
+             (-if-let (cwd (prodigy-service-cwd service))
+                 (f-full cwd)
+               default-directory))
+           (name (plist-get service :name))
            (command (prodigy-service-command service))
            (args (prodigy-service-args service))
-           (default-directory (f-full (prodigy-service-cwd service)))
            (exec-path (append (prodigy-service-path service) exec-path))
            (env (--map (s-join "=" it) (prodigy-service-env service)))
            (process-environment (append env process-environment))
@@ -839,7 +842,10 @@ PROCESS is the service process that the OUTPUT is associated to."
   "Set default directory to :cwd for service at point."
   (when (eq major-mode 'prodigy-mode)
     (-when-let (service (prodigy-service-at-pos))
-      (setq default-directory (prodigy-service-cwd service)))))
+      (setq default-directory
+            (-if-let (cwd (prodigy-service-cwd service))
+                cwd
+              (getenv "HOME"))))))
 
 (defun prodigy-define-default-status-list ()
   "Define the default status list."
