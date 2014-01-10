@@ -29,6 +29,7 @@
 ;;; Code:
 
 (require 'f)
+(require 'json)
 
 (defvar prodigy-test/test-path
   (f-parent (f-this-file)))
@@ -36,18 +37,47 @@
 (defvar prodigy-test/root-path
   (f-parent prodigy-test/test-path))
 
-(defun make-service (&rest args)
-  (let ((plist '(:name "name" :command "command" :cwd "cwd")))
-    (append plist args)))
 
-(defun make-server-service (&rest args)
-  (plist-put args :name "Foo")
-  (plist-put args :command "server")
-  (plist-put args :cwd prodigy-test/test-path)
-  (plist-put args :path (list prodigy-test/test-path))
-  (plist-put args :env '(("PORT" "6001")))
-  (apply 'prodigy-define-service args)
-  (car prodigy-services))
+(defun plist-keys (plist)
+  "Return a list containing all the keys in PLIST."
+  (when plist
+    (cons
+     (car plist)
+     (plist-keys
+      (cddr plist)))))
+
+(defvar prodigy-test/process nil
+  "")
+
+(defvar prodigy-test/port 1333
+  "")
+
+(defun prodigy-test/make-service (&rest args)
+  "..."
+  (let ((server-path (f-expand "server.coffee" prodigy-test/test-path)))
+    (let* ((port prodigy-test/port)
+           (service
+            (list :name "Test Service"
+                  :command "coffee"
+                  :args (list server-path)
+                  :port port
+                  :env `(("PORT" ,(number-to-string port))))))
+      (mapc
+       (lambda (property)
+         (plist-put service property (plist-get args property)))
+       (plist-keys args))
+      (car (apply 'prodigy-define-service service)))))
+
+(defun prodigy-test/post-message (service action &rest args)
+  "..."
+  (let ((process
+         (or prodigy-test/process
+             (setq prodigy-test/process
+                   (make-network-process
+                    :name "Test Server Connector"
+                    :host "127.0.0.1"
+                    :service (plist-get service :port))))))
+    (process-send-string process (json-encode (cons action args)))))
 
 (defmacro with-sandbox (&rest body)
   "Yield BODY in a sandboxed environment."

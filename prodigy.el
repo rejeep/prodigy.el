@@ -192,7 +192,7 @@ these (see `prodigy-services' doc-string for more information):
  * `cwd'
  * `tags'
  * `init'
- * `init-async',
+ * `init-async'
  * `stop-signal'
  * `path'
  * `env'
@@ -762,8 +762,20 @@ Note that the return value is always a list."
 
 ;;;; Process handling
 
-(defun prodigy-start-service (service)
-  "Start process associated with SERVICE unless already started."
+;; TODO: MOVE
+(defvar prodigy-start-tryouts 10
+  "")
+
+(defun prodigy-start-service (service &optional callback)
+  "Start process associated with SERVICE unless already started.
+
+If process is not successfully started within
+`prodigy-start-timeout', the service will fail.
+
+CALLBACK is called when the process is live.
+
+"
+  (declare (indent 1))
   (unless (prodigy-service-started-p service)
     (let* ((default-directory
              (-if-let (cwd (prodigy-service-cwd service))
@@ -795,9 +807,32 @@ Note that the return value is always a list."
                       prodigy-init-async-timeout))
             (while (not callbacked) (accept-process-output nil 0.005)))))
       (funcall create-process)
+
+
+
+      (let (timer (tryout 0))
+        (setq
+         timer
+         (prodigy-every 1
+             (lambda (next)
+               (setq tryout (1+ tryout))
+               (if (process-live-p process)
+                   (funcall callback)
+                 (if (= tryout prodigy-stop-tryouts)
+                     (prodigy-set-status service 'failed)
+                   (funcall next)
+                   )
+                 )
+               )
+           )
+         )
+        )
+
+
+
+      (plist-put service :process process)
       (set-process-filter process 'prodigy-process-filter)
-      (set-process-query-on-exit-flag process nil)
-      (plist-put service :process process))))
+      (set-process-query-on-exit-flag process nil))))
 
 (defun prodigy-stop-service (service &optional force callback)
   "Stop process associated with SERVICE.

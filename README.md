@@ -108,11 +108,13 @@ You can also set the variable `prodigy-filters` directly:
 Each service is associated with a status. The built in statuses are:
 
 * `stopped` (default) - The process is not running.
+* `starting` - Service has this directly when started.
 * `running` - The process is running. If the process status is `run`,
   this status will be used.
 * `ready` - The process is "actually" ready. Not managed by Prodigy.
 * `stopping` - Set when a service is stopping.
-* `failed` - The process failed. Not managed by Prodigy.
+* `failed` - The process failed. A service will get this state if it
+  is not started within `var` or not stopped within `var`.
 
 The only way Prodigy has an idea of the service status, is to look at
 the process status (note the difference between service and process
