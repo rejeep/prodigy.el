@@ -1157,7 +1157,8 @@ The old service process is transfered to the new service."
 
 ;;;###autoload
 (define-derived-mode prodigy-view-mode special-mode "Prodigy-view"
-  "Mode for viewing prodigy process output.")
+  "Mode for viewing prodigy process output."
+  (font-lock-mode 1))
 
 ;;;###autoload
 (defun prodigy ()
