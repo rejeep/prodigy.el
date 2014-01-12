@@ -459,7 +459,7 @@ PATHY can be either of:
   (cond ((functionp pathy)
          (prodigy-resolve-pathy (funcall pathy)))
         ((listp pathy)
-         (-map 'prodigy-resolve-pathy pathy))
+         (-flatten (-uniq (-map 'prodigy-resolve-pathy pathy))))
         ((stringp pathy)
          (list pathy))))
 
@@ -669,9 +669,7 @@ The completion system used is determined by
 
 (defun prodigy-status-col (service)
   "Return SERVICE status column."
-  (-if-let (process (plist-get service :process))
-      (propertize (prodigy-status-name service) 'face (prodigy-status-face service))
-    ""))
+  (propertize (prodigy-status-name service) 'face (prodigy-status-face service)))
 
 (defun prodigy-tags-col (service)
   "Return SERVICE tags column."

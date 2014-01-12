@@ -85,8 +85,9 @@ ACTION and ARGS are json encoded and sent to the process."
      (setq prodigy-status-list nil)
      (setq prodigy-start-tryouts 1)
      (setq prodigy-stop-tryouts 1)
+     (setq prodigy-filters nil)
      (prodigy-define-default-status-list)
-     ,@body))
+     (with-mock ,@body)))
 
 (defun prodigy-test/delay (seconds callback)
   "Wait SECONDS, then run function CALLBACK."

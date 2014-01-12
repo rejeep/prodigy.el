@@ -33,11 +33,30 @@
 
 ;;;; prodigy-marked-col
 
+(ert-deftest prodigy-marked-col-test/marked ()
+  (let ((service '(:marked t)))
+    (should (string= (prodigy-marked-col service) "*"))))
+
+(ert-deftest prodigy-marked-col-test/not-marked ()
+  (let ((service '(:marked nil)))
+    (should (string= (prodigy-marked-col service) ""))))
+
 
 ;;;; prodigy-name-col
 
+(ert-deftest prodigy-name-col-test ()
+  (let ((service '(:name "foo")))
+    (should (string= (prodigy-name-col service) "foo"))))
+
 
 ;;;; prodigy-status-col
+
+(ert-deftest prodigy-status-col-test ()
+  (with-mock
+   (stub prodigy-status-name => "Foo")
+   (stub prodigy-status-face => 'foo)
+   (let ((service '(:name "foo")))
+     (should (equal (prodigy-status-col service) #("Foo" 0 3 (face foo)))))))
 
 
 ;;;; prodigy-tags-col
