@@ -795,9 +795,9 @@ Note that the return value is always a list."
                       prodigy-init-async-timeout))
             (while (not callbacked) (accept-process-output nil 0.005)))))
       (funcall create-process)
+      (plist-put service :process process)
       (set-process-filter process 'prodigy-process-filter)
-      (set-process-query-on-exit-flag process nil)
-      (plist-put service :process process))))
+      (set-process-query-on-exit-flag process nil))))
 
 (defun prodigy-stop-service (service &optional force callback)
   "Stop process associated with SERVICE.
