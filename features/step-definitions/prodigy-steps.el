@@ -116,11 +116,6 @@
   (lambda ()
     (kill-buffer prodigy-buffer-name)))
 
-(Then "^prodigy view mode should be enabled$"
-  (lambda ()
-    (should (equal major-mode 'prodigy-view-mode))
-    (should (equal mode-name "Prodigy-view"))))
-
 (When "^I filter by tag \"\\([^\"]+\\)\"$"
   (lambda (tag)
     (When "I start an action chain")
