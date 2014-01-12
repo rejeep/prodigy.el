@@ -19,7 +19,7 @@ Feature: View
       """
       Starting append...
       """
-    And view mode should be enabled
+    And prodigy view mode should be enabled
 
   Scenario: Appends output
     When I start service

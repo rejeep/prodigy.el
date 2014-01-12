@@ -179,9 +179,10 @@
   (lambda ()
     (kill-buffer prodigy-buffer-name)))
 
-(Then "^view mode should be enabled$"
+(Then "^prodigy view mode should be enabled$"
   (lambda ()
-    (should view-mode)))
+    (should (equal major-mode 'prodigy-view-mode))
+    (should (equal mode-name "Prodigy-view"))))
 
 (When "^I filter by tag \"\\([^\"]+\\)\"$"
   (lambda (tag)
