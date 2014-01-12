@@ -51,12 +51,19 @@
 
 ;;;; prodigy-status-col
 
-(ert-deftest prodigy-status-col-test ()
+(ert-deftest prodigy-status-col-test/with-status ()
   (with-mock
    (stub prodigy-status-name => "Foo")
    (stub prodigy-status-face => 'foo)
    (let ((service '(:name "foo")))
      (should (equal (prodigy-status-col service) #("Foo" 0 3 (face foo)))))))
+
+(ert-deftest prodigy-status-col-test/no-status ()
+  (with-mock
+   (stub prodigy-status-name)
+   (stub prodigy-status-face => 'foo)
+   (let ((service '(:name "foo")))
+     (should (string= (prodigy-status-col service) "")))))
 
 
 ;;;; prodigy-tags-col

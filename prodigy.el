@@ -669,7 +669,9 @@ The completion system used is determined by
 
 (defun prodigy-status-col (service)
   "Return SERVICE status column."
-  (propertize (prodigy-status-name service) 'face (prodigy-status-face service)))
+  (-if-let (status-name (prodigy-status-name service))
+      (propertize status-name 'face (prodigy-status-face service))
+    ""))
 
 (defun prodigy-tags-col (service)
   "Return SERVICE tags column."
@@ -734,10 +736,9 @@ The completion system used is determined by
 
 (defun prodigy-status-name (service)
   "Return string representation of SERVICE status."
-  (let* ((status-id (plist-get service :status))
-         (status (prodigy-find-status status-id)))
-    (or (plist-get status :name)
-        (s-capitalize (symbol-name status-id)))))
+  (let ((status-id (plist-get service :status)))
+    (-when-let (status (prodigy-find-status status-id))
+      (or (plist-get status :name) (s-capitalize (symbol-name status-id))))))
 
 (defun prodigy-status-face (service)
   "Return SERVICE status face."
