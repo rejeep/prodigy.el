@@ -31,6 +31,8 @@
 
 ;;;; prodigy-start-service
 
+(require 'ert-async)
+
 (ert-deftest-async prodigy-start-service-test/callback-when-started (done)
   (with-sandbox
    (let ((service (prodigy-test/make-service)))
