@@ -88,6 +88,11 @@ ACTION and ARGS are json encoded and sent to the process."
      (prodigy-define-default-status-list)
      ,@body))
 
+(defun prodigy-test/delay (seconds callback)
+  "Wait SECONDS, then run function CALLBACK."
+  (declare (indent 1))
+  (run-at-time seconds nil callback))
+
 (require 'prodigy (f-expand "prodigy" prodigy-test/root-path))
 (require 'ert)
 (require 'ert-async)

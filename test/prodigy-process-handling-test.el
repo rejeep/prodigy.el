@@ -44,10 +44,10 @@
                    :command "echo"
                    :args '("foo"))))
      (prodigy-start-service service)
-     (run-at-time 2 nil
-                  (lambda ()
-                    (should (eq (plist-get service :status) 'failed))
-                    (funcall done))))))
+     (prodigy-test/delay 2
+       (lambda ()
+         (should (eq (plist-get service :status) 'failed))
+         (funcall done))))))
 
 (ert-deftest prodigy-start-service-test/path ()
   
@@ -139,15 +139,15 @@
      (prodigy-start-service service
        (lambda ()
          (prodigy-test/post-message service 'ignore-signal "SIGINT")
-         (run-at-time 1 nil
-                      (lambda ()
-                        (prodigy-stop-service service nil
-                          (lambda ()
-                            (funcall done "should not stop because SIGINT ignored")))
-                        (run-at-time 2 nil
-                                     (lambda ()
-                                       (should (eq (plist-get service :status) 'failed))
-                                       (prodigy-stop-service service 'force done))))))))))
+         (prodigy-test/delay 1
+           (lambda ()
+             (prodigy-stop-service service nil
+               (lambda ()
+                 (funcall done "should not stop because SIGINT ignored")))
+             (prodigy-test/delay 2
+               (lambda ()
+                 (should (eq (plist-get service :status) 'failed))
+                 (prodigy-stop-service service 'force done))))))))))
 
 (ert-deftest-async prodigy-stop-service-test/force-kill (done)
   (with-sandbox
@@ -155,11 +155,11 @@
      (prodigy-start-service service
        (lambda ()
          (prodigy-test/post-message service 'ignore-signal "SIGINT")
-         (run-at-time 1 nil
-                      (lambda ()
-                        (prodigy-stop-service service 'force
-                          (lambda ()
-                            (funcall done))))))))))
+         (prodigy-test/delay 1
+           (lambda ()
+             (prodigy-stop-service service 'force
+               (lambda ()
+                 (funcall done))))))))))
 
 (ert-deftest-async prodigy-stop-service-test/callback-when-stopped (done)
   (with-sandbox
