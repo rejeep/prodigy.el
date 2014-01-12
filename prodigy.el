@@ -192,7 +192,7 @@ these (see `prodigy-services' doc-string for more information):
  * `cwd'
  * `tags'
  * `init'
- * `init-async',
+ * `init-async'
  * `stop-signal'
  * `path'
  * `env'
