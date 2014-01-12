@@ -30,6 +30,16 @@
 
 ;;; Code:
 
+
+;;;; prodigy-marked-col
+
+
+;;;; prodigy-name-col
+
+
+;;;; prodigy-status-col
+
+
 ;;;; prodigy-tags-col
 
 (ert-deftest prodigy-tags-col-test/no-tags ()
@@ -50,6 +60,43 @@
            (:name baz :hide t)))
         (service '(:name "service" :tags (foo bar baz qux))))
     (should (string= (prodigy-tags-col service) "bar, qux"))))
+
+
+;;;; prodigy-list-entries
+
+
+;;;; prodigy-service-at-pos
+
+
+;;;; prodigy-service-at-pos-p
+
+
+;;;; prodigy-goto-next-line
+
+
+;;;; prodigy-goto-prev-line
+
+
+;;;; prodigy-goto-first-line
+
+
+;;;; prodigy-goto-last-line
+
+
+;;;; prodigy-goto-pos
+
+
+;;;; prodigy-status-name
+
+
+;;;; prodigy-status-face
+
+
+;;;; prodigy-relevant-services
+
+
+;;;; prodigy-set-default-directory
+
 
 (provide 'prodigy-gui-test)
 
