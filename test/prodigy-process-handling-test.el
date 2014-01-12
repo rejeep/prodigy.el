@@ -49,6 +49,14 @@
                     (should (eq (plist-get service :status) 'failed))
                     (funcall done))))))
 
+(ert-deftest prodigy-start-service-test/path ()
+  
+  )
+
+(ert-deftest prodigy-start-service-test/env ()
+  
+  )
+
 ;;;; on-output
 
 (ert-deftest-async prodigy-start-service-test/on-output/no-tags (done-log-foo done-log-bar done-stop)
@@ -82,6 +90,12 @@
      (prodigy-start-service service
        (lambda ()
          (prodigy-test/post-message service 'log "foo"))))))
+
+;;;; init
+
+(ert-deftest prodigy-start-service-test/init ()
+  
+  )
 
 ;;;; init-async
 
