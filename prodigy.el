@@ -82,6 +82,11 @@ An example is restarting a service."
   :group 'prodigy
   :type 'number)
 
+(defcustom prodigy-start-tryouts 10
+  "Number of times to check for service being started."
+  :group 'prodigy
+  :type 'number)
+
 (defcustom prodigy-kill-process-buffer-on-stop nil
   "Will kill process buffer on stop if this is true."
   :group 'prodigy
@@ -762,8 +767,17 @@ Note that the return value is always a list."
 
 ;;;; Process handling
 
-(defun prodigy-start-service (service)
-  "Start process associated with SERVICE unless already started."
+(defun prodigy-start-service (service &optional callback)
+  "Start process associated with SERVICE unless already started.
+
+When CALLBACK function is specified, that is called when the
+process has been started.
+
+When the process is started, a timer starts and checks every
+second for `prodigy-start-tryouts' times if the process is live.
+If the process is not live after `prodigy-start-tryouts' seconds,
+the process is put in failed status."
+  (declare (indent 1))
   (unless (prodigy-service-started-p service)
     (let* ((default-directory
              (-if-let (cwd (prodigy-service-cwd service))
@@ -795,6 +809,15 @@ Note that the return value is always a list."
                       prodigy-init-async-timeout))
             (while (not callbacked) (accept-process-output nil 0.005)))))
       (funcall create-process)
+      (let ((tryout 0))
+        (prodigy-every 1
+            (lambda (next)
+              (setq tryout (1+ tryout))
+              (if (process-live-p process)
+                  (funcall callback)
+                (if (= tryout prodigy-start-tryouts)
+                    (prodigy-set-status service 'failed)
+                  (funcall next))))))
       (plist-put service :process process)
       (set-process-filter process 'prodigy-process-filter)
       (set-process-query-on-exit-flag process nil))))
@@ -816,6 +839,7 @@ process is live.  If the process lives after
 `prodigy-stop-tryouts' seconds, the process is put in failed
 status.  If the process is successfully stopped, the process is
 put in stopped status."
+  (declare (indent 2))
   (unless (prodigy-service-stopping-p service)
     (-when-let (process (plist-get service :process))
       (when (process-live-p process)
@@ -823,25 +847,39 @@ put in stopped status."
         (if force
             (kill-process process)
           (signal-process process (or (prodigy-service-stop-signal service) 'int)))
-        (let (timer (tryout 0))
-          (setq
-           timer
-           (prodigy-every 1
-               (lambda (next)
-                 (setq tryout (1+ tryout))
-                 (unless (process-live-p process)
-                   (plist-put service :process nil)
-                   (plist-put service :process-status nil)
-                   (prodigy-set-status service 'stopped))
-                 (when (= tryout prodigy-stop-tryouts)
-                   (prodigy-set-status service 'failed))
-                 (if (or (= tryout prodigy-stop-tryouts) (not (process-live-p process)))
-                     (progn
-                       (unless (process-live-p process)
-                         (prodigy-maybe-kill-process-buffer service))
-                       (when (and callback (not (process-live-p process)))
-                         (funcall callback)))
-                   (funcall next))))))))))
+        (let ((tryout 0))
+          (prodigy-every 1
+              (lambda (next)
+                (setq tryout (1+ tryout))
+                (unless (process-live-p process)
+                  (plist-put service :process nil)
+                  (plist-put service :process-status nil)
+                  (prodigy-set-status service 'stopped))
+                (when (= tryout prodigy-stop-tryouts)
+                  (prodigy-set-status service 'failed))
+                (if (or (= tryout prodigy-stop-tryouts) (not (process-live-p process)))
+                    (progn
+                      (unless (process-live-p process)
+                        (prodigy-maybe-kill-process-buffer service))
+                      (when (and callback (not (process-live-p process)))
+                        (funcall callback)))
+                  (funcall next)))))))))
+
+(defun prodigy-restart-service (service &optional callback)
+  "Restart SERVICE.
+
+If SERVICE is not started, it will be started.
+
+If CALLBACK is specified, it will be called when SERVICE is
+started."
+  (declare (indent 1))
+  (if (prodigy-service-started-p service)
+      (prodigy-stop-service
+       service
+       nil
+       (lambda ()
+         (prodigy-start-service service callback)))
+    (prodigy-start-service service callback)))
 
 (defun prodigy-process-filter (process output)
   "Process filter for service processes.
@@ -969,14 +1007,7 @@ SIGNINT signal."
   (-each (prodigy-relevant-services)
          (lambda (service)
            (prodigy-with-refresh
-            (if (prodigy-service-started-p service)
-                (prodigy-stop-service
-                 service
-                 nil
-                 (lambda ()
-                   (prodigy-with-refresh
-                    (prodigy-start-service service))))
-              (prodigy-start-service service))))))
+            (prodigy-restart-service service)))))
 
 (defun prodigy-display-process ()
   "Switch to process buffer for service at current line."

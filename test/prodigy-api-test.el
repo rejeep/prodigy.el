@@ -116,14 +116,14 @@
 
 (ert-deftest prodigy-set-status-test/status-defined ()
   (with-sandbox
-   (let ((service (make-service)))
+   (let ((service (prodigy-test/make-service)))
      (prodigy-define-status :id 'waiting)
      (prodigy-set-status service 'waiting)
      (should (eq (plist-get service :status) 'waiting)))))
 
 (ert-deftest prodigy-set-status-test/status-not-defined ()
   (with-sandbox
-   (let ((service (make-service)))
+   (let ((service (prodigy-test/make-service)))
      (should-error (prodigy-set-status service 'waiting)))))
 
 (provide 'prodigy-api-test)
