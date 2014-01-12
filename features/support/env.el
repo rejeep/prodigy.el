@@ -9,9 +9,6 @@
 (defvar prodigy-root-path
   (f-parent prodigy-features-path))
 
-(defvar prodigy-servers-path
-  (f-expand "servers" prodigy-features-path))
-
 (defvar prodigy-buffer-list (buffer-list))
 
 (require 'prodigy (f-expand "prodigy" prodigy-root-path))
@@ -24,12 +21,7 @@
 (Before
  (setq prodigy-services nil)
  (setq prodigy-filters nil)
- (setq prodigy-kill-process-buffer-on-stop nil)
-
- (makunbound 'foo)
- (-each (process-list)
-        (lambda (buffer)
-          (signal-process buffer 'int)))
+ 
  (-each (buffer-list)
         (lambda (buffer)
           (unless (-contains? prodigy-buffer-list buffer)
