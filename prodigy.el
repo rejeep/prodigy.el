@@ -757,7 +757,7 @@ Note that the return value is always a list."
       (setq default-directory
             (-if-let (cwd (prodigy-service-cwd service))
                 cwd
-              (getenv "HOME"))))))
+              (f-expand (getenv "HOME")))))))
 
 
 ;;;; Process handling
