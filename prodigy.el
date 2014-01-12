@@ -1014,7 +1014,7 @@ SIGNINT signal."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
     (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
-        (progn (pop-to-buffer buffer) (view-mode 1))
+        (progn (pop-to-buffer buffer) (prodigy-view-mode))
       (message "Nothing to show for %s" (plist-get service :name)))))
 
 (defun prodigy-browse ()
@@ -1157,6 +1157,10 @@ The old service process is transfered to the new service."
   (when (featurep 'discover)
     (prodigy-discover-initialize))
   (run-mode-hooks 'prodigy-mode-hook))
+
+;;;###autoload
+(define-derived-mode prodigy-view-mode special-mode "Prodigy-view"
+  "Mode for viewing prodigy process output.")
 
 ;;;###autoload
 (defun prodigy ()
