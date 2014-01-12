@@ -500,7 +500,7 @@ the timeouts stop."
 (defun prodigy-service-first-tag-with (service property)
   "Return SERVICE PROPERTY or tag with PROPERTY.
 
-If SERVICE has PROPERTY, return the value of that property.  Not
+If SERVICE has PROPERTY, return the value of that property.  Note
 that '(:foo nil) means that the list has the property :foo.  If
 SERVICE does not have property, find the first SERVICE tag that
 has that property and return its value."
