@@ -28,6 +28,7 @@
 
 ;;; Code:
 
+
 ;;;; prodigy-service-tags
 
 (ert-deftest prodigy-service-tags-test/no-tags ()
