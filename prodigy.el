@@ -874,11 +874,9 @@ If CALLBACK is specified, it will be called when SERVICE is
 started."
   (declare (indent 1))
   (if (prodigy-service-started-p service)
-      (prodigy-stop-service
-       service
-       nil
-       (lambda ()
-         (prodigy-start-service service callback)))
+      (prodigy-stop-service service nil
+        (lambda ()
+          (prodigy-start-service service callback)))
     (prodigy-start-service service callback)))
 
 (defun prodigy-process-filter (process output)
