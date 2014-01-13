@@ -459,7 +459,7 @@ PATHY can be either of:
   (cond ((functionp pathy)
          (prodigy-resolve-pathy (funcall pathy)))
         ((listp pathy)
-         (-flatten (-uniq (-map 'prodigy-resolve-pathy pathy))))
+         (-map 'prodigy-resolve-pathy pathy))
         ((stringp pathy)
          (list pathy))))
 

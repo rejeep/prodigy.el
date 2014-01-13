@@ -170,6 +170,9 @@
        (lambda ()
          (prodigy-stop-service service nil done))))))
 
+(ert-deftest prodigy-stop-service-test/kill-process-buffer-on-stop ()
+  )
+
 
 ;;;; prodigy-restart-service
 
