@@ -485,6 +485,12 @@ the timeouts stop."
   "Return true if SERVICE is currently stopping, false otherwise."
   (eq (plist-get service :status) 'stopping))
 
+(defun prodigy-switch-to-process-buffer (service)
+  "Switch to the process buffer for SERVICE."
+  (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
+      (progn (pop-to-buffer buffer) (prodigy-view-mode))
+    (message "Nothing to show for %s" (plist-get service :name))))
+
 (defun prodigy-maybe-kill-process-buffer (service)
   "Kill SERVICE buffer if kill-process-buffer-on-stop is t."
   (let ((kill-process-buffer-on-stop (prodigy-service-kill-process-buffer-on-stop service)))
@@ -1021,9 +1027,7 @@ SIGNINT signal."
   "Switch to process buffer for service at current line."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
-    (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
-        (progn (pop-to-buffer buffer) (prodigy-view-mode))
-      (message "Nothing to show for %s" (plist-get service :name)))))
+    (prodigy-switch-to-process-buffer service)))
 
 (defun prodigy-browse ()
   "Browse service url at point if possible to figure out."
