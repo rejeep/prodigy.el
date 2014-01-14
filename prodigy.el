@@ -554,6 +554,13 @@ The timer is not created if already exists."
   "Return prodigy buffer if it exists."
   (get-buffer prodigy-buffer-name))
 
+(defun prodigy-buffer-visible-p ()
+  "Retrun true if the prodigy buffer is visible in any window."
+  (-any?
+   (lambda (window)
+     (equal (window-buffer window) (prodigy-buffer)))
+   (window-list)))
+
 (defun prodigy-service-status-check (&optional next)
   "Check for service process change and update service status.
 
@@ -562,7 +569,7 @@ status.
 
 When NEXT is specifed, call that to start a new timer.  See
 `prodigy-every'."
-  (when (eq major-mode 'prodigy-mode)
+  (when (prodigy-buffer-visible-p)
     (-each prodigy-services
            (lambda (service)
              (-when-let (process (plist-get service :process))
