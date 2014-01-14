@@ -71,12 +71,12 @@
   (should (>= (count-lines (point-min) (point-max)) 50)))
 
 (prodigy-test-truncate prodigy-view-test/truncate/property
-    (prodigy-test/make-service :truncate 30) nil
+    (prodigy-test/make-service :truncate-output 30) nil
   (should (> (count-lines (point-min) (point-max)) 10))
   (should (<= (count-lines (point-min) (point-max)) 30)))
 
 (prodigy-test-truncate prodigy-view-test/truncate/default-with-property
-    (prodigy-test/make-service :truncate t) nil
+    (prodigy-test/make-service :truncate-output t) nil
   (should (<= (count-lines (point-min) (point-max)) 10)))
 
 (prodigy-test-truncate prodigy-view-test/truncate/default

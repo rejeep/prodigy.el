@@ -182,6 +182,11 @@ The list is a property list with the following properties:
 `kill-process-buffer-on-stop'
   Kill associated process buffer when process stops.
 
+`truncate-output'
+ Truncates the process ouptut buffer.  If set to t, truncates to
+ `prodigy-view-buffer-maximum-size' lines.  If set to an integer,
+ truncates to that number of lines.
+
 `on-output'
   Call this function with (service, output), each time process gets
   new output.")
@@ -260,7 +265,7 @@ Supported filters:
   "The maximum size in lines for process view buffers.
 
 Only enabled if `prodigy-view-truncate-by-default' is non-nil or
-for services where :truncate is set to t.")
+for services where :truncate-output is set to t.")
 
 (defvar prodigy-view-truncate-by-default nil
   "Truncate all prodigy view buffers by default.
@@ -699,7 +704,7 @@ The completion system used is determined by
 (defun prodigy-truncate-buffer ()
   "Truncate the process view buffer to its maximum size."
   (-when-let (truncate-property
-              (or (plist-get prodigy-current-service :truncate)
+              (or (plist-get prodigy-current-service :truncate-output)
                  prodigy-view-truncate-by-default))
     (let ((max-buffer-size (if (numberp truncate-property)
                                truncate-property
