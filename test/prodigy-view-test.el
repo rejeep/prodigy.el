@@ -41,6 +41,10 @@
 (ert-deftest prodigy-view-test/mode-line ()
   (with-view-mode
    (should (string= mode-name "Prodigy-view"))))
+
+(ert-deftest prodigy-view-test/view-mode ()
+  (with-view-mode (should view-mode)))
+
 (provide 'prodigy-view-test)
 
 ;;; prodigy-view-test.el ends here
