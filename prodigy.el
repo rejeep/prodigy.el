@@ -251,6 +251,18 @@ Supported filters:
   '("Name" . nil)
   "Sort table on this key.")
 
+(defvar prodigy-view-buffer-maximum-size 1024
+  "The maximum size in lines for process view buffers.
+
+Only enabled if `prodigy-view-truncate-by-default' is non-nil or
+for services where :truncate is set to t.")
+
+(defvar prodigy-view-truncate-by-default nil
+  "Truncate all prodigy view buffers by default.
+
+If enabled, view buffers will be truncated at
+`prodigy-view-buffer-maximum-size' lines.")
+
 (defconst prodigy-discover-context-menu
   '(prodigy
     (actions
@@ -673,6 +685,15 @@ The completion system used is determined by
   (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'failed :face 'prodigy-red-face))
 
+(defun prodigy-truncate-buffer (max-buffer-size)
+  "Truncate the buffer to MAX-BUFFER-SIZE lines."
+  (save-excursion
+    (goto-char (point-max))
+    (forward-line (- max-buffer-size))
+    (beginning-of-line)
+    (let ((inhibit-read-only t))
+      (delete-region (point-min) (point)))))
+
 
 ;;;; GUI
 
@@ -911,7 +932,13 @@ PROCESS is the service process that the OUTPUT is associated to."
         (let ((inhibit-read-only t))
           (save-excursion
             (goto-char (point-max))
-            (insert (ansi-color-apply output))))))))
+            (insert (ansi-color-apply output))
+            (-when-let (truncate-property
+                        (or (plist-get service :truncate)
+                           prodigy-view-truncate-by-default))
+              (prodigy-truncate-buffer
+               (if (numberp truncate-property) truncate-property
+                 prodigy-view-buffer-maximum-size)))))))))
 
 
 ;;;; User functions

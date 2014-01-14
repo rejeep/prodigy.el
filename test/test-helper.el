@@ -77,6 +77,12 @@ ACTION and ARGS are json encoded and sent to the process."
           :service (plist-get service :port))))
     (process-send-string process (json-encode (cons action args)))))
 
+(defun prodigy-test/log-lines (service n)
+  "Log N lines into the process ouptut."
+  (--dotimes n
+    (prodigy-test/post-message service 'log
+                               (concat "Line " (number-to-string it)))))
+
 (defmacro with-sandbox (&rest body)
   "Yield BODY in a sandboxed environment."
   `(with-temp-buffer
@@ -86,6 +92,7 @@ ACTION and ARGS are json encoded and sent to the process."
      (setq prodigy-start-tryouts 1)
      (setq prodigy-stop-tryouts 1)
      (setq prodigy-filters nil)
+     (setq prodigy-view-truncate-by-default nil)
      (prodigy-define-default-status-list)
      (with-mock ,@body)))
 
