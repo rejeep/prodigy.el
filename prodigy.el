@@ -1171,7 +1171,7 @@ The old service process is transfered to the new service."
 (defun prodigy ()
   "Manage external services from within Emacs."
   (interactive)
-  (let ((buffer-p (get-buffer prodigy-buffer-name))
+  (let ((buffer-p (prodigy-buffer))
         (buffer (get-buffer-create prodigy-buffer-name)))
     (pop-to-buffer buffer)
     (unless buffer-p
