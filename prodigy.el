@@ -191,11 +191,6 @@ The list is a property list with the following properties:
   Call this function with (service, output), each time process gets
   new output.")
 
-(defvar prodigy-current-service nil
-  "Special variable to hold the service for a process view buffer.
-
-Do not set manually.")
-
 (defvar prodigy-tags nil
   "List of tags.
 
@@ -273,11 +268,13 @@ for services where :truncate-output is set to t.")
 If enabled, view buffers will be truncated at
 `prodigy-view-buffer-maximum-size' lines.")
 
-(defvar prodigy-process-after-insert-hook nil
-  "Hook to run after process output has been inserted into the view buffer.
+(defvar prodigy-process-on-output-hook
+  '(prodigy-insert-output prodigy-truncate-buffer)
+  "Hook to run after the process has produced output.
 
-The special variable `prodigy-current-service' will be bound to
-the associated service.")
+Functions will be run with 2 arguments, `service' and `output'.
+The hook will be run with the process view buffer as the current
+buffer and read-only mode disabled.")
 
 (defconst prodigy-discover-context-menu
   '(prodigy
@@ -701,10 +698,16 @@ The completion system used is determined by
   (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'failed :face 'prodigy-red-face))
 
-(defun prodigy-truncate-buffer ()
-  "Truncate the process view buffer to its maximum size."
+(defun prodigy-insert-output (_ output)
+  "Insert OUTPUT into the process view buffer."
+  (save-excursion
+    (goto-char (point-max))
+    (insert (ansi-color-apply output))))
+
+(defun prodigy-truncate-buffer (service _)
+  "Truncate the process view buffer for SERVICE to its maximum size."
   (-when-let (truncate-property
-              (or (plist-get prodigy-current-service :truncate-output)
+              (or (plist-get service :truncate-output)
                  prodigy-view-truncate-by-default))
     (let ((max-buffer-size (if (numberp truncate-property)
                                truncate-property
@@ -713,10 +716,7 @@ The completion system used is determined by
         (goto-char (point-max))
         (forward-line (- max-buffer-size))
         (beginning-of-line)
-        (let ((inhibit-read-only t))
-          (delete-region (point-min) (point)))))))
-
-(add-hook 'prodigy-process-after-insert-hook 'prodigy-truncate-buffer)
+        (delete-region (point-min) (point))))))
 
 
 ;;;; GUI
@@ -954,11 +954,7 @@ PROCESS is the service process that the OUTPUT is associated to."
     (let ((buffer (get-buffer-create (prodigy-buffer-name service))))
       (with-current-buffer buffer
         (let ((inhibit-read-only t))
-          (save-excursion
-            (goto-char (point-max))
-            (insert (ansi-color-apply output))
-            (let ((prodigy-current-service service))
-              (run-hooks 'prodigy-process-after-insert-hook))))))))
+          (run-hook-with-args 'prodigy-process-on-output-hook service output))))))
 
 
 ;;;; User functions
