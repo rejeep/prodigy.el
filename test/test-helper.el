@@ -79,7 +79,7 @@ ACTION and ARGS are json encoded and sent to the process."
 
 (defmacro with-sandbox (&rest body)
   "Yield BODY in a sandboxed environment."
-  `(progn
+  `(with-temp-buffer
      (setq prodigy-tags nil)
      (setq prodigy-services nil)
      (setq prodigy-status-list nil)
