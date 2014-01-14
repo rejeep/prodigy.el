@@ -186,6 +186,11 @@ The list is a property list with the following properties:
   Call this function with (service, output), each time process gets
   new output.")
 
+(defvar prodigy-current-service nil
+  "Special variable to hold the service for a process view buffer.
+
+Do not set manually.")
+
 (defvar prodigy-tags nil
   "List of tags.
 
@@ -262,6 +267,12 @@ for services where :truncate is set to t.")
 
 If enabled, view buffers will be truncated at
 `prodigy-view-buffer-maximum-size' lines.")
+
+(defvar prodigy-process-after-insert-hook nil
+  "Hook to run after process output has been inserted into the view buffer.
+
+The special variable `prodigy-current-service' will be bound to
+the associated service.")
 
 (defconst prodigy-discover-context-menu
   '(prodigy
@@ -685,14 +696,22 @@ The completion system used is determined by
   (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'failed :face 'prodigy-red-face))
 
-(defun prodigy-truncate-buffer (max-buffer-size)
-  "Truncate the buffer to MAX-BUFFER-SIZE lines."
-  (save-excursion
-    (goto-char (point-max))
-    (forward-line (- max-buffer-size))
-    (beginning-of-line)
-    (let ((inhibit-read-only t))
-      (delete-region (point-min) (point)))))
+(defun prodigy-truncate-buffer ()
+  "Truncate the process view buffer to its maximum size."
+  (-when-let (truncate-property
+              (or (plist-get prodigy-current-service :truncate)
+                 prodigy-view-truncate-by-default))
+    (let ((max-buffer-size (if (numberp truncate-property)
+                               truncate-property
+                             prodigy-view-buffer-maximum-size)))
+      (save-excursion
+        (goto-char (point-max))
+        (forward-line (- max-buffer-size))
+        (beginning-of-line)
+        (let ((inhibit-read-only t))
+          (delete-region (point-min) (point)))))))
+
+(add-hook 'prodigy-process-after-insert-hook 'prodigy-truncate-buffer)
 
 
 ;;;; GUI
@@ -933,12 +952,8 @@ PROCESS is the service process that the OUTPUT is associated to."
           (save-excursion
             (goto-char (point-max))
             (insert (ansi-color-apply output))
-            (-when-let (truncate-property
-                        (or (plist-get service :truncate)
-                           prodigy-view-truncate-by-default))
-              (prodigy-truncate-buffer
-               (if (numberp truncate-property) truncate-property
-                 prodigy-view-buffer-maximum-size)))))))))
+            (let ((prodigy-current-service service))
+              (run-hooks 'prodigy-process-after-insert-hook))))))))
 
 
 ;;;; User functions
