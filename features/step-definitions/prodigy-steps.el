@@ -32,19 +32,10 @@
   (lambda ()
     (call-interactively 'prodigy)))
 
-(Given "^I start prodigy view mode$"
-  (lambda ()
-    (call-interactively 'prodigy-view-mode)))
-
 (Then "^I should be in prodigy mode$"
   (lambda ()
     (should (equal major-mode 'prodigy-mode))
     (should (equal mode-name "Prodigy"))))
-
-(Then "^I should be in prodigy view mode$"
-  (lambda ()
-    (should (equal major-mode 'prodigy-view-mode))
-    (should (equal mode-name "Prodigy-view"))))
 
 (Then "^the buffer should be read only$"
   (lambda ()
@@ -162,10 +153,6 @@
 (Then "^default directory should be \"\\([^\"]+\\)\"$"
   (lambda (dir)
     (should (string= dir default-directory))))
-
-(Then "^font lock mode should be enabled$"
-  (lambda ()
-    (should font-lock-mode)))
 
 (provide 'prodigy-steps)
 

@@ -28,6 +28,19 @@
 
 ;;; Code:
 
+(defmacro with-view-mode (&rest body)
+  "Yield BODY in a `prodigy-view-mode' buffer."
+  `(with-temp-buffer
+     (prodigy-view-mode)
+     ,@body))
+
+(ert-deftest prodigy-view-test/major-mode ()
+  (with-view-mode
+   (should (eq major-mode 'prodigy-view-mode))))
+
+(ert-deftest prodigy-view-test/mode-line ()
+  (with-view-mode
+   (should (string= mode-name "Prodigy-view"))))
 (provide 'prodigy-view-test)
 
 ;;; prodigy-view-test.el ends here
