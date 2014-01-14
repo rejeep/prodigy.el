@@ -186,6 +186,11 @@ The list is a property list with the following properties:
   Call this function with (service, output), each time process gets
   new output.")
 
+(defvar prodigy-current-service nil
+  "Special variable to hold the service for a process view buffer.
+
+Do not set manually.")
+
 (defvar prodigy-tags nil
   "List of tags.
 
@@ -250,6 +255,24 @@ Supported filters:
 (defconst prodigy-list-sort-key
   '("Name" . nil)
   "Sort table on this key.")
+
+(defvar prodigy-view-buffer-maximum-size 1024
+  "The maximum size in lines for process view buffers.
+
+Only enabled if `prodigy-view-truncate-by-default' is non-nil or
+for services where :truncate is set to t.")
+
+(defvar prodigy-view-truncate-by-default nil
+  "Truncate all prodigy view buffers by default.
+
+If enabled, view buffers will be truncated at
+`prodigy-view-buffer-maximum-size' lines.")
+
+(defvar prodigy-process-after-insert-hook nil
+  "Hook to run after process output has been inserted into the view buffer.
+
+The special variable `prodigy-current-service' will be bound to
+the associated service.")
 
 (defconst prodigy-discover-context-menu
   '(prodigy
@@ -485,6 +508,12 @@ the timeouts stop."
   "Return true if SERVICE is currently stopping, false otherwise."
   (eq (plist-get service :status) 'stopping))
 
+(defun prodigy-switch-to-process-buffer (service)
+  "Switch to the process buffer for SERVICE."
+  (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
+      (progn (pop-to-buffer buffer) (prodigy-view-mode))
+    (message "Nothing to show for %s" (plist-get service :name))))
+
 (defun prodigy-maybe-kill-process-buffer (service)
   "Kill SERVICE buffer if kill-process-buffer-on-stop is t."
   (let ((kill-process-buffer-on-stop (prodigy-service-kill-process-buffer-on-stop service)))
@@ -666,6 +695,23 @@ The completion system used is determined by
   (prodigy-define-status :id 'ready :face 'prodigy-green-face)
   (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'failed :face 'prodigy-red-face))
+
+(defun prodigy-truncate-buffer ()
+  "Truncate the process view buffer to its maximum size."
+  (-when-let (truncate-property
+              (or (plist-get prodigy-current-service :truncate)
+                 prodigy-view-truncate-by-default))
+    (let ((max-buffer-size (if (numberp truncate-property)
+                               truncate-property
+                             prodigy-view-buffer-maximum-size)))
+      (save-excursion
+        (goto-char (point-max))
+        (forward-line (- max-buffer-size))
+        (beginning-of-line)
+        (let ((inhibit-read-only t))
+          (delete-region (point-min) (point)))))))
+
+(add-hook 'prodigy-process-after-insert-hook 'prodigy-truncate-buffer)
 
 
 ;;;; GUI
@@ -905,7 +951,9 @@ PROCESS is the service process that the OUTPUT is associated to."
         (let ((inhibit-read-only t))
           (save-excursion
             (goto-char (point-max))
-            (insert (ansi-color-apply output))))))))
+            (insert (ansi-color-apply output))
+            (let ((prodigy-current-service service))
+              (run-hooks 'prodigy-process-after-insert-hook))))))))
 
 
 ;;;; User functions
@@ -1021,9 +1069,7 @@ SIGNINT signal."
   "Switch to process buffer for service at current line."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
-    (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
-        (progn (pop-to-buffer buffer) (prodigy-view-mode))
-      (message "Nothing to show for %s" (plist-get service :name)))))
+    (prodigy-switch-to-process-buffer service)))
 
 (defun prodigy-browse ()
   "Browse service url at point if possible to figure out."
