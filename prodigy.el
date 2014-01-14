@@ -550,6 +550,10 @@ The timer is not created if already exists."
               (prodigy-service-status-check)
               (prodigy-every prodigy-timer-interval 'prodigy-service-status-check)))))
 
+(defun prodigy-buffer ()
+  "Return prodigy buffer if it exists."
+  (get-buffer prodigy-buffer-name))
+
 (defun prodigy-service-status-check (&optional next)
   "Check for service process change and update service status.
 
@@ -1028,8 +1032,10 @@ SIGNINT signal."
 (defun prodigy-refresh ()
   "Refresh list of services."
   (interactive)
-  (tabulated-list-print :remember-pos)
-  (hl-line-highlight))
+  (-when-let (buffer (prodigy-buffer))
+    (with-current-buffer buffer
+      (tabulated-list-print :remember-pos)
+      (hl-line-highlight))))
 
 (defun prodigy-add-tag-filter ()
   "Read tag and add filter so that only services with that tag show."

@@ -173,6 +173,17 @@
 (ert-deftest prodigy-stop-service-test/kill-process-buffer-on-stop ()
   )
 
+(ert-deftest-async prodigy-stop-service-test/todo (done)
+  (with-sandbox
+   (let ((service (prodigy-test/make-service)))
+     (prodigy-start-service service
+       (lambda ()
+         (switch-to-buffer (get-buffer-create "foo"))
+         (insert "bar")
+         (prodigy-stop-service service nil done)
+         (should (string= (buffer-name) "foo"))
+         (should (string= (buffer-string) "bar")))))))
+
 
 ;;;; prodigy-restart-service
 
