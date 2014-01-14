@@ -122,6 +122,8 @@ An example is restarting a service."
     (define-key map (kbd "F") 'prodigy-clear-filters)
     (define-key map (kbd "j m") 'prodigy-jump-magit)
     (define-key map (kbd "j d") 'prodigy-jump-dired)
+    (define-key map (kbd "M-n") 'prodigy-next-with-status)
+    (define-key map (kbd "M-p") 'prodigy-prev-with-status)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -667,6 +669,30 @@ The completion system used is determined by
   (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'failed :face 'prodigy-red-face))
 
+(defun prodigy-service-has-status-p (service)
+  "Return true if SERVICE has a status, except for stopped."
+  (let ((status (plist-get service :status)))
+    (and status (not (eq status 'stopped)))))
+
+(defun prodigy-move-until (direction callback)
+  "Move in DIRECTION until while CALLBACK return false.
+
+DIRECTION is either 'up or 'down."
+  (let ((pos (line-beginning-position))
+        (found
+         (catch 'break
+           (while t
+             (condition-case err
+                 (cond ((eq direction 'down)
+                        (prodigy-goto-next-line))
+                       ((eq direction 'up)
+                        (prodigy-goto-prev-line)))
+               (error (throw 'break nil)))
+             (when (funcall callback (prodigy-service-at-pos))
+               (throw 'break t))))))
+    (unless found
+      (prodigy-goto-pos pos))))
+
 
 ;;;; GUI
 
@@ -1080,6 +1106,16 @@ SIGNINT signal."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
     (dired (prodigy-service-cwd service))))
+
+(defun prodigy-next-with-status ()
+  "Move to next service with status."
+  (interactive)
+  (prodigy-move-until 'down 'prodigy-service-has-status-p))
+
+(defun prodigy-prev-with-status ()
+  "Move to prev service with status."
+  (interactive)
+  (prodigy-move-until 'up 'prodigy-service-has-status-p))
 
 
 ;;;; Public API functions

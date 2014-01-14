@@ -42,3 +42,34 @@ Feature: Prev
       | bar  | t           |
       | foo  | nil         |
     Then I should see message "Cannot move further up"
+
+  Scenario: Prev with status
+    Given I add the following services:
+      | name | status  |
+      | bar  | running |
+      | baz  | nil     |
+      | foo  | failed  |
+      | qux  | nil     |
+    And I start prodigy
+    When I press "M->"
+    And I press "M-p"
+    Then I should see services:
+      | name | highlighted |
+      | bar  | nil         |
+      | baz  | nil         |
+      | foo  | t           |
+      | qux  | nil         |
+    When I press "M-p"
+    Then I should see services:
+      | name | highlighted |
+      | bar  | t           |
+      | baz  | nil         |
+      | foo  | nil         |
+      | qux  | nil         |
+    When I press "M-p"
+    Then I should see services:
+      | name | highlighted |
+      | bar  | t           |
+      | baz  | nil         |
+      | foo  | nil         |
+      | qux  | nil         |

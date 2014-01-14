@@ -59,7 +59,8 @@
           (rows (cdr table)))
       (let ((name-index (-elem-index "name" head))
             (cwd-index (-elem-index "cwd" head))
-            (tags-index (-elem-index "tags" head)))
+            (tags-index (-elem-index "tags" head))
+            (status-index (-elem-index "status" head)))
         (mapc
          (lambda (row)
            (let ((service (list :name (nth name-index row))))
@@ -67,6 +68,8 @@
                (plist-put service :tags tags))
              (-when-let (cwd (and cwd-index (nth cwd-index row)))
                (plist-put service :cwd cwd))
+             (-when-let (status (and status-index (read (nth status-index row))))
+               (plist-put service :status status))
              (apply 'prodigy-define-service service)))
          rows)))))
 
