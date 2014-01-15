@@ -735,7 +735,7 @@ DIRECTION is either 'up or 'down."
 
 Buffer will be writable for BODY."
   (declare (indent 1))
-  `(let ((buffer (get-buffer-create (prodigy-buffer-name service))))
+  `(let ((buffer (get-buffer-create (prodigy-buffer-name ,service))))
      (with-current-buffer buffer
        (let ((inhibit-read-only t))
          ,@body))))
