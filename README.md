@@ -1,4 +1,4 @@
-# Prodigy [![Build Status](https://api.travis-ci.org/rejeep/prodigy.el.png?branch=master)](http://travis-ci.org/rejeep/prodigy.el)
+# Prodigy
 
 Manage external services from within Emacs
 
@@ -112,7 +112,8 @@ Each service is associated with a status. The built in statuses are:
   this status will be used.
 * `ready` - The process is "actually" ready. Not managed by Prodigy.
 * `stopping` - Set when a service is stopping.
-* `failed` - The process failed. Not managed by Prodigy.
+* `failed` - The process failed. A service will get this state if it
+  is not started within `var` or not stopped within `var`.
 
 The only way Prodigy has an idea of the service status, is to look at
 the process status (note the difference between service and process

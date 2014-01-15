@@ -1,4 +1,4 @@
-;;; prodigy-gui-test.el --- Prodigy: GUI tests -*- lexical-binding: t; -*-
+;;; prodigy-internals-test.el --- Prodigy: Tests for the internal functions -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2014 Johan Andersson
 
@@ -26,13 +26,11 @@
 
 ;;; Commentary:
 
-;; This file contains tests related to the Prodigy GUI.
-
-;; Try to avoid adding tests in this file.  If possible, GUI related
-;; features should instead be tested with Ecukes.
+;; Try to avoid adding tests in this file.  If possible, the internal
+;; functions should be tested via the process related functions.
 
 ;;; Code:
 
-(provide 'prodigy-gui-test)
+(provide 'prodigy-internals-test)
 
-;;; prodigy-gui-test.el ends here
+;;; prodigy-internals-test.el ends here

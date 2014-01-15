@@ -82,6 +82,11 @@ An example is restarting a service."
   :group 'prodigy
   :type 'number)
 
+(defcustom prodigy-start-tryouts 10
+  "Number of times to check for service being started."
+  :group 'prodigy
+  :type 'number)
+
 (defcustom prodigy-kill-process-buffer-on-stop nil
   "Will kill process buffer on stop if this is true."
   :group 'prodigy
@@ -117,6 +122,8 @@ An example is restarting a service."
     (define-key map (kbd "F") 'prodigy-clear-filters)
     (define-key map (kbd "j m") 'prodigy-jump-magit)
     (define-key map (kbd "j d") 'prodigy-jump-dired)
+    (define-key map (kbd "M-n") 'prodigy-next-with-status)
+    (define-key map (kbd "M-p") 'prodigy-prev-with-status)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -177,6 +184,11 @@ The list is a property list with the following properties:
 `kill-process-buffer-on-stop'
   Kill associated process buffer when process stops.
 
+`truncate-output'
+ Truncates the process ouptut buffer.  If set to t, truncates to
+ `prodigy-view-buffer-maximum-size' lines.  If set to an integer,
+ truncates to that number of lines.
+
 `on-output'
   Call this function with (service, output), each time process gets
   new output.")
@@ -192,13 +204,14 @@ these (see `prodigy-services' doc-string for more information):
  * `cwd'
  * `tags'
  * `init'
- * `init-async',
+ * `init-async'
  * `stop-signal'
  * `path'
  * `env'
  * `url'
  * `kill-process-buffer-on-stop'
  * `on-output'
+ * `truncate-output'
 
 These properties are also valid for a tag:
 
@@ -245,6 +258,24 @@ Supported filters:
 (defconst prodigy-list-sort-key
   '("Name" . nil)
   "Sort table on this key.")
+
+(defvar prodigy-view-buffer-maximum-size 1024
+  "The maximum size in lines for process view buffers.
+
+Only enabled if `prodigy-view-truncate-by-default' is non-nil or
+for services where :truncate-output is set to t.")
+
+(defvar prodigy-view-truncate-by-default nil
+  "Truncate all prodigy view buffers by default.
+
+If enabled, view buffers will be truncated at
+`prodigy-view-buffer-maximum-size' lines.")
+
+(defvar prodigy-process-on-output-hook
+  '(prodigy-on-output prodigy-insert-output prodigy-truncate-buffer)
+  "Hook to run after the process has produced output.
+
+Functions will be run with 2 arguments, `service' and `output'.")
 
 (defconst prodigy-discover-context-menu
   '(prodigy
@@ -333,7 +364,7 @@ that looks like a port in the ARGS list."
 
 If SERVICE command exists, use that.  If not, find the first
 SERVICE tag that has a command and return that."
-  (let ((command (prodigy-service-first-tag-with service :command)))
+  (let ((command (prodigy-service-or-first-tag-with service :command)))
     (if (functionp command)
         (funcall command)
       command)))
@@ -343,7 +374,7 @@ SERVICE tag that has a command and return that."
 
 If SERVICE args exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (let ((args (prodigy-service-first-tag-with service :args)))
+  (let ((args (prodigy-service-or-first-tag-with service :args)))
     (if (functionp args)
         (funcall args)
       args)))
@@ -353,35 +384,35 @@ tag that has and return that."
 
 If SERVICE cwd exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (prodigy-service-first-tag-with service :cwd))
+  (prodigy-service-or-first-tag-with service :cwd))
 
 (defun prodigy-service-init (service)
   "Return SERVICE init callback function.
 
 If SERVICE init exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (prodigy-service-first-tag-with service :init))
+  (prodigy-service-or-first-tag-with service :init))
 
 (defun prodigy-service-init-async (service)
   "Return SERVICE init async callback function.
 
 If SERVICE init exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (prodigy-service-first-tag-with service :init-async))
+  (prodigy-service-or-first-tag-with service :init-async))
 
 (defun prodigy-service-stop-signal (service)
   "Return SERVICE stop signal.
 
 If SERVICE stop-signal exists, use that.  If not, find the first
 SERVICE tag that has and return that."
-  (prodigy-service-first-tag-with service :stop-signal))
+  (prodigy-service-or-first-tag-with service :stop-signal))
 
 (defun prodigy-service-kill-process-buffer-on-stop (service)
   "Return weather SERVICE should kill process buffer on stop or not.
 
 If SERVICE kill-process-buffer-on-stop exists, use that.  If not, find the first
 SERVICE tag that has and return that."
-  (prodigy-service-first-tag-with service :kill-process-buffer-on-stop))
+  (prodigy-service-or-first-tag-with service :kill-process-buffer-on-stop))
 
 (defun prodigy-service-path (service)
   "Return list of SERVICE path extended with all tags path."
@@ -395,9 +426,9 @@ SERVICE tag that has and return that."
 
 (defun prodigy-service-env (service)
   "Return list of SERVICE env extended with all tags env."
-  (let ((compare-fn
+  (let ((-compare-fn
          (lambda (a b)
-           (string< (car a) (car b)))))
+           (equal (car a) (car b)))))
     (-uniq
      (append
       (plist-get service :env)
@@ -410,7 +441,7 @@ SERVICE tag that has and return that."
 
 If SERVICE url exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (prodigy-service-first-tag-with service :url))
+  (prodigy-service-or-first-tag-with service :url))
 
 (defun prodigy-service-on-output (service)
   "Return SERVICE and its tags on-output functions as list.
@@ -421,6 +452,13 @@ comes the SERVICE tags on-output functions."
    'null
    (cons (plist-get service :on-output)
          (--map (plist-get it :on-output) (prodigy-service-tags service)))))
+
+(defun prodigy-service-truncate-output (service)
+  "Return SERVICE truncate output size.
+
+If SERVICE truncate-output exists, use that.  If not, find the
+first SERVICE tag that has and return that."
+  (prodigy-service-or-first-tag-with service :truncate-output))
 
 
 ;;;; Internal functions
@@ -480,6 +518,12 @@ the timeouts stop."
   "Return true if SERVICE is currently stopping, false otherwise."
   (eq (plist-get service :status) 'stopping))
 
+(defun prodigy-switch-to-process-buffer (service)
+  "Switch to the process buffer for SERVICE."
+  (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
+      (progn (pop-to-buffer buffer) (prodigy-view-mode))
+    (message "Nothing to show for %s" (plist-get service :name))))
+
 (defun prodigy-maybe-kill-process-buffer (service)
   "Kill SERVICE buffer if kill-process-buffer-on-stop is t."
   (let ((kill-process-buffer-on-stop (prodigy-service-kill-process-buffer-on-stop service)))
@@ -492,10 +536,10 @@ the timeouts stop."
   (-when-let (process (plist-get service :process))
     (process-live-p process)))
 
-(defun prodigy-service-first-tag-with (service property)
+(defun prodigy-service-or-first-tag-with (service property)
   "Return SERVICE PROPERTY or tag with PROPERTY.
 
-If SERVICE has PROPERTY, return the value of that property.  Not
+If SERVICE has PROPERTY, return the value of that property.  Note
 that '(:foo nil) means that the list has the property :foo.  If
 SERVICE does not have property, find the first SERVICE tag that
 has that property and return its value."
@@ -545,6 +589,17 @@ The timer is not created if already exists."
               (prodigy-service-status-check)
               (prodigy-every prodigy-timer-interval 'prodigy-service-status-check)))))
 
+(defun prodigy-buffer ()
+  "Return prodigy buffer if it exists."
+  (get-buffer prodigy-buffer-name))
+
+(defun prodigy-buffer-visible-p ()
+  "Retrun true if the prodigy buffer is visible in any window."
+  (-any?
+   (lambda (window)
+     (equal (window-buffer window) (prodigy-buffer)))
+   (window-list)))
+
 (defun prodigy-service-status-check (&optional next)
   "Check for service process change and update service status.
 
@@ -553,7 +608,7 @@ status.
 
 When NEXT is specifed, call that to start a new timer.  See
 `prodigy-every'."
-  (when (eq major-mode 'prodigy-mode)
+  (when (prodigy-buffer-visible-p)
     (-each prodigy-services
            (lambda (service)
              (-when-let (process (plist-get service :process))
@@ -651,6 +706,67 @@ The completion system used is determined by
   (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'failed :face 'prodigy-red-face))
 
+(defun prodigy-service-has-status-p (service)
+  "Return true if SERVICE has a status, except for stopped."
+  (let ((status (plist-get service :status)))
+    (and status (not (eq status 'stopped)))))
+
+(defun prodigy-move-until (direction callback)
+  "Move in DIRECTION until while CALLBACK return false.
+
+DIRECTION is either 'up or 'down."
+  (let ((pos (line-beginning-position))
+        (found
+         (catch 'break
+           (while t
+             (condition-case nil
+                 (cond ((eq direction 'down)
+                        (prodigy-goto-next-line))
+                       ((eq direction 'up)
+                        (prodigy-goto-prev-line)))
+               (error (throw 'break nil)))
+             (when (funcall callback (prodigy-service-at-pos))
+               (throw 'break t))))))
+    (unless found
+      (prodigy-goto-pos pos))))
+
+(defmacro prodigy-with-service-process-buffer (service &rest body)
+  "Switch to SERVICE process buffer and yield BODY.
+
+Buffer will be writable for BODY."
+  (declare (indent 1))
+  `(let ((buffer (get-buffer-create (prodigy-buffer-name ,service))))
+     (with-current-buffer buffer
+       (let ((inhibit-read-only t))
+         ,@body))))
+
+(defun prodigy-insert-output (service output)
+  "Switch to SERVICE process view buffer and insert OUTPUT."
+  (prodigy-with-service-process-buffer service
+    (save-excursion
+      (goto-char (point-max))
+      (insert (ansi-color-apply output)))))
+
+(defun prodigy-truncate-buffer (service _)
+  "Truncate SERVICE process view buffer to its maximum size."
+  (prodigy-with-service-process-buffer service
+    (-when-let (truncate-property
+                (or (prodigy-service-truncate-output service)
+                    prodigy-view-truncate-by-default))
+      (let ((max-buffer-size (if (numberp truncate-property)
+                                 truncate-property
+                               prodigy-view-buffer-maximum-size)))
+        (save-excursion
+          (goto-char (point-max))
+          (forward-line (- max-buffer-size))
+          (beginning-of-line)
+          (delete-region (point-min) (point)))))))
+
+(defun prodigy-on-output (service output)
+  "Call SERVICE on-output hooks with OUTPUT."
+  (-when-let (on-output (prodigy-service-on-output service))
+    (--each on-output (funcall it service output))))
+
 
 ;;;; GUI
 
@@ -664,8 +780,8 @@ The completion system used is determined by
 
 (defun prodigy-status-col (service)
   "Return SERVICE status column."
-  (-if-let (process (plist-get service :process))
-      (propertize (prodigy-status-name service) 'face (prodigy-status-face service))
+  (-if-let (status-name (prodigy-status-name service))
+      (propertize status-name 'face (prodigy-status-face service))
     ""))
 
 (defun prodigy-tags-col (service)
@@ -731,10 +847,9 @@ The completion system used is determined by
 
 (defun prodigy-status-name (service)
   "Return string representation of SERVICE status."
-  (let* ((status-id (plist-get service :status))
-         (status (prodigy-find-status status-id)))
-    (or (plist-get status :name)
-        (s-capitalize (symbol-name status-id)))))
+  (let ((status-id (plist-get service :status)))
+    (-when-let (status (prodigy-find-status status-id))
+      (or (plist-get status :name) (s-capitalize (symbol-name status-id))))))
 
 (defun prodigy-status-face (service)
   "Return SERVICE status face."
@@ -757,13 +872,22 @@ Note that the return value is always a list."
       (setq default-directory
             (-if-let (cwd (prodigy-service-cwd service))
                 cwd
-              (getenv "HOME"))))))
+              (f-expand (getenv "HOME")))))))
 
 
 ;;;; Process handling
 
-(defun prodigy-start-service (service)
-  "Start process associated with SERVICE unless already started."
+(defun prodigy-start-service (service &optional callback)
+  "Start process associated with SERVICE unless already started.
+
+When CALLBACK function is specified, that is called when the
+process has been started.
+
+When the process is started, a timer starts and checks every
+second for `prodigy-start-tryouts' times if the process is live.
+If the process is not live after `prodigy-start-tryouts' seconds,
+the process is put in failed status."
+  (declare (indent 1))
   (unless (prodigy-service-started-p service)
     (let* ((default-directory
              (-if-let (cwd (prodigy-service-cwd service))
@@ -795,9 +919,21 @@ Note that the return value is always a list."
                       prodigy-init-async-timeout))
             (while (not callbacked) (accept-process-output nil 0.005)))))
       (funcall create-process)
-      (set-process-filter process 'prodigy-process-filter)
-      (set-process-query-on-exit-flag process nil)
-      (plist-put service :process process))))
+      (let ((tryout 0))
+        (prodigy-every 1
+            (lambda (next)
+              (setq tryout (1+ tryout))
+              (if (process-live-p process)
+                  (funcall callback)
+                (if (= tryout prodigy-start-tryouts)
+                    (prodigy-set-status service 'failed)
+                  (funcall next))))))
+      (plist-put service :process process)
+      (set-process-filter
+       process
+       (lambda (_ output)
+         (run-hook-with-args 'prodigy-process-on-output-hook service output)))
+      (set-process-query-on-exit-flag process nil))))
 
 (defun prodigy-stop-service (service &optional force callback)
   "Stop process associated with SERVICE.
@@ -816,6 +952,7 @@ process is live.  If the process lives after
 `prodigy-stop-tryouts' seconds, the process is put in failed
 status.  If the process is successfully stopped, the process is
 put in stopped status."
+  (declare (indent 2))
   (unless (prodigy-service-stopping-p service)
     (-when-let (process (plist-get service :process))
       (when (process-live-p process)
@@ -823,43 +960,37 @@ put in stopped status."
         (if force
             (kill-process process)
           (signal-process process (or (prodigy-service-stop-signal service) 'int)))
-        (let (timer (tryout 0))
-          (setq
-           timer
-           (prodigy-every 1
-               (lambda (next)
-                 (setq tryout (1+ tryout))
-                 (unless (process-live-p process)
-                   (plist-put service :process nil)
-                   (plist-put service :process-status nil)
-                   (prodigy-set-status service 'stopped))
-                 (when (= tryout prodigy-stop-tryouts)
-                   (prodigy-set-status service 'failed))
-                 (if (or (= tryout prodigy-stop-tryouts) (not (process-live-p process)))
-                     (progn
-                       (unless (process-live-p process)
-                         (prodigy-maybe-kill-process-buffer service))
-                       (when (and callback (not (process-live-p process)))
-                         (funcall callback)))
-                   (funcall next))))))))))
+        (let ((tryout 0))
+          (prodigy-every 1
+              (lambda (next)
+                (setq tryout (1+ tryout))
+                (unless (process-live-p process)
+                  (plist-put service :process nil)
+                  (plist-put service :process-status nil)
+                  (prodigy-set-status service 'stopped))
+                (when (= tryout prodigy-stop-tryouts)
+                  (prodigy-set-status service 'failed))
+                (if (or (= tryout prodigy-stop-tryouts) (not (process-live-p process)))
+                    (progn
+                      (unless (process-live-p process)
+                        (prodigy-maybe-kill-process-buffer service))
+                      (when (and callback (not (process-live-p process)))
+                        (funcall callback)))
+                  (funcall next)))))))))
 
-(defun prodigy-process-filter (process output)
-  "Process filter for service processes.
+(defun prodigy-restart-service (service &optional callback)
+  "Restart SERVICE.
 
-PROCESS is the service process that the OUTPUT is associated to."
-  (-when-let (service
-              (-first
-               (lambda (service)
-                 (eq (plist-get service :process) process))
-               prodigy-services))
-    (-when-let (on-output (prodigy-service-on-output service))
-      (--each on-output (funcall it service output)))
-    (let ((buffer (get-buffer-create (prodigy-buffer-name service))))
-      (with-current-buffer buffer
-        (let ((inhibit-read-only t))
-          (save-excursion
-            (goto-char (point-max))
-            (insert (ansi-color-apply output))))))))
+If SERVICE is not started, it will be started.
+
+If CALLBACK is specified, it will be called when SERVICE is
+started."
+  (declare (indent 1))
+  (if (prodigy-service-started-p service)
+      (prodigy-stop-service service nil
+        (lambda ()
+          (prodigy-start-service service callback)))
+    (prodigy-start-service service callback)))
 
 
 ;;;; User functions
@@ -867,7 +998,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-next ()
   "Go to next service."
   (interactive)
-  (condition-case err
+  (condition-case nil
       (prodigy-goto-next-line)
     (error
      (message "Cannot move further down"))))
@@ -875,7 +1006,7 @@ PROCESS is the service process that the OUTPUT is associated to."
 (defun prodigy-prev ()
   "Go to previous service."
   (interactive)
-  (condition-case err
+  (condition-case nil
       (prodigy-goto-prev-line)
     (error
      (message "Cannot move further up"))))
@@ -969,22 +1100,13 @@ SIGNINT signal."
   (-each (prodigy-relevant-services)
          (lambda (service)
            (prodigy-with-refresh
-            (if (prodigy-service-started-p service)
-                (prodigy-stop-service
-                 service
-                 nil
-                 (lambda ()
-                   (prodigy-with-refresh
-                    (prodigy-start-service service))))
-              (prodigy-start-service service))))))
+            (prodigy-restart-service service)))))
 
 (defun prodigy-display-process ()
   "Switch to process buffer for service at current line."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
-    (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
-        (progn (pop-to-buffer buffer) (view-mode 1))
-      (message "Nothing to show for %s" (plist-get service :name)))))
+    (prodigy-switch-to-process-buffer service)))
 
 (defun prodigy-browse ()
   "Browse service url at point if possible to figure out."
@@ -1000,8 +1122,10 @@ SIGNINT signal."
 (defun prodigy-refresh ()
   "Refresh list of services."
   (interactive)
-  (tabulated-list-print :remember-pos)
-  (hl-line-highlight))
+  (-when-let (buffer (prodigy-buffer))
+    (with-current-buffer buffer
+      (tabulated-list-print :remember-pos)
+      (hl-line-highlight))))
 
 (defun prodigy-add-tag-filter ()
   "Read tag and add filter so that only services with that tag show."
@@ -1039,6 +1163,16 @@ SIGNINT signal."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
     (dired (prodigy-service-cwd service))))
+
+(defun prodigy-next-with-status ()
+  "Move to next service with status."
+  (interactive)
+  (prodigy-move-until 'down 'prodigy-service-has-status-p))
+
+(defun prodigy-prev-with-status ()
+  "Move to prev service with status."
+  (interactive)
+  (prodigy-move-until 'up 'prodigy-service-has-status-p))
 
 
 ;;;; Public API functions
@@ -1128,10 +1262,16 @@ The old service process is transfered to the new service."
   (run-mode-hooks 'prodigy-mode-hook))
 
 ;;;###autoload
+(define-derived-mode prodigy-view-mode special-mode "Prodigy-view"
+  "Mode for viewing prodigy process output."
+  (view-mode 1)
+  (font-lock-mode 1))
+
+;;;###autoload
 (defun prodigy ()
   "Manage external services from within Emacs."
   (interactive)
-  (let ((buffer-p (get-buffer prodigy-buffer-name))
+  (let ((buffer-p (prodigy-buffer))
         (buffer (get-buffer-create prodigy-buffer-name)))
     (pop-to-buffer buffer)
     (unless buffer-p

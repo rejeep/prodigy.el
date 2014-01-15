@@ -1,50 +1,32 @@
-;; NOTE:
-;;
-;; Using Curl here because for some weird reason, using
-;; `url-retrieve-synchronously' fails with the message "Emacs is not
-;; compiled with network support". That however only is an issue
-;; inside the step.
+;;; prodigy-steps.el --- Prodigy: Ecukes step definitions -*- lexical-binding: t; -*-
 
-(defun prodigy-test/parse-table (table)
-  "Return list of services/tags from TABLE."
-  (let ((head (car table))
-        (rows (cdr table)))
-    (let ((name-index (-elem-index "name" head))
-          (tags-index (-elem-index "tags" head))
-          (cwd-index (-elem-index "cwd" head))
-          (command-index (-elem-index "command" head))
-          (args-index (-elem-index "args" head))
-          (init-index (-elem-index "init" head))
-          (init-async-index (-elem-index "init-async" head))
-          (path-index (-elem-index "path" head))
-          (env-index (-elem-index "env" head))
-          (kill-process-buffer-on-stop-index (-elem-index "kill-process-buffer-on-stop" head)))
-      (mapcar
-       (lambda (row)
-         (let ((result (list :name (nth name-index row))))
-           (-when-let (tags (and tags-index (read (nth tags-index row))))
-             (plist-put result :tags tags))
-           (-when-let (cwd (and cwd-index (f-expand (nth cwd-index row) prodigy-servers-path)))
-             (plist-put result :cwd cwd))
-           (-when-let (command (and command-index (nth command-index row)))
-             (plist-put result :command command))
-           (-when-let (args (and args-index (read (nth args-index row))))
-             (plist-put result :args args))
-           (-when-let (init (and init-index (read (nth init-index row))))
-             (plist-put result :init init))
-           (-when-let (init-async (and init-async-index (read (nth init-async-index row))))
-             (plist-put result :init-async init-async))
-           (-when-let (path (and path-index (-map (lambda (path)
-                                                    (f-expand path prodigy-servers-path))
-                                                  (read (nth path-index row)))))
-             (plist-put result :path path))
-           (-when-let (env (and env-index (read (nth env-index row))))
-             (plist-put result :env env))
-           (-when-let (kill-process-buffer-on-stop (and kill-process-buffer-on-stop-index
-                                                        (read (nth kill-process-buffer-on-stop-index row))))
-             (plist-put result :kill-process-buffer-on-stop kill-process-buffer-on-stop-index))
-           result))
-       rows))))
+;; Copyright (C) 2014 Johan Andersson
+
+;; Author: Johan Andersson <johan.rejeep@gmail.com>
+;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
+
+;; This file is NOT part of GNU Emacs.
+
+;;; License:
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
+;;; Commentary:
+
+;;; Code:
 
 (Given "^I start prodigy$"
   (lambda ()
@@ -73,17 +55,23 @@
 
 (Given "^I add the following services:$"
   (lambda (table)
-    (-each (prodigy-test/parse-table table)
-           (lambda (service)
-             (apply 'prodigy-define-service service)))))
-
-(Given "^I add the following tags:$"
-  (lambda (table)
-    (-each (prodigy-test/parse-table table)
-           (lambda (tag)
-             ;; Euww...
-             (plist-put tag :name (intern (plist-get tag :name)))
-             (apply 'prodigy-define-tag tag)))))
+    (let ((head (car table))
+          (rows (cdr table)))
+      (let ((name-index (-elem-index "name" head))
+            (cwd-index (-elem-index "cwd" head))
+            (tags-index (-elem-index "tags" head))
+            (status-index (-elem-index "status" head)))
+        (mapc
+         (lambda (row)
+           (let ((service (list :name (nth name-index row))))
+             (-when-let (tags (and tags-index (read (nth tags-index row))))
+               (plist-put service :tags tags))
+             (-when-let (cwd (and cwd-index (nth cwd-index row)))
+               (plist-put service :cwd cwd))
+             (-when-let (status (and status-index (read (nth status-index row))))
+               (plist-put service :status status))
+             (apply 'prodigy-define-service service)))
+         rows)))))
 
 (Then "^I should see services:$"
   (lambda (table)
@@ -127,61 +115,9 @@
                (should (equal expected-tags actual-tags))))
            (forward-line 1)))))))
 
-(Then "^requesting \"\\([^\"]+\\)\" should respond with \"\\([^\"]+\\)\"$"
-  (lambda (url response callback)
-    (let ((finish-func
-           `(lambda (process)
-              (with-current-buffer (process-buffer process)
-                (when (string= (buffer-string) ,response)
-                  (funcall ,callback))))))
-      (async-start-process "curl" "curl" finish-func "-s" url))))
-
-(Then "^requesting \"\\([^\"]+\\)\" should not respond$"
-  (lambda (url callback)
-    (async-start
-     `(lambda ()
-        (with-temp-buffer
-          (call-process "curl" nil t nil "-s" "-S" ,url)
-          (buffer-string)))
-     `(lambda (response)
-        (when (or (s-contains? "Connection refused" response)
-                  (s-contains? "couldn't connect to host" response))
-          (funcall ,callback))))))
-
-(When "^I request \"\\([^\"]+\\)\"$"
-  (lambda (url callback)
-    (async-start-process "curl" "curl" callback url)))
-
-(When "^I start services?$"
-  (lambda (callback)
-    (When "I press \"s\"")
-    (async-start-process "sleep" "sleep" callback "2")))
-
-(When "^I stop services?$"
-  (lambda (callback)
-    (When "I press \"S\"")
-    (async-start-process "sleep" "sleep" callback "1")))
-
-(When "^I restart services?$"
-  (lambda (callback)
-    (When "I press \"r\"")
-    (async-start-process "sleep" "sleep" callback "1")))
-
-(Then "^the buffer \"\\([^\"]+\\)\" should exist$"
-  (lambda (buffer-name)
-    (should (get-buffer buffer-name))))
-
-(Then "^the buffer \"\\([^\"]+\\)\" should not exist$"
-  (lambda (buffer-name)
-    (should-not (get-buffer buffer-name))))
-
 (When "^I kill the prodigy buffer$"
   (lambda ()
     (kill-buffer prodigy-buffer-name)))
-
-(Then "^view mode should be enabled$"
-  (lambda ()
-    (should view-mode)))
 
 (When "^I filter by tag \"\\([^\"]+\\)\"$"
   (lambda (tag)
@@ -217,10 +153,10 @@
   (lambda ()
     (should (eq major-mode 'dired-mode))))
 
-(Then "^I turn on kill process buffer on stop$"
-  (lambda ()
-    (setq prodigy-kill-process-buffer-on-stop t)))
-
 (Then "^default directory should be \"\\([^\"]+\\)\"$"
   (lambda (dir)
-    (should (f-same? (f-expand dir prodigy-servers-path) default-directory))))
+    (should (string= dir default-directory))))
+
+(provide 'prodigy-steps)
+
+;;; prodigy-steps.el ends here

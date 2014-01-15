@@ -28,6 +28,7 @@
 
 ;;; Code:
 
+
 ;;;; prodigy-service-tags
 
 (ert-deftest prodigy-service-tags-test/no-tags ()
@@ -215,20 +216,20 @@
 ;;;; prodigy-service-env
 
 (ert-deftest prodigy-service-env-test ()
-  (let ((prodigy-tags '((:name foo :env (("FOO" "VALUE")))
-                        (:name bar :env (("BAR" "VALUE")
-                                         ("BAZ" "VALUE")))))
-        (service-1 '(:name "service-1" :env (("BAZ" "VALUE"))))
-        (service-2 '(:name "service-2" :env (("BAZ" "VALUE")) :tags (foo bar)))
+  (let ((prodigy-tags '((:name foo :env (("FOO" "VALUE-1")))
+                        (:name bar :env (("BAR" "VALUE-2")
+                                         ("BAZ" "VALUE-3")))))
+        (service-1 '(:name "service-1" :env (("BAZ" "VALUE-4"))))
+        (service-2 '(:name "service-2" :env (("BAZ" "VALUE-5")) :tags (foo bar)))
         (service-3 '(:name "service-3" :tags (foo bar)))
         (service-4 '(:name "service-4")))
-    (should (equal (prodigy-service-env service-1) '(("BAZ" "VALUE"))))
-    (should (equal (prodigy-service-env service-2) '(("BAZ" "VALUE")
-                                                     ("FOO" "VALUE")
-                                                     ("BAR" "VALUE"))))
-    (should (equal (prodigy-service-env service-3) '(("FOO" "VALUE")
-                                                     ("BAR" "VALUE")
-                                                     ("BAZ" "VALUE"))))
+    (should (equal (prodigy-service-env service-1) '(("BAZ" "VALUE-4"))))
+    (should (equal (prodigy-service-env service-2) '(("BAZ" "VALUE-5")
+                                                     ("FOO" "VALUE-1")
+                                                     ("BAR" "VALUE-2"))))
+    (should (equal (prodigy-service-env service-3) '(("FOO" "VALUE-1")
+                                                     ("BAR" "VALUE-2")
+                                                     ("BAZ" "VALUE-3"))))
     (should-not (prodigy-service-env service-4))))
 
 

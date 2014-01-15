@@ -15,7 +15,7 @@ unit:
 	${CASK} exec ert-runner
 
 ecukes:
-	${CASK} exec ecukes --reporter magnars
+	${CASK} exec ecukes
 
 compile:
 	${CASK} exec ${EMACS} -Q -batch -f batch-byte-compile prodigy.el

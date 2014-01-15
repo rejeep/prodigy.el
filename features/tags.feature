@@ -30,15 +30,3 @@ Feature: Tags
       | bar  | ()            |
       | baz  | (tag-2)       |
       | foo  | (tag-1 tag-2) |
-
-  Scenario: Tag inheritance
-    Given I add the following tags:
-      | name  | command | cwd | command | path    | env               |
-      | tag-1 | server  | foo | server  | ("foo") | (("PORT" "6001")) |
-    # NOTE: path and env are extended, not overwritten.
-    Given I add the following services:
-      | name | tags    | path        | env             |
-      | foo  | (tag-1) | ("invalid") | (("FOO" "BAR")) |
-    When I start prodigy
-    And I start service
-    Then requesting "http://127.0.0.1:6001" should respond with "FOO"
