@@ -62,11 +62,10 @@
             (prodigy-test/log-lines service 50)
             (prodigy-test/delay 0.5
               (lambda ()
-                (prodigy-switch-to-process-buffer service)
-                (should (s-match "Line 49" (buffer-string)))
-                ,@conditions
-                (prodigy-stop-service service nil done)
-                (kill-buffer)))))))))
+                (prodigy-with-service-process-buffer service
+                  (should (s-match "Line 49" (buffer-string)))
+                  ,@conditions)
+                (prodigy-stop-service service nil done)))))))))
 
 (prodigy-test-truncate prodigy-view-test/truncate/none
     (prodigy-test/make-service) nil
@@ -84,6 +83,19 @@
 (prodigy-test-truncate prodigy-view-test/truncate/default
     (prodigy-test/make-service) t
   (should (<= (count-lines (point-min) (point-max)) 10)))
+
+(ert-deftest-async prodigy-view-test/truncate/tag-inheritance (done)
+  (with-sandbox
+   (let ((service (prodigy-test/make-service :tags '(foo))))
+     (prodigy-define-tag :name 'foo :truncate-output 10)
+     (prodigy-start-service service
+       (lambda ()
+         (prodigy-test/log-lines service 50)
+         (prodigy-test/delay 0.5
+           (lambda ()
+             (prodigy-with-service-process-buffer service
+               (should (<= (count-lines (point-min) (point-max)) 10))
+               (prodigy-stop-service service nil done)))))))))
 
 (provide 'prodigy-view-test)
 

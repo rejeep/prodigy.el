@@ -209,6 +209,7 @@ these (see `prodigy-services' doc-string for more information):
  * `url'
  * `kill-process-buffer-on-stop'
  * `on-output'
+ * `truncate-output'
 
 These properties are also valid for a tag:
 
@@ -449,6 +450,13 @@ comes the SERVICE tags on-output functions."
    'null
    (cons (plist-get service :on-output)
          (--map (plist-get it :on-output) (prodigy-service-tags service)))))
+
+(defun prodigy-service-truncate-output (service)
+  "Return SERVICE truncate output size.
+
+If SERVICE truncate-output exists, use that.  If not, find the
+first SERVICE tag that has and return that."
+  (prodigy-service-or-first-tag-with service :truncate-output))
 
 
 ;;;; Internal functions
@@ -717,7 +725,7 @@ Buffer will be writable for BODY."
   "Truncate SERVICE process view buffer to its maximum size."
   (prodigy-with-service-process-buffer service
     (-when-let (truncate-property
-                (or (plist-get service :truncate-output)
+                (or (prodigy-service-truncate-output service)
                     prodigy-view-truncate-by-default))
       (let ((max-buffer-size (if (numberp truncate-property)
                                  truncate-property
