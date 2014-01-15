@@ -269,12 +269,10 @@ If enabled, view buffers will be truncated at
 `prodigy-view-buffer-maximum-size' lines.")
 
 (defvar prodigy-process-on-output-hook
-  '(prodigy-insert-output prodigy-truncate-buffer)
+  '(prodigy-on-output prodigy-insert-output prodigy-truncate-buffer)
   "Hook to run after the process has produced output.
 
-Functions will be run with 2 arguments, `service' and `output'.
-The hook will be run with the process view buffer as the current
-buffer and read-only mode disabled.")
+Functions will be run with 2 arguments, `service' and `output'.")
 
 (defconst prodigy-discover-context-menu
   '(prodigy
@@ -698,25 +696,42 @@ The completion system used is determined by
   (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'failed :face 'prodigy-red-face))
 
-(defun prodigy-insert-output (_ output)
-  "Insert OUTPUT into the process view buffer."
-  (save-excursion
-    (goto-char (point-max))
-    (insert (ansi-color-apply output))))
+(defmacro prodigy-with-service-process-buffer (service &rest body)
+  "Switch to SERVICE process buffer and yield BODY.
+
+Buffer will be writable for BODY."
+  (declare (indent 1))
+  `(let ((buffer (get-buffer-create (prodigy-buffer-name service))))
+     (with-current-buffer buffer
+       (let ((inhibit-read-only t))
+         ,@body))))
+
+(defun prodigy-insert-output (service output)
+  "Switch to SERVICE process view buffer and insert OUTPUT."
+  (prodigy-with-service-process-buffer service
+    (save-excursion
+      (goto-char (point-max))
+      (insert (ansi-color-apply output)))))
 
 (defun prodigy-truncate-buffer (service _)
-  "Truncate the process view buffer for SERVICE to its maximum size."
-  (-when-let (truncate-property
-              (or (plist-get service :truncate-output)
-                 prodigy-view-truncate-by-default))
-    (let ((max-buffer-size (if (numberp truncate-property)
-                               truncate-property
-                             prodigy-view-buffer-maximum-size)))
-      (save-excursion
-        (goto-char (point-max))
-        (forward-line (- max-buffer-size))
-        (beginning-of-line)
-        (delete-region (point-min) (point))))))
+  "Truncate SERVICE process view buffer to its maximum size."
+  (prodigy-with-service-process-buffer service
+    (-when-let (truncate-property
+                (or (plist-get service :truncate-output)
+                    prodigy-view-truncate-by-default))
+      (let ((max-buffer-size (if (numberp truncate-property)
+                                 truncate-property
+                               prodigy-view-buffer-maximum-size)))
+        (save-excursion
+          (goto-char (point-max))
+          (forward-line (- max-buffer-size))
+          (beginning-of-line)
+          (delete-region (point-min) (point)))))))
+
+(defun prodigy-on-output (service output)
+  "Call SERVICE on-output hooks with OUTPUT."
+  (-when-let (on-output (prodigy-service-on-output service))
+    (--each on-output (funcall it service output))))
 
 
 ;;;; GUI
@@ -880,7 +895,10 @@ the process is put in failed status."
                     (prodigy-set-status service 'failed)
                   (funcall next))))))
       (plist-put service :process process)
-      (set-process-filter process 'prodigy-process-filter)
+      (set-process-filter
+       process
+       (lambda (process output)
+         (run-hook-with-args 'prodigy-process-on-output-hook service output)))
       (set-process-query-on-exit-flag process nil))))
 
 (defun prodigy-stop-service (service &optional force callback)
@@ -939,22 +957,6 @@ started."
         (lambda ()
           (prodigy-start-service service callback)))
     (prodigy-start-service service callback)))
-
-(defun prodigy-process-filter (process output)
-  "Process filter for service processes.
-
-PROCESS is the service process that the OUTPUT is associated to."
-  (-when-let (service
-              (-first
-               (lambda (service)
-                 (eq (plist-get service :process) process))
-               prodigy-services))
-    (-when-let (on-output (prodigy-service-on-output service))
-      (--each on-output (funcall it service output)))
-    (let ((buffer (get-buffer-create (prodigy-buffer-name service))))
-      (with-current-buffer buffer
-        (let ((inhibit-read-only t))
-          (run-hook-with-args 'prodigy-process-on-output-hook service output))))))
 
 
 ;;;; User functions
