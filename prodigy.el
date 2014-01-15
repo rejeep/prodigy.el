@@ -426,9 +426,9 @@ SERVICE tag that has and return that."
 
 (defun prodigy-service-env (service)
   "Return list of SERVICE env extended with all tags env."
-  (let ((compare-fn
+  (let ((-compare-fn
          (lambda (a b)
-           (string< (car a) (car b)))))
+           (equal (car a) (car b)))))
     (-uniq
      (append
       (plist-get service :env)
