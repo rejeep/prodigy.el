@@ -361,7 +361,7 @@ that looks like a port in the ARGS list."
 
 If SERVICE command exists, use that.  If not, find the first
 SERVICE tag that has a command and return that."
-  (let ((command (prodigy-service-first-tag-with service :command)))
+  (let ((command (prodigy-service-or-first-tag-with service :command)))
     (if (functionp command)
         (funcall command)
       command)))
@@ -371,7 +371,7 @@ SERVICE tag that has a command and return that."
 
 If SERVICE args exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (let ((args (prodigy-service-first-tag-with service :args)))
+  (let ((args (prodigy-service-or-first-tag-with service :args)))
     (if (functionp args)
         (funcall args)
       args)))
@@ -381,35 +381,35 @@ tag that has and return that."
 
 If SERVICE cwd exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (prodigy-service-first-tag-with service :cwd))
+  (prodigy-service-or-first-tag-with service :cwd))
 
 (defun prodigy-service-init (service)
   "Return SERVICE init callback function.
 
 If SERVICE init exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (prodigy-service-first-tag-with service :init))
+  (prodigy-service-or-first-tag-with service :init))
 
 (defun prodigy-service-init-async (service)
   "Return SERVICE init async callback function.
 
 If SERVICE init exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (prodigy-service-first-tag-with service :init-async))
+  (prodigy-service-or-first-tag-with service :init-async))
 
 (defun prodigy-service-stop-signal (service)
   "Return SERVICE stop signal.
 
 If SERVICE stop-signal exists, use that.  If not, find the first
 SERVICE tag that has and return that."
-  (prodigy-service-first-tag-with service :stop-signal))
+  (prodigy-service-or-first-tag-with service :stop-signal))
 
 (defun prodigy-service-kill-process-buffer-on-stop (service)
   "Return weather SERVICE should kill process buffer on stop or not.
 
 If SERVICE kill-process-buffer-on-stop exists, use that.  If not, find the first
 SERVICE tag that has and return that."
-  (prodigy-service-first-tag-with service :kill-process-buffer-on-stop))
+  (prodigy-service-or-first-tag-with service :kill-process-buffer-on-stop))
 
 (defun prodigy-service-path (service)
   "Return list of SERVICE path extended with all tags path."
@@ -438,7 +438,7 @@ SERVICE tag that has and return that."
 
 If SERVICE url exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (prodigy-service-first-tag-with service :url))
+  (prodigy-service-or-first-tag-with service :url))
 
 (defun prodigy-service-on-output (service)
   "Return SERVICE and its tags on-output functions as list.
@@ -526,7 +526,7 @@ the timeouts stop."
   (-when-let (process (plist-get service :process))
     (process-live-p process)))
 
-(defun prodigy-service-first-tag-with (service property)
+(defun prodigy-service-or-first-tag-with (service property)
   "Return SERVICE PROPERTY or tag with PROPERTY.
 
 If SERVICE has PROPERTY, return the value of that property.  Note
