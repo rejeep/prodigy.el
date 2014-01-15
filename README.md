@@ -297,6 +297,36 @@ This can be solved by adding a `jekyll` tag, like this:
 
 Then tag your services with the `jekyll` tag.
 
+## Changelog
+
+This is a short summary of changes between versions.
+
+### v0.4.0
+
+* Do not require current working directory (see `:cwd` property).
+* Improved test suite.
+* Process output buffer has major mode `prodigy-view-mode`.
+* Font lock automatically enabled in view mode.
+* Truncate process output buffer (see variables
+  `prodigy-view-buffer-maximum-size`,
+  `prodigy-view-truncate-by-default` and `:truncate-output` property).
+* Fix bug when restarting a service cleared buffer contents.
+
+### v0.3.0
+
+* Tag inheritance (see `prodigy-define-tag`).
+* On process output hook (see `:on-output` property).
+* Improved status handling (see `prodigy-set-status`).
+* Using `hl-line`.
+* Updated status colors.
+* Url property can be a list of urls (see `:url` property).
+* Async restarts.
+* Force kill process (using prefix argument to `prodigy-stop`).
+* Service path can be string, list or lambda (see `:path` property).
+* Service command can be string or lambda (see `:command` property).
+* Service args can be list or lambda (see `:args` property).
+* Hidden tags (see `:hide` property).
+
 ## Contribution
 
 Contribution is much welcome!
