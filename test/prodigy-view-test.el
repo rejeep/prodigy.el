@@ -28,6 +28,8 @@
 
 ;;; Code:
 
+(require 'ert-async)
+
 (defmacro with-view-mode (&rest body)
   "Yield BODY in a `prodigy-view-mode' buffer."
   `(with-temp-buffer
