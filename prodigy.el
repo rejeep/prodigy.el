@@ -719,7 +719,7 @@ DIRECTION is either 'up or 'down."
         (found
          (catch 'break
            (while t
-             (condition-case err
+             (condition-case nil
                  (cond ((eq direction 'down)
                         (prodigy-goto-next-line))
                        ((eq direction 'up)
@@ -931,7 +931,7 @@ the process is put in failed status."
       (plist-put service :process process)
       (set-process-filter
        process
-       (lambda (process output)
+       (lambda (_ output)
          (run-hook-with-args 'prodigy-process-on-output-hook service output)))
       (set-process-query-on-exit-flag process nil))))
 
@@ -998,7 +998,7 @@ started."
 (defun prodigy-next ()
   "Go to next service."
   (interactive)
-  (condition-case err
+  (condition-case nil
       (prodigy-goto-next-line)
     (error
      (message "Cannot move further down"))))
@@ -1006,7 +1006,7 @@ started."
 (defun prodigy-prev ()
   "Go to previous service."
   (interactive)
-  (condition-case err
+  (condition-case nil
       (prodigy-goto-prev-line)
     (error
      (message "Cannot move further up"))))
