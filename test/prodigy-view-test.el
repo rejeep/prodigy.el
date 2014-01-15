@@ -28,6 +28,8 @@
 
 ;;; Code:
 
+(require 'ert-async)
+
 (defmacro with-view-mode (&rest body)
   "Yield BODY in a `prodigy-view-mode' buffer."
   `(with-temp-buffer
@@ -44,6 +46,56 @@
 
 (ert-deftest prodigy-view-test/view-mode ()
   (with-view-mode (should view-mode)))
+
+;; prodigy-view-mode/truncate
+
+(defmacro prodigy-test-truncate
+  (test-name service truncate-by-default &rest conditions)
+  (declare (indent 3))
+  `(ert-deftest-async ,test-name (done)
+     (with-sandbox
+      (setq prodigy-view-buffer-maximum-size 10
+            prodigy-view-truncate-by-default ,truncate-by-default)
+      (let ((service ,service))
+        (prodigy-start-service service
+          (lambda ()
+            (prodigy-test/log-lines service 50)
+            (prodigy-test/delay 0.5
+              (lambda ()
+                (prodigy-with-service-process-buffer service
+                  (should (s-match "Line 49" (buffer-string)))
+                  ,@conditions)
+                (prodigy-stop-service service nil done)))))))))
+
+(prodigy-test-truncate prodigy-view-test/truncate/none
+    (prodigy-test/make-service) nil
+  (should (>= (count-lines (point-min) (point-max)) 50)))
+
+(prodigy-test-truncate prodigy-view-test/truncate/property
+    (prodigy-test/make-service :truncate-output 30) nil
+  (should (> (count-lines (point-min) (point-max)) 10))
+  (should (<= (count-lines (point-min) (point-max)) 30)))
+
+(prodigy-test-truncate prodigy-view-test/truncate/default-with-property
+    (prodigy-test/make-service :truncate-output t) nil
+  (should (<= (count-lines (point-min) (point-max)) 10)))
+
+(prodigy-test-truncate prodigy-view-test/truncate/default
+    (prodigy-test/make-service) t
+  (should (<= (count-lines (point-min) (point-max)) 10)))
+
+(ert-deftest-async prodigy-view-test/truncate/tag-inheritance (done)
+  (with-sandbox
+   (let ((service (prodigy-test/make-service :tags '(foo))))
+     (prodigy-define-tag :name 'foo :truncate-output 10)
+     (prodigy-start-service service
+       (lambda ()
+         (prodigy-test/log-lines service 50)
+         (prodigy-test/delay 0.5
+           (lambda ()
+             (prodigy-with-service-process-buffer service
+               (should (<= (count-lines (point-min) (point-max)) 10))
+               (prodigy-stop-service service nil done)))))))))
 
 (provide 'prodigy-view-test)
 
