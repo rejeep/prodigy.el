@@ -311,6 +311,7 @@ This is a short summary of changes between versions.
   `prodigy-view-buffer-maximum-size`,
   `prodigy-view-truncate-by-default` and `:truncate-output` property).
 * Fix bug when restarting a service cleared buffer contents.
+* Jump between services with status with `M-n` and `M-p`.
 
 ### v0.3.0
 
