@@ -7,9 +7,7 @@ before I could start working I had to manually start ten or so
 services.
 
 To get rid of this tedious work, I started working on this Emacs
-plugin. Prodigy provides a
-[Magit](https://github.com/magit/magit)-like GUI to manage services in
-a simple way.
+plugin, which provides a nice and simple GUI to manage services.
 
 ![Prodigy](/prodigy.png)
 
@@ -112,8 +110,10 @@ Each service is associated with a status. The built in statuses are:
   this status will be used.
 * `ready` - The process is "actually" ready. Not managed by Prodigy.
 * `stopping` - Set when a service is stopping.
-* `failed` - The process failed. A service will get this state if it
-  is not started within `var` or not stopped within `var`.
+* `failed` - The process failed. A service has this status if:
+  * It is not started within `prodigy-start-tryouts` seconds.
+  * Or, it is not stopped within `prodigy-stop-tryouts` seconds.
+  * Or, if the process exit code is non zero.
 
 The only way Prodigy has an idea of the service status, is to look at
 the process status (note the difference between service and process
