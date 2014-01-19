@@ -924,7 +924,7 @@ the process is put in failed status."
             (lambda (next)
               (setq tryout (1+ tryout))
               (if (process-live-p process)
-                  (funcall callback)
+                  (when callback (funcall callback))
                 (if (= tryout prodigy-start-tryouts)
                     (prodigy-set-status service 'failed)
                   (funcall next))))))
