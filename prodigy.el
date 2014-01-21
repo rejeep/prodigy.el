@@ -552,20 +552,20 @@ has that property and return its value."
   "Return list of services, with applied filters."
   (let ((services (-clone prodigy-services)))
     (-each
-     prodigy-filters
-     (lambda (filter)
-       (let ((type (-first-item filter))
-             (value (-last-item filter)))
-         (cond ((eq type :tag)
-                (setq services (-select
-                                (lambda (service)
-                                  (prodigy-service-tagged-with? service value))
-                                services)))
-               ((eq type :name)
-                (setq services (-select
-                                (lambda (service)
-                                  (s-contains? value (plist-get service :name) 'ignore-case))
-                                services)))))))
+        prodigy-filters
+      (lambda (filter)
+        (let ((type (-first-item filter))
+              (value (-last-item filter)))
+          (cond ((eq type :tag)
+                 (setq services (-select
+                                 (lambda (service)
+                                   (prodigy-service-tagged-with? service value))
+                                 services)))
+                ((eq type :name)
+                 (setq services (-select
+                                 (lambda (service)
+                                   (s-contains? value (plist-get service :name) 'ignore-case))
+                                 services)))))))
     services))
 
 (defun prodigy-find-status (id)
@@ -610,19 +610,19 @@ When NEXT is specifed, call that to start a new timer.  See
 `prodigy-every'."
   (when (prodigy-buffer-visible-p)
     (-each prodigy-services
-           (lambda (service)
-             (-when-let (process (plist-get service :process))
-               (let ((last-process-status (plist-get service :process-status))
-                     (this-process-status (process-status process)))
-                 (unless (eq last-process-status this-process-status)
-                   (plist-put service :process-status this-process-status)
-                   (let ((status
-                          (if (eq this-process-status 'run)
-                              'running
-                            (if (= (process-exit-status process) 0)
-                                'stopped
-                              'failed))))
-                     (prodigy-set-status service status))))))))
+      (lambda (service)
+        (-when-let (process (plist-get service :process))
+          (let ((last-process-status (plist-get service :process-status))
+                (this-process-status (process-status process)))
+            (unless (eq last-process-status this-process-status)
+              (plist-put service :process-status this-process-status)
+              (let ((status
+                     (if (eq this-process-status 'run)
+                         'running
+                       (if (= (process-exit-status process) 0)
+                           'stopped
+                         'failed))))
+                (prodigy-set-status service status))))))))
   (when next (funcall next)))
 
 (defun prodigy-tags ()
@@ -1036,18 +1036,18 @@ started."
   (prodigy-with-refresh
    (let ((tag (prodigy-read-tag)))
      (-each
-      (prodigy-services-tagged-with tag)
-      (lambda (service)
-        (plist-put service :marked t))))))
+         (prodigy-services-tagged-with tag)
+       (lambda (service)
+         (plist-put service :marked t))))))
 
 (defun prodigy-mark-all ()
   "Mark all services."
   (interactive)
   (prodigy-with-refresh
    (-each
-    prodigy-services
-    (lambda (service)
-      (plist-put service :marked t)))))
+       prodigy-services
+     (lambda (service)
+       (plist-put service :marked t)))))
 
 (defun prodigy-unmark ()
   "Unmark service at point."
@@ -1064,18 +1064,18 @@ started."
   (prodigy-with-refresh
    (let ((tag (prodigy-read-tag)))
      (-each
-      (prodigy-services-tagged-with tag)
-      (lambda (service)
-        (plist-put service :marked nil))))))
+         (prodigy-services-tagged-with tag)
+       (lambda (service)
+         (plist-put service :marked nil))))))
 
 (defun prodigy-unmark-all ()
   "Unmark all services."
   (interactive)
   (prodigy-with-refresh
    (-each
-    prodigy-services
-    (lambda (service)
-      (plist-put service :marked nil)))))
+       prodigy-services
+     (lambda (service)
+       (plist-put service :marked nil)))))
 
 (defun prodigy-start ()
   "Start service at line or marked services."
@@ -1091,16 +1091,16 @@ SIGNINT signal."
   (interactive "P")
   (prodigy-with-refresh
    (-each (prodigy-relevant-services)
-          (lambda (service)
-            (prodigy-stop-service service force)))))
+     (lambda (service)
+       (prodigy-stop-service service force)))))
 
 (defun prodigy-restart ()
   "Restart service at line or marked services."
   (interactive)
   (-each (prodigy-relevant-services)
-         (lambda (service)
-           (prodigy-with-refresh
-            (prodigy-restart-service service)))))
+    (lambda (service)
+      (prodigy-with-refresh
+       (prodigy-restart-service service)))))
 
 (defun prodigy-display-process ()
   "Switch to process buffer for service at current line."
