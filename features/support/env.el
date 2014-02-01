@@ -18,7 +18,8 @@
 (Before
  (setq prodigy-services nil)
  (setq prodigy-filters nil)
- 
+ (setq prodigy-view-confirm-clear-buffer nil)
+
  (-each (buffer-list)
         (lambda (buffer)
           (unless (-contains? prodigy-buffer-list buffer)
