@@ -32,6 +32,12 @@
   (lambda ()
     (call-interactively 'prodigy)))
 
+(Given "^I am in a log buffer with output$"
+  (lambda ()
+    (switch-to-buffer (get-buffer-create "*log output*"))
+    (insert "foo bar baz")
+    (prodigy-view-mode)))
+
 (Then "^I should be in prodigy mode$"
   (lambda ()
     (should (equal major-mode 'prodigy-mode))
