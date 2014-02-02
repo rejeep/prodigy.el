@@ -100,6 +100,9 @@ An example is restarting a service."
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
 
+(defvar prodigy-view-confirm-clear-buffer t
+  "`prodigy-view-clear-buffer' will require confirmation if non-nil.")
+
 (defvar prodigy-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "n") 'prodigy-next)
@@ -126,6 +129,12 @@ An example is restarting a service."
     (define-key map (kbd "M-p") 'prodigy-prev-with-status)
     map)
   "Keymap for `prodigy-mode'.")
+
+(defvar prodigy-view-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "k") 'prodigy-view-clear-buffer)
+    map)
+  "Keymap for `prodigy-view-mode'.")
 
 (defvar prodigy-timer nil
   "Timer object checking for process changes.
@@ -1175,6 +1184,20 @@ SIGNINT signal."
   (prodigy-move-until 'up 'prodigy-service-has-status-p))
 
 
+;;;; View mode functions
+
+(defun prodigy-view-clear-buffer ()
+  "Clear the current buffer.
+
+If `prodigy-view-confirm-clear-buffer' is non-nil, will require
+confirmation."
+  (interactive)
+  (when (or (not prodigy-view-confirm-clear-buffer)
+            (y-or-n-p "Clear buffer? "))
+    (let ((inhibit-read-only t))
+      (erase-buffer))))
+
+
 ;;;; Public API functions
 
 (defun prodigy-set-status (service status)
@@ -1265,7 +1288,8 @@ The old service process is transfered to the new service."
 (define-derived-mode prodigy-view-mode special-mode "Prodigy-view"
   "Mode for viewing prodigy process output."
   (view-mode 1)
-  (font-lock-mode 1))
+  (font-lock-mode 1)
+  (use-local-map prodigy-view-mode-map))
 
 ;;;###autoload
 (defun prodigy ()
