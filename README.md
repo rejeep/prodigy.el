@@ -108,7 +108,9 @@ Each service is associated with a status. The built in statuses are:
 * `stopped` (default) - The process is not running.
 * `running` - The process is running. If the process status is `run`,
   this status will be used.
-* `ready` - The process is "actually" ready. Not managed by Prodigy.
+* `ready` - The process is "actually" ready. This will be set when the
+  service outputs a message that matches its `ready-message` property,
+  or it can be set manually.
 * `stopping` - Set when a service is stopping.
 * `failed` - The process failed. A service has this status if:
   * It is not started within `prodigy-start-tryouts` seconds.
@@ -208,21 +210,15 @@ simply use that tag.
 ```lisp
 (prodigy-define-tag
   :name 'thin
-  :on-output (lambda (service output)
-               (when (s-matches? "Listening on 0\\.0\\.0\\.0:[0-9]+, CTRL\\+C to stop" output)
-                 (prodigy-set-status service 'ready))))
+  :ready-message "Listening on 0\\.0\\.0\\.0:[0-9]+, CTRL\\+C to stop")
 
 (prodigy-define-tag
   :name 'webrick
-  :on-output (lambda (service output)
-               (when (s-matches? "WEBrick::HTTPServer#start: pid=[0-9]+ port=[0-9]+" output)
-                 (prodigy-set-status service 'ready))))
+  :ready-message "WEBrick::HTTPServer#start: pid=[0-9]+ port=[0-9]+")
 
 (prodigy-define-tag
   :name 'mongrel
-  :on-output (lambda (service output)
-               (when (s-matches? "Ctrl-C to shutdown server" output)
-                 (prodigy-set-status service 'ready))))
+  :ready-message "Ctrl-C to shutdown server")
 
 (prodigy-define-tag
   :name 'rails
