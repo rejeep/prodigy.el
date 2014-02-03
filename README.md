@@ -297,6 +297,12 @@ Then tag your services with the `jekyll` tag.
 
 This is a short summary of changes between versions.
 
+### v0.5.0
+
+* New property `:ready-message` used to set the process status to
+  ready when matching output appears.
+* Clear process buffer contents using `k`
+
 ### v0.4.0
 
 * Do not require current working directory (see `:cwd` property).
