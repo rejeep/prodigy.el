@@ -200,7 +200,11 @@ The list is a property list with the following properties:
 
 `on-output'
   Call this function with (service, output), each time process gets
-  new output.")
+  new output.
+
+`ready-message'
+  The text that a service displays when it is ready.  Will be
+  matched as a regexp.")
 
 (defvar prodigy-tags nil
   "List of tags.
@@ -281,7 +285,10 @@ If enabled, view buffers will be truncated at
 `prodigy-view-buffer-maximum-size' lines.")
 
 (defvar prodigy-process-on-output-hook
-  '(prodigy-on-output prodigy-insert-output prodigy-truncate-buffer)
+  '(prodigy-on-output
+    prodigy-check-for-ready-message
+    prodigy-insert-output
+    prodigy-truncate-buffer)
   "Hook to run after the process has produced output.
 
 Functions will be run with 2 arguments, `service' and `output'.")
@@ -457,10 +464,11 @@ tag that has and return that."
 
 First item in the list is the SERVICE on-output function, then
 comes the SERVICE tags on-output functions."
-  (-reject
-   'null
-   (cons (plist-get service :on-output)
-         (--map (plist-get it :on-output) (prodigy-service-tags service)))))
+  (prodigy-service-and-tags-with service :on-output))
+
+(defun prodigy-service-ready-message (service)
+  "Return the ready message for SERVICE."
+  (prodigy-service-and-tags-with service :ready-message))
 
 (defun prodigy-service-truncate-output (service)
   "Return SERVICE truncate output size.
@@ -556,6 +564,12 @@ has that property and return its value."
       (plist-get service property)
     (-when-let (tag (--first (plist-member it property) (prodigy-service-tags service)))
       (plist-get tag property))))
+
+(defun prodigy-service-and-tags-with (service property)
+  "Return a list of all values of SERVICE PROPERTY from SERVICE and its tags."
+  (-reject 'null
+           (cons (plist-get service property)
+                 (--map (plist-get it property) (prodigy-service-tags service)))))
 
 (defun prodigy-services ()
   "Return list of services, with applied filters."
@@ -775,6 +789,16 @@ Buffer will be writable for BODY."
   "Call SERVICE on-output hooks with OUTPUT."
   (-when-let (on-output (prodigy-service-on-output service))
     (--each on-output (funcall it service output))))
+
+(defun prodigy-check-for-ready-message (service output)
+  "Check SERVICE's OUTPUT for a ready message.
+
+If a ready message is found, update the service's status
+accordingly."
+  (-when-let (ready-messages (prodigy-service-ready-message service))
+    (when (and (not (eq (plist-get service :status) 'ready))
+               (--any? (s-matches? it output) ready-messages))
+      (prodigy-set-status service 'ready))))
 
 
 ;;;; GUI

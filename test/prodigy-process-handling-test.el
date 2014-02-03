@@ -93,6 +93,50 @@
        (lambda ()
          (prodigy-test/post-message service 'log "foo"))))))
 
+;;;; ready-message
+
+(ert-deftest-async prodigy-start-service-test/ready-message/no-tags (done)
+  (with-sandbox
+   (let ((service (prodigy-test/make-service
+                   :ready-message "Ready!")))
+     (prodigy-start-service service
+       (lambda ()
+         (prodigy-test/post-message service 'log "I am Ready!")
+         (prodigy-test/delay 0.1
+           (lambda ()
+             (should (eq (plist-get service :status) 'ready))
+             (prodigy-stop-service service nil done))))))))
+
+(ert-deftest-async prodigy-start-service-test/ready-message/with-tags (done)
+  (with-sandbox
+   (prodigy-define-tag
+     :name 'tag1
+     :ready-message "Foo")
+   (prodigy-define-tag
+     :name 'tag2
+     :ready-message "Ready!")
+   (let ((service (prodigy-test/make-service
+                   :tags '(tag1 tag2))))
+     (prodigy-start-service service
+       (lambda ()
+         (prodigy-test/post-message service 'log "I am Ready!")
+         (prodigy-test/delay 0.1
+           (lambda ()
+             (should (eq (plist-get service :status) 'ready))
+             (prodigy-stop-service service nil done))))))))
+
+(ert-deftest-async prodigy-start-service-test/ready-message/other-message(done)
+  (with-sandbox
+   (let ((service (prodigy-test/make-service
+                   :ready-message "Ready!")))
+     (prodigy-start-service service
+       (lambda ()
+         (prodigy-test/post-message service 'log "Something else!")
+         (prodigy-test/delay 0.1
+           (lambda ()
+             (should-not (eq (plist-get service :status) 'ready))
+             (prodigy-stop-service service nil done))))))))
+
 ;;;; init
 
 (ert-deftest prodigy-start-service-test/init ()

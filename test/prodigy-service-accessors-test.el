@@ -264,6 +264,23 @@
     (should (equal (prodigy-service-on-output service-3) (list bar)))
     (should-not (prodigy-service-on-output service-4))))
 
+
+;;; prodigy-service-ready-message
+
+(ert-deftest prodigy-service-ready-message-test ()
+  (let* ((bar "bar")
+         (baz "baz")
+         (prodigy-tags `((:name foo)
+                         (:name bar :ready-message ,bar)))
+         (service-1 `(:name "service-1" :ready-message ,baz))
+         (service-2 `(:name "service-2" :ready-message ,baz :tags (foo bar)))
+         (service-3 '(:name "service-3" :tags (foo bar)))
+         (service-4 '(:name "service-4")))
+    (should (equal (prodigy-service-ready-message service-1) (list baz)))
+    (should (equal (prodigy-service-ready-message service-2) (list baz bar)))
+    (should (equal (prodigy-service-ready-message service-3) (list bar)))
+    (should-not (prodigy-service-ready-message service-4))))
+
 (provide 'prodigy-service-accessors-test)
 
 ;;; prodigy-service-accessors-test.el ends here
