@@ -217,7 +217,7 @@
 (ert-deftest prodigy-stop-service-test/kill-process-buffer-on-stop ()
   )
 
-(ert-deftest-async prodigy-stop-service-test/todo (done)
+(ert-deftest-async prodigy-stop-service-test/keep-buffer (done)
   (with-sandbox
    (let ((service (prodigy-test/make-service)))
      (prodigy-start-service service
