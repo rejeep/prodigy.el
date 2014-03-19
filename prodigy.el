@@ -97,6 +97,10 @@ An example is restarting a service."
   :group 'prodigy
   :type 'number)
 
+(defvar *prodigy-service-with* nil
+  "Holds the current service in `prodigy-with-service'
+  environments.")
+
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
 
@@ -350,6 +354,12 @@ Functions will be run with 2 arguments, `service' and `output'.")
 
 ;;;; Service accessors
 
+(defmacro prodigy-with-service (service &rest body)
+  "SERVICE can be accessed in BODY as `*prodigy-service-with*'."
+  `(let ((*prodigy-service-with* ,service))
+     ,@body)
+  )
+
 (defun prodigy-service-tags (service)
   "Return list of SERVICE tag objects.
 
@@ -367,33 +377,39 @@ the list."
 
 If PORT is specified, use that.  If not, try to find something
 that looks like a port in the ARGS list."
-  (or
-   (plist-get service :port)
-   (-when-let (port (-first
-                     (lambda (arg)
-                       (s-matches? "^\\([0-9]\\)\\{4,5\\}$" arg))
-                     (prodigy-service-args service)))
-     (string-to-number port))))
+  (prodigy-with-service
+   service
+   (or
+    (plist-get service :port)
+    (-when-let (port (-first
+                      (lambda (arg)
+                        (s-matches? "^\\([0-9]\\)\\{4,5\\}$" arg))
+                      (prodigy-service-args service)))
+      (string-to-number port)))))
 
 (defun prodigy-service-command (service)
   "Return SERVICE command.
 
 If SERVICE command exists, use that.  If not, find the first
 SERVICE tag that has a command and return that."
-  (let ((command (prodigy-service-or-first-tag-with service :command)))
-    (if (functionp command)
-        (funcall command)
-      command)))
+  (prodigy-with-service
+   service
+   (let ((command (prodigy-service-or-first-tag-with service :command)))
+     (if (functionp command)
+         (funcall command)
+       command))))
 
 (defun prodigy-service-args (service)
   "Return SERVICE args list.
 
 If SERVICE args exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (let ((args (prodigy-service-or-first-tag-with service :args)))
-    (if (functionp args)
-        (funcall args)
-      args)))
+  (prodigy-with-service
+   service
+   (let ((args (prodigy-service-or-first-tag-with service :args)))
+     (if (functionp args)
+         (funcall args)
+       args))))
 
 (defun prodigy-service-cwd (service)
   "Return SERVICE current working directory.
@@ -432,25 +448,29 @@ SERVICE tag that has and return that."
 
 (defun prodigy-service-path (service)
   "Return list of SERVICE path extended with all tags path."
-  (-uniq
-   (-flatten
-    (append
-     (prodigy-resolve-pathy (plist-get service :path))
-     (-map (lambda (tag)
-             (prodigy-resolve-pathy (plist-get tag :path)))
-           (prodigy-service-tags service))))))
+  (prodigy-with-service
+   service
+   (-uniq
+    (-flatten
+     (append
+      (prodigy-resolve-pathy (plist-get service :path))
+      (-map (lambda (tag)
+              (prodigy-resolve-pathy (plist-get tag :path)))
+            (prodigy-service-tags service)))))))
 
 (defun prodigy-service-env (service)
   "Return list of SERVICE env extended with all tags env."
-  (let ((-compare-fn
-         (lambda (a b)
-           (equal (car a) (car b)))))
-    (-uniq
-     (append
-      (plist-get service :env)
-      (apply 'append (-map (lambda (tag)
-                             (plist-get tag :env))
-                           (prodigy-service-tags service)))))))
+  (prodigy-with-service
+   service
+   (let ((-compare-fn
+          (lambda (a b)
+            (equal (car a) (car b)))))
+     (-uniq
+      (append
+       (plist-get service :env)
+       (apply 'append (-map (lambda (tag)
+                              (plist-get tag :env))
+                            (prodigy-service-tags service))))))))
 
 (defun prodigy-service-url (service)
   "Return SERVICE url.
@@ -560,10 +580,12 @@ If SERVICE has PROPERTY, return the value of that property.  Note
 that '(:foo nil) means that the list has the property :foo.  If
 SERVICE does not have property, find the first SERVICE tag that
 has that property and return its value."
-  (if (plist-member service property)
-      (plist-get service property)
-    (-when-let (tag (--first (plist-member it property) (prodigy-service-tags service)))
-      (plist-get tag property))))
+  (prodigy-with-service
+   service
+   (if (plist-member service property)
+       (plist-get service property)
+     (-when-let (tag (--first (plist-member it property) (prodigy-service-tags service)))
+       (plist-get tag property)))))
 
 (defun prodigy-service-and-tags-with (service property)
   "Return a list of all values of SERVICE PROPERTY from SERVICE and its tags."
