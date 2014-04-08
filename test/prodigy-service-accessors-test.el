@@ -87,6 +87,11 @@
   (let ((service '(:name "service" :command (lambda () "command"))))
     (should (string= (prodigy-service-command service) "command"))))
 
+(ert-deftest prodigy-service-command-test/lambda-arity-1 ()
+  (let ((service '(:name "service" :prop "test" :command
+                         (lambda (arg1) (concat "concat" (getf arg1 :prop))))))
+    (should (string= (prodigy-service-command service) "concattest"))))
+
 
 ;;;; prodigy-service-args
 
