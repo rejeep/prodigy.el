@@ -275,11 +275,11 @@ The services that are tagged with `rails` will all inherit this.
 ### SSH Tunnel
 
 Prodigy allows to access the current service in dynamic *lambda*
-properties `command` and `arg`, if you define them to get one
+properties `command` and `args`, if you define them to get one
 parameter. This is useful to abstract out common code into a tag, and
 use service properties to feed additional static data to the tag
 lambda. You can access service properties with `getf` inside of the
-property lambda. If you use this feature you have to careful not to
+property lambda. If you use this feature you have to be careful not to
 produce endless loops -- only use `prodigy-*` accessors if you know
 this won't recurse into your lambda indefinitly, use `getf` if you
 know you can access the property at service level directly without
