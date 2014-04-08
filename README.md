@@ -272,6 +272,54 @@ The services that are tagged with `rails` will all inherit this.
   :tags '(rvm rails))
 ```
 
+### SSH Tunnel
+
+Prodigy allows to access the current service in dynamic *lambda*
+properties `command` and `arg`, if you define them to get one
+parameter. This is useful to abstract out common code into a tag, and
+use service properties to feed additional static data to the tag
+lambda. You can access service properties with `getf` inside of the
+property lambda. If you use this feature you have to careful not to
+produce endless loops -- only use `prodigy-*` accessors if you know
+this won't recurse into your lambda indefinitly, use `getf` if you
+know you can access the property at service level directly without
+reference to the tag hierarchy.
+
+```lisp
+(prodigy-define-tag
+    :name 'ssh-tunnel
+    :command "ssh"
+    :cwd (getenv "HOME")
+    :args (lambda ()
+                 (my-build-tunnel-args
+                     (getf *prodigy-service-with* :tunnel)))
+    :ready-message "debug1: Entering interactive session.")
+
+(prodigy-define-service
+    :name "name"
+    :tags '(ssh-tunnel)
+    :tunnel (list 
+             :localport  "23232"
+             :tunnel-ip  "192.168.32.66"
+             :tunnel-port  "22"
+             :user  "myname"
+             :host  "exiting.access.host"
+             :port  "22"))
+             
+(defun my-build-tunnel-args (args)
+    "Assemble the ssh tunnel argument list."
+    `("-v" ;; allows us to parse for the ready message
+      "-N" ;; don't start an interactive shell remotely
+      "-L" ,(concat (getf args :localport) ;; the tunnel spec
+                    ":"
+                    (getf args :tunnel-ip)
+                    ":"
+                    (getf args :tunnel-port))
+      "-l" ,(getf args :user) ;; the username
+      "-p" ,(getf args :port) ;; the remote port
+      ,(getf args :host)))    ;; the remote host
+```
+
 ## Troubleshoot
 
 ### Jekyll
