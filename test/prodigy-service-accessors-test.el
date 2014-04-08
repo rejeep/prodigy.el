@@ -120,6 +120,10 @@
                          (lambda (arg1) (list (concat "concat" (getf arg1 :prop)))))))
     (should (equal (prodigy-service-args service) '("concattest")))))
 
+(ert-deftest prodigy-service-tags-args-test/lambda-arity-1 ()
+  (let ((prodigy-tags '((:name foo :args (lambda (arg1) (list "fooarg" (getf arg1 :prop))))))
+        (service '(:name "service" :prop "test" :tags (foo))))
+    (should (equal (prodigy-service-args service) '("fooarg" "test")))))
 
 
 ;;;; prodigy-service-cwd
