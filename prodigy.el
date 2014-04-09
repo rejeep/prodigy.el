@@ -381,9 +381,7 @@ that looks like a port in the ARGS list."
 If SERVICE command exists, use that.  If not, find the first
 SERVICE tag that has a command and return that."
   (let ((command (prodigy-service-or-first-tag-with service :command)))
-    (if (functionp command)
-        (funcall command)
-      command)))
+    (prodigy-property-value command service)))
 
 (defun prodigy-service-args (service)
   "Return SERVICE args list.
@@ -391,9 +389,7 @@ SERVICE tag that has a command and return that."
 If SERVICE args exists, use that.  If not, find the first SERVICE
 tag that has and return that."
   (let ((args (prodigy-service-or-first-tag-with service :args)))
-    (if (functionp args)
-        (funcall args)
-      args)))
+    (prodigy-property-value args service)))
 
 (defun prodigy-service-cwd (service)
   "Return SERVICE current working directory.
@@ -479,6 +475,16 @@ first SERVICE tag that has and return that."
 
 
 ;;;; Internal functions
+
+(defun prodigy-property-value (property service)
+  "Examin PROPERTY and return the correct value.
+
+Call PROPERY as callback if a function, pass SERVICE if possible."
+  (if (and property (functionp property))
+      (if (help-function-arglist property nil)
+          (funcall property service)
+        (funcall property))
+    property))
 
 (defmacro prodigy-with-refresh (&rest body)
   "Execute BODY and then refresh."
