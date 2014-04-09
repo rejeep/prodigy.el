@@ -290,9 +290,9 @@ reference to the tag hierarchy.
     :name 'ssh-tunnel
     :command "ssh"
     :cwd (getenv "HOME")
-    :args (lambda ()
+    :args (lambda (service)
                  (my-build-tunnel-args
-                     (getf *prodigy-service-with* :tunnel)))
+                     (getf service :tunnel)))
     :ready-message "debug1: Entering interactive session.")
 
 (prodigy-define-service
