@@ -1238,6 +1238,13 @@ confirmation."
 
 ;;;; Public API functions
 
+(defmacro prodigy-callback (properties &rest body)
+  "Return function that make PROPERTIES available in BODY."
+  (declare (indent 1))
+  `(lambda (&rest args)
+     (let ,(--map `(,it (plist-get args ,(intern (concat ":" (symbol-name it))))) properties)
+       ,@body)))
+
 (defun prodigy-set-status (service status)
   "Set SERVICE status to STATUS.
 

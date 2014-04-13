@@ -126,6 +126,16 @@
    (let ((service (prodigy-test/make-service)))
      (should-error (prodigy-set-status service 'waiting)))))
 
+
+;;;; prodigy-callback
+
+(ert-deftest prodigy-callback-test ()
+  (apply
+   (prodigy-callback (foo baz)
+     (should (string= foo "bar"))
+     (should (string= baz "qux")))
+   (list :foo "bar" :baz "qux")))
+
 (provide 'prodigy-api-test)
 
 ;;; prodigy-api-test.el ends here

@@ -41,6 +41,16 @@ as argument, for example:
                )))
 ```
 
+You can also use the `prodigy-callback` macro to simplify the argument
+handling.
+
+```lisp
+(prodigy-define-service
+  :command (prodigy-callback (service)
+             ;; ...
+             ))
+```
+
 Depending on property, the `args` list contain various properties.
 
 #### prodigy-define-service (`&rest args`)
