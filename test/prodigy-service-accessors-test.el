@@ -83,9 +83,15 @@
   (let ((service '(:name "service" :command "command")))
     (should (string= (prodigy-service-command service) "command"))))
 
-(ert-deftest prodigy-service-command-test/lambda ()
+(ert-deftest prodigy-service-command-test/lambda-no-args ()
   (let ((service '(:name "service" :command (lambda () "command"))))
     (should (string= (prodigy-service-command service) "command"))))
+
+(ert-deftest prodigy-service-command-test/lambda-with-args ()
+  (let ((service '(:name "service" :command
+                         (lambda (&rest args)
+                           (plist-get args :service)))))
+    (should (equal (prodigy-service-command service) service))))
 
 
 ;;;; prodigy-service-args
@@ -106,9 +112,15 @@
   (let ((service '(:name "service" :args ("foo" "bar"))))
     (should (equal (prodigy-service-args service) '("foo" "bar")))))
 
-(ert-deftest prodigy-service-args-test/lambda ()
-  (let ((service '(:name "service" :args (lambda () (list "foo" "bar")))))
-    (should (equal (prodigy-service-args service) '("foo" "bar")))))
+(ert-deftest prodigy-service-args-test/lambda-no-args ()
+  (let ((service '(:name "service" :args (lambda () (list 'arg-1 'arg-2)))))
+    (should (equal (prodigy-service-args service) (list 'arg-1 'arg-2)))))
+
+(ert-deftest prodigy-service-args-test/lambda-with-args ()
+  (let ((service '(:name "service" :args
+                         (lambda (&rest args)
+                           (plist-get args :service)))))
+    (should (equal (prodigy-service-args service) service))))
 
 
 ;;;; prodigy-service-cwd

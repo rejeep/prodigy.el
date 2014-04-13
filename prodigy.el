@@ -382,7 +382,7 @@ If SERVICE command exists, use that.  If not, find the first
 SERVICE tag that has a command and return that."
   (let ((command (prodigy-service-or-first-tag-with service :command)))
     (if (functionp command)
-        (funcall command)
+        (prodigy-callback-with-plist command service)
       command)))
 
 (defun prodigy-service-args (service)
@@ -392,7 +392,7 @@ If SERVICE args exists, use that.  If not, find the first SERVICE
 tag that has and return that."
   (let ((args (prodigy-service-or-first-tag-with service :args)))
     (if (functionp args)
-        (funcall args)
+        (prodigy-callback-with-plist args service)
       args)))
 
 (defun prodigy-service-cwd (service)
@@ -479,6 +479,20 @@ first SERVICE tag that has and return that."
 
 
 ;;;; Internal functions
+
+(defmacro prodigy-callback-with-plist (function &rest properties)
+  "Call FUNCTION with PROPERTIES as plist."
+  `(if (help-function-arglist ,function nil)
+       (apply
+        ,function
+        ,(cons
+          'list
+          (apply
+           'append
+           (-map
+            (lambda (property)
+              `(,(intern (concat ":" (symbol-name property))) ,property)) properties))))
+     (funcall ,function)))
 
 (defmacro prodigy-with-refresh (&rest body)
   "Execute BODY and then refresh."
@@ -788,7 +802,7 @@ Buffer will be writable for BODY."
 (defun prodigy-on-output (service output)
   "Call SERVICE on-output hooks with OUTPUT."
   (-when-let (on-output (prodigy-service-on-output service))
-    (--each on-output (funcall it service output))))
+    (--each on-output (apply it (list :service service :output output)))))
 
 (defun prodigy-check-for-ready-message (service output)
   "Check SERVICE's OUTPUT for a ready message.

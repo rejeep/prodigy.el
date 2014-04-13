@@ -30,6 +30,19 @@ Services can be defined in a few different ways. See doc-string for
 information about available properties to specify: `M-x
 describe-variable RET prodigy-services`.
 
+Properties that accepts a function as argument all get a property list
+as argument, for example:
+
+```lisp
+(prodigy-define-service
+  :command (lambda (&rest args)
+             (let ((service (plist-get args :service)))
+               ;; ...
+               )))
+```
+
+Depending on property, the `args` list contain various properties.
+
 #### prodigy-define-service (`&rest args`)
 
 Services can be defined using the function `prodigy-define-service`:
@@ -252,10 +265,12 @@ The services that are tagged with `rails` will all inherit this.
 ```lisp
 (prodigy-define-tag
   :name 'rails
-  :on-output (lambda (service output)
-               (when (or (s-matches? "Listening on 0\.0\.0\.0:[0-9]+, CTRL\\+C to stop" output)
-                         (s-matches? "Ctrl-C to shutdown server" output))
-                 (prodigy-set-status service 'ready))))
+  :on-output (lambda (&rest args)
+               (let ((output (plist-get args :output))
+                     (service (plist-get args :service)))
+                 (when (or (s-matches? "Listening on 0\.0\.0\.0:[0-9]+, CTRL\\+C to stop" output)
+                           (s-matches? "Ctrl-C to shutdown server" output))
+                   (prodigy-set-status service 'ready)))))
 
 (prodigy-define-service
   :name "Rails"
