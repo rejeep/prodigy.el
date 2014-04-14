@@ -4,7 +4,9 @@
 ;; accesses the service definition (lower in the hierarchy!) to get
 ;; the tunnel specific data (property :TUNNEL) as property list and
 ;; pass that to the helper `my-build-tunnel-args'.
-;; 
+;;
+;; This code uses `getf' from `cl.el', an autoloaded function; if you
+;; don't like that, replace it with `plist-get'
 (defun my-build-tunnel-args (args)
   "Assemble the ssh tunnel argument list."
   `("-v" ;; allows us to parse for the ready message
