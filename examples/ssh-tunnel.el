@@ -1,9 +1,9 @@
 ;;; prodigy service example ssh tunnels
 ;; This example uses `prodigy-callback' in a tag definition to make it
-;; easy to define new tunnels: The generic :ARGS of the tag access the
-;; service definition to get the tunel specific data (propery :TUNNEL)
-;; as property list and pass that to the helper
-;; `my-build-tunnel-args'.
+;; easy to define new tunnels: The generic :ARGS property of the tag
+;; accesses the service definition (lower in the hierarchy!) to get
+;; the tunnel specific data (property :TUNNEL) as property list and
+;; pass that to the helper `my-build-tunnel-args'.
 ;; 
 (defun my-build-tunnel-args (args)
   "Assemble the ssh tunnel argument list."
@@ -14,7 +14,7 @@
                   (getf args :tunnel-ip)
                   ":"
                   (getf args :tunnel-port))
-    "-l" ,(getf args :user) ;; the username
+    "-l" ,(getf args :user) ;; the user name
     "-p" ,(getf args :port) ;; the remote port
     ,(getf args :host)))    ;; the remote host
 
