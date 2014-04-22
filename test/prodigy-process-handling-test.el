@@ -64,12 +64,14 @@
 (ert-deftest-async prodigy-start-service-test/on-output/no-tags (done-log-foo done-log-bar done-stop)
   (with-sandbox
    (let ((service (prodigy-test/make-service
-                   :on-output (lambda (service output)
-                                (cond ((string= output "foo\n")
-                                       (funcall done-log-foo))
-                                      ((string= output "bar\n")
-                                       (funcall done-log-bar)
-                                       (prodigy-stop-service service nil done-stop)))))))
+                   :on-output (lambda (&rest args)
+                                (let ((output (plist-get args :output))
+                                      (service (plist-get args :service)))
+                                  (cond ((string= output "foo\n")
+                                         (funcall done-log-foo))
+                                        ((string= output "bar\n")
+                                         (funcall done-log-bar)
+                                         (prodigy-stop-service service nil done-stop))))))))
      (prodigy-start-service service
        (lambda ()
          (prodigy-test/post-message service 'log "foo")
@@ -79,16 +81,20 @@
   (with-sandbox
    (prodigy-define-tag
      :name 'tag
-     :on-output (lambda (service output)
-                  (when (string= output "foo\n")
-                    (funcall done-tag)
-                    (prodigy-stop-service service nil done-stop))))
+     :on-output (lambda (&rest args)
+                  (let ((output (plist-get args :output))
+                        (service (plist-get args :service)))
+                    (when (string= output "foo\n")
+                      (funcall done-tag)
+                      (prodigy-stop-service service nil done-stop)))))
    (let ((service
           (prodigy-test/make-service
            :tags '(tag)
-           :on-output (lambda (service output)
-                        (when (string= output "foo\n")
-                          (funcall done-service))))))
+           :on-output (lambda (&rest args)
+                        (let ((output (plist-get args :output))
+                              (service (plist-get args :service)))
+                          (when (string= output "foo\n")
+                            (funcall done-service)))))))
      (prodigy-start-service service
        (lambda ()
          (prodigy-test/post-message service 'log "foo"))))))
