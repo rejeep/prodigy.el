@@ -322,6 +322,13 @@ Then tag your services with the `jekyll` tag.
 
 This is a short summary of changes between versions.
 
+### v0.6.0
+
+* Adding new function `prodigy-callback`, allowing for some syntactic
+  sugar using property lambdas (that take plist as argument).
+* For some properties that accepts a lambda as argument, the lambda
+  arguments is now a plist. **Breaking change!**
+
 ### v0.5.0
 
 * New property `:ready-message` used to set the process status to
