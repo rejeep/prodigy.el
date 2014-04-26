@@ -293,6 +293,14 @@ If enabled, view buffers will be truncated at
 
 Functions will be run with 2 arguments, `service' and `output'.")
 
+(defvar prodigy-output-filters
+  '(ansi-color-apply
+    prodigy-strip-ctrl-m)
+  "Functions to run on process output.
+
+Each function should take the output string as an argument and
+return a string.")
+
 (defconst prodigy-discover-context-menu
   '(prodigy
     (actions
@@ -777,12 +785,18 @@ Buffer will be writable for BODY."
        (let ((inhibit-read-only t))
          ,@body))))
 
+(defun prodigy-process-output (output)
+  "Apply each of `prodigy-output-filters' to OUTPUT."
+  (--each prodigy-output-filters
+    (setq output (funcall it output)))
+  output)
+
 (defun prodigy-insert-output (service output)
   "Switch to SERVICE process view buffer and insert OUTPUT."
   (prodigy-with-service-process-buffer service
     (save-excursion
       (goto-char (point-max))
-      (insert (ansi-color-apply output)))))
+      (insert (prodigy-process-output output)))))
 
 (defun prodigy-truncate-buffer (service _)
   "Truncate SERVICE process view buffer to its maximum size."
@@ -1223,6 +1237,10 @@ SIGNINT signal."
 
 
 ;;;; View mode functions
+
+(defun prodigy-strip-ctrl-m (output)
+  "Strip  line endings from OUTPUT."
+  (s-replace "" "" output))
 
 (defun prodigy-view-clear-buffer ()
   "Clear the current buffer.
