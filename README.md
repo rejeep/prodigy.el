@@ -71,6 +71,21 @@ Services can be defined by setting the variable `prodigy-services`:
    (:prop value ...)))
 ```
 
+### Viewing process output
+
+In the prodigy window, you can see a process' output with the `$` key.
+Process output buffers use the `prodigy-view-mode` and do some special
+pre-processing to the process output. There are two significant
+variables that influence process output:
+- `prodigy-output-filters` is a list of filters to apply to the
+output (currently, the process will be ansi-colorized and `^M`
+literals will be stripped). Filter functions should take a single
+argument, the `output` string, and should return a string.
+- `prodigy-process-on-output-hook` is a hook that runs on
+process output. Each function in the hook takes two arguments,
+`service` (the service data structure) and `output` (the service's
+output).
+
 ### Tags
 
 Services can have any number of tags. Tags does not have to be pre
