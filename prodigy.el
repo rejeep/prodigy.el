@@ -1142,10 +1142,10 @@ started."
 (defun prodigy-copy-cmd ()
   "Copy cmd at line."
   (interactive)
-  (let* ((service (car (prodigy-relevant-services)))
+  (let* ((service (prodigy-service-at-pos))
          (cmd (prodigy-service-command service))
          (args (prodigy-service-args service))
-         (cmd-str (concat cmd " " (mapconcat 'identity args " "))))
+         (cmd-str (concat cmd " " (s-join " " args))))
     (kill-new cmd-str)
     (message "%s" cmd-str)))
 
