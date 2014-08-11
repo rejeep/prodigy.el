@@ -127,6 +127,7 @@ An example is restarting a service."
     (define-key map (kbd "j d") 'prodigy-jump-dired)
     (define-key map (kbd "M-n") 'prodigy-next-with-status)
     (define-key map (kbd "M-p") 'prodigy-prev-with-status)
+    (define-key map (kbd "C-w") 'prodigy-copy-cmd)
     map)
   "Keymap for `prodigy-mode'.")
 
@@ -1137,6 +1138,16 @@ started."
        prodigy-services
      (lambda (service)
        (plist-put service :marked nil)))))
+
+(defun prodigy-copy-cmd ()
+  "Copy cmd at line."
+  (interactive)
+  (let* ((service (prodigy-service-at-pos))
+         (cmd (prodigy-service-command service))
+         (args (prodigy-service-args service))
+         (cmd-str (concat cmd " " (s-join " " args))))
+    (kill-new cmd-str)
+    (message "%s" cmd-str)))
 
 (defun prodigy-start ()
   "Start service at line or marked services."
