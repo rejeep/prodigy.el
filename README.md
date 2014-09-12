@@ -75,8 +75,9 @@ Services can be defined by setting the variable `prodigy-services`:
 
 In the prodigy window, you can see a process' output with the `$` key.
 Process output buffers use the `prodigy-view-mode` and do some special
-pre-processing to the process output. There are two significant
-variables that influence process output:
+pre-processing to the process output. The buffer output will be tailed
+(à la `tail -f`) if the point is at the buffer end. There are two
+significant variables that influence process output:
 - `prodigy-output-filters` is a list of filters to apply to the
 output (currently, the process will be ansi-colorized and `^M`
 literals will be stripped). Filter functions should take a single
