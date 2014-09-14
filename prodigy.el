@@ -357,6 +357,37 @@ return a string.")
     ["Open in browser" prodigy-browse]))
 
 
+;;;; Internal macros
+
+(defmacro prodigy-callback-with-plist (function &rest properties)
+  "Call FUNCTION with PROPERTIES as plist."
+  `(if (help-function-arglist ,function nil)
+       (apply
+        ,function
+        ,(cons
+          'list
+          (apply
+           'append
+           (-map
+            (lambda (property)
+              `(,(intern (concat ":" (symbol-name property))) ,property)) properties))))
+     (funcall ,function)))
+
+(defmacro prodigy-with-refresh (&rest body)
+  "Execute BODY and then refresh."
+  `(progn ,@body (prodigy-refresh)))
+
+(defmacro prodigy-with-service-process-buffer (service &rest body)
+  "Switch to SERVICE process buffer and yield BODY.
+
+Buffer will be writable for BODY."
+  (declare (indent 1))
+  `(let ((buffer (get-buffer-create (prodigy-buffer-name ,service))))
+     (with-current-buffer buffer
+       (let ((inhibit-read-only t))
+         ,@body))))
+
+
 ;;;; Service accessors
 
 (defun prodigy-service-tags (service)
@@ -488,24 +519,6 @@ first SERVICE tag that has and return that."
 
 
 ;;;; Internal functions
-
-(defmacro prodigy-callback-with-plist (function &rest properties)
-  "Call FUNCTION with PROPERTIES as plist."
-  `(if (help-function-arglist ,function nil)
-       (apply
-        ,function
-        ,(cons
-          'list
-          (apply
-           'append
-           (-map
-            (lambda (property)
-              `(,(intern (concat ":" (symbol-name property))) ,property)) properties))))
-     (funcall ,function)))
-
-(defmacro prodigy-with-refresh (&rest body)
-  "Execute BODY and then refresh."
-  `(progn ,@body (prodigy-refresh)))
 
 (defun prodigy-taggable-tags (taggable)
   "Return list of tags objects for TAGGABLE."
@@ -775,16 +788,6 @@ DIRECTION is either 'up or 'down."
                (throw 'break t))))))
     (unless found
       (prodigy-goto-pos pos))))
-
-(defmacro prodigy-with-service-process-buffer (service &rest body)
-  "Switch to SERVICE process buffer and yield BODY.
-
-Buffer will be writable for BODY."
-  (declare (indent 1))
-  `(let ((buffer (get-buffer-create (prodigy-buffer-name ,service))))
-     (with-current-buffer buffer
-       (let ((inhibit-read-only t))
-         ,@body))))
 
 (defun prodigy-process-output (output)
   "Apply each of `prodigy-output-filters' to OUTPUT."
