@@ -383,9 +383,12 @@ return a string.")
 Buffer will be writable for BODY."
   (declare (indent 1))
   `(let ((buffer (get-buffer-create (prodigy-buffer-name ,service))))
-     (with-current-buffer buffer
-       (let ((inhibit-read-only t))
-         ,@body))))
+     (let ((inhibit-read-only t))
+       (-if-let (buffer-window (car (get-buffer-window-list buffer)))
+           (with-selected-window buffer-window
+             ,@body)
+         (with-current-buffer buffer
+           ,@body)))))
 
 
 ;;;; Service accessors
@@ -798,9 +801,12 @@ DIRECTION is either 'up or 'down."
 (defun prodigy-insert-output (service output)
   "Switch to SERVICE process view buffer and insert OUTPUT."
   (prodigy-with-service-process-buffer service
-    (save-excursion
+    (let ((current-position (point))
+          (at-buffer-end (equal (point) (point-max))))
       (goto-char (point-max))
-      (insert (prodigy-process-output output)))))
+      (insert (prodigy-process-output output))
+      (unless at-buffer-end
+        (goto-char current-position)))))
 
 (defun prodigy-truncate-buffer (service _)
   "Truncate SERVICE process view buffer to its maximum size."

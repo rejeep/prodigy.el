@@ -97,6 +97,30 @@
                (should (<= (count-lines (point-min) (point-max)) 10))
                (prodigy-stop-service service nil done)))))))))
 
+(ert-deftest-async prodigy-view-test/tail (done)
+  (with-sandbox
+   (let ((service (prodigy-test/make-service)))
+     (prodigy-start-service service
+       (lambda ()
+         (prodigy-test/log-lines service 20)
+         (prodigy-test/delay 0.2
+           (lambda ()
+             (prodigy-with-service-process-buffer service
+               (should (= (point) (point-max)))
+               (goto-line 10))
+             (prodigy-test/log-lines service 20)
+             (prodigy-test/delay 0.2
+               (lambda ()
+                 (prodigy-with-service-process-buffer service
+                   (should (= (line-number-at-pos) 10))
+                   (goto-char (point-max)))
+                 (prodigy-test/log-lines service 20)
+                 (prodigy-test/delay 0.2
+                   (lambda ()
+                     (prodigy-with-service-process-buffer service
+                       (should (= (point) (point-max))))
+                     (prodigy-stop-service service nil done))))))))))))
+
 (provide 'prodigy-view-test)
 
 ;;; prodigy-view-test.el ends here
