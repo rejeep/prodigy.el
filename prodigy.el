@@ -175,7 +175,14 @@ The list is a property list with the following properties:
   Function called before process is started with async callback.
 
 `stop-signal'
-  Signal to send to processes to stop (defaults to 'int).
+  How to signal processes when stopping it.  This property can have
+  any of the following values:
+   * `int' - Will use the function `interrupt-process'.
+   * `kill' - Will use the function `kill-process'.
+   * `quit' - Will use the function `quit-process'.
+   * `stop' - Will use the function `stop-process'.
+   * If neither of the above, the function `signal-process' will be
+     called with that value.
 
 `path'
   Use this to add directories to PATH when starting service process.
@@ -1028,9 +1035,17 @@ put in stopped status."
     (-when-let (process (plist-get service :process))
       (when (process-live-p process)
         (prodigy-set-status service 'stopping)
-        (if force
-            (kill-process process)
-          (signal-process process (or (prodigy-service-stop-signal service) 'int)))
+        (let ((stop-signal (prodigy-service-stop-signal service)))
+          (cond ((eq stop-signal 'int)
+                 (interrupt-process process))
+                ((or force (eq stop-signal 'kill))
+                 (kill-process process))
+                ((eq stop-signal 'quit)
+                 (quit-process process))
+                ((eq stop-signal 'stop)
+                 (stop-process process))
+                (t
+                 (signal-process process (or stop-signal 'int)))))
         (let ((tryout 0))
           (prodigy-every 1
               (lambda (next)
