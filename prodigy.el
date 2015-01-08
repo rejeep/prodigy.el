@@ -103,6 +103,12 @@ An example is restarting a service."
 (defvar prodigy-view-confirm-clear-buffer t
   "`prodigy-view-clear-buffer' will require confirmation if non-nil.")
 
+(defvar prodigy-dependent-services nil
+  "Alist mapping services to a list of service names that depend on them.")
+
+(defvar prodigy-service-dependencies nil
+  "Alist mapping services to the current state of dependent services.")
+
 (defvar prodigy-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "n") 'prodigy-next)
@@ -770,6 +776,7 @@ The completion system used is determined by
 (defun prodigy-define-default-status-list ()
   "Define the default status list."
   (prodigy-define-status :id 'stopped :name "")
+  (prodigy-define-status :id 'waiting :face 'prodigy-yellow-face)
   (prodigy-define-status :id 'running :face 'prodigy-green-face)
   (prodigy-define-status :id 'ready :face 'prodigy-green-face)
   (prodigy-define-status :id 'stopping :face 'prodigy-yellow-face)
@@ -967,51 +974,57 @@ If the process is not live after `prodigy-start-tryouts' seconds,
 the process is put in failed status."
   (declare (indent 1))
   (unless (prodigy-service-started-p service)
-    (let* ((default-directory
-             (-if-let (cwd (prodigy-service-cwd service))
-                 (f-full cwd)
-               default-directory))
-           (name (plist-get service :name))
-           (command (prodigy-service-command service))
-           (args (prodigy-service-args service))
-           (exec-path (append (prodigy-service-path service) exec-path))
-           (env (--map (s-join "=" it) (prodigy-service-env service)))
-           (process-environment (append env process-environment))
-           (process nil)
-           (create-process
-            (lambda ()
-              (unless process
-                (setq process (apply 'start-process (append (list name nil command) args)))))))
-      (-when-let (init (prodigy-service-init service))
-        (funcall init))
-      (-when-let (init-async (prodigy-service-init-async service))
-        (let (callbacked)
-          (funcall
-           init-async
-           (lambda ()
-             (setq callbacked t)
-             (funcall create-process)))
-          (with-timeout
-              (prodigy-init-async-timeout
-               (error "Did not callback async callback within %s seconds"
-                      prodigy-init-async-timeout))
-            (while (not callbacked) (accept-process-output nil 0.005)))))
-      (funcall create-process)
-      (let ((tryout 0))
-        (prodigy-every 1
-            (lambda (next)
-              (setq tryout (1+ tryout))
-              (if (process-live-p process)
-                  (when callback (funcall callback))
-                (if (= tryout prodigy-start-tryouts)
-                    (prodigy-set-status service 'failed)
-                  (funcall next))))))
-      (plist-put service :process process)
-      (set-process-filter
-       process
-       (lambda (_ output)
-         (run-hook-with-args 'prodigy-process-on-output-hook service output)))
-      (set-process-query-on-exit-flag process nil))))
+    (if (prodigy-service-dependencies-met-p service)
+        (prodigy-initialize-service service callback)
+      (prodigy-service-start-waiting service))))
+
+(defun prodigy-initialize-service (service &optional callback)
+  "Internal function to initialize the process associated with SERVICE."
+  (let* ((default-director
+           (-if-let (cwd (prodigy-service-cwd service))
+               (f-full cwd)
+             default-directory))
+         (name (plist-get service :name))
+         (command (prodigy-service-command service))
+         (args (prodigy-service-args service))
+         (exec-path (append (prodigy-service-path service) exec-path))
+         (env (--map (s-join "=" it) (prodigy-service-env service)))
+         (process-environment (append env process-environment))
+         (process nil)
+         (create-process
+          (lambda ()
+            (unless process
+              (setq process (apply 'start-process (append (list name nil command) args)))))))
+    (-when-let (init (prodigy-service-init service))
+      (funcall init))
+    (-when-let (init-async (prodigy-service-init-async service))
+      (let (callbacked)
+        (funcall
+         init-async
+         (lambda ()
+           (setq callbacked t)
+           (funcall create-process)))
+        (with-timeout
+            (prodigy-init-async-timeout
+             (error "Did not callback async callback within %s seconds"
+                    prodigy-init-async-timeout))
+          (while (not callbacked) (accept-process-output nil 0.005)))))
+    (funcall create-process)
+    (let ((tryout 0))
+      (prodigy-every 1
+          (lambda (next)
+            (setq tryout (1+ tryout))
+            (if (process-live-p process)
+                (when callback (funcall callback))
+              (if (= tryout prodigy-start-tryouts)
+                  (prodigy-set-status service 'failed)
+                (funcall next))))))
+    (plist-put service :process process)
+    (set-process-filter
+     process
+     (lambda (_ output)
+       (run-hook-with-args 'prodigy-process-on-output-hook service output)))
+    (set-process-query-on-exit-flag process nil)))
 
 (defun prodigy-stop-service (service &optional force callback)
   "Stop process associated with SERVICE.
@@ -1271,6 +1284,82 @@ SIGNINT signal."
   (prodigy-move-until 'up 'prodigy-service-has-status-p))
 
 
+;;;; Dependency management
+(defun prodigy-dependencies-init (service)
+  "Initialize dependency management for SERVICE."
+  (let ((dependencies (plist-get service :depends-on)))
+    (-each dependencies
+      (lambda (dependency-pair)
+        (let ((dependency (car dependency-pair)))
+          (push (list dependency (cons (plist-get service :name)
+                                       (cadr (assoc dependency
+                                                    prodigy-dependent-services))))
+                prodigy-dependent-services))))
+    (push (list (plist-get service :name)
+                (-map (lambda (dependency)
+                        (list (car dependency)
+                              (or (plist-get (prodigy-find-service dependency)
+                                             :status)
+                                  'stopped)))
+                      dependencies))
+          prodigy-service-dependencies)))
+
+(defun prodigy-service-dependencies-met-p (service)
+  "Checks whether the dependencies for SERVICE are ready yet."
+  (or (null (plist-get service :depends-on))
+      (let ((current-state (cadr (assoc (plist-get service :name)
+                                        prodigy-service-dependencies))))
+        (and current-state
+             (-all-p (lambda (dependency-pair)
+                       (let ((new-dependency-state (car dependency-pair))
+                             (required-dependency-state (cdr dependency-pair)))
+                         (prodigy-dependency-met-p new-dependency-state
+                                                   required-dependency-state)))
+                     (-zip current-state (plist-get service :depends-on)))))))
+
+(defun prodigy-dependency-met-p (dependency-state required-dependency-state)
+  "Checks whether a particular DEPENDENCY-STATE meets REQUIRED-DEPENDENCY-STATE."
+  (let ((acceptable-states (member (cadr required-dependency-state)
+                                   '(stopped waiting running ready))))
+    (member (cadr dependency-state)
+            acceptable-states)))
+
+(defun prodigy-notify-status-change (service status)
+  "Notify dependencies of SERVICE that its status has changed to STATUS.
+
+Calls `prodigy-start-service' on each dependency, in case the
+dependencies have been met."
+  (let ((dependent-services
+         (cadr (assoc (plist-get service :name) prodigy-dependent-services))))
+    (-each dependent-services
+      (lambda (dependent-service-name)
+        (let ((dependent-service (prodigy-find-service dependent-service-name)))
+          (prodigy-update-dependency dependent-service service status)
+          (prodigy-start-service dependent-service))))))
+
+(defun prodigy-update-dependency (service changed-service new-status)
+  "Update dependency information for SERVICE with regards to CHANGED-SERVICE's NEW-STATUS."
+  (let* ((service-name (plist-get service :name))
+         (changed-service-name (plist-get changed-service :name))
+         (current-state (cadr (assoc service-name prodigy-service-dependencies)))
+         (new-state
+          (-map (lambda (state-pair)
+                  (if (equal (car state-pair) changed-service-name)
+                      (list changed-service-name new-status)
+                    state-pair))
+                current-state)))
+    (push (list service-name new-state) prodigy-service-dependencies)))
+
+(defun prodigy-service-start-waiting (service)
+  "If SERVICE is not already waiting, initialize dependencies and start waiting."
+  (unless (eq (plist-get service :status) 'waiting)
+    (prodigy-dependencies-init service)
+    (prodigy-set-status service 'waiting)
+    (-each (-map #'car (plist-get service :depends-on))
+      (lambda (service-name)
+        (prodigy-start-service (prodigy-find-service service-name))))))
+
+
 ;;;; View mode functions
 
 (defun prodigy-strip-ctrl-m (output)
@@ -1308,7 +1397,8 @@ is not defined an error is raised.
 This function will refresh the Prodigy buffer."
   (if (prodigy-find-status status)
       (prodigy-with-refresh
-       (plist-put service :status status))
+       (plist-put service :status status)
+       (prodigy-notify-status-change service status))
     (error "Status %s not defined" status)))
 
 ;;;###autoload
