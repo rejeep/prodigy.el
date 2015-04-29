@@ -229,6 +229,18 @@ set up.
                 (rvm-activate-ruby-for "/path/to/my/project" done)))
 ```
 
+### Foreman
+
+Prodigy also works with [Foreman](http://theforeman.org/).
+
+```lisp
+(prodigy-define-service
+  :name "Foreman"
+  :command "foreman"
+  :args '("start")
+  :cwd "/path/to/my/project")
+```
+
 ### Tag inheritance
 
 If a service has a tag and that tag is defined (see
