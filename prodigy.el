@@ -808,12 +808,14 @@ DIRECTION is either 'up or 'down."
 (defun prodigy-insert-output (service output)
   "Switch to SERVICE process view buffer and insert OUTPUT."
   (prodigy-with-service-process-buffer service
-    (let ((current-position (point))
-          (at-buffer-end (equal (point) (point-max))))
+    (let ((p-max (point-max))
+          (windows (--map
+                    (cons it (window-point it))
+                    (get-buffer-window-list (prodigy-buffer-name service) nil t))))
       (goto-char (point-max))
       (insert (prodigy-process-output output))
-      (unless at-buffer-end
-        (goto-char current-position)))))
+      (--each windows
+          (set-window-point (car it) (if (eq p-max (cdr it)) (point-max) (cdr it)))))))
 
 (defun prodigy-truncate-buffer (service _)
   "Truncate SERVICE process view buffer to its maximum size."
