@@ -108,7 +108,7 @@
      (prodigy-start-service service
        (lambda ()
          (prodigy-test/post-message service 'log "I am Ready!")
-         (prodigy-test/delay 0.1
+         (prodigy-test/delay 1
            (lambda ()
              (should (eq (plist-get service :status) 'ready))
              (prodigy-stop-service service nil done))))))))
@@ -126,7 +126,7 @@
      (prodigy-start-service service
        (lambda ()
          (prodigy-test/post-message service 'log "I am Ready!")
-         (prodigy-test/delay 0.1
+         (prodigy-test/delay 1
            (lambda ()
              (should (eq (plist-get service :status) 'ready))
              (prodigy-stop-service service nil done))))))))
@@ -138,7 +138,7 @@
      (prodigy-start-service service
        (lambda ()
          (prodigy-test/post-message service 'log "Something else!")
-         (prodigy-test/delay 0.1
+         (prodigy-test/delay 1
            (lambda ()
              (should-not (eq (plist-get service :status) 'ready))
              (prodigy-stop-service service nil done))))))))
