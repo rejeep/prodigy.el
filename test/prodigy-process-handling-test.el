@@ -48,8 +48,8 @@
      (prodigy-start-service service)
      (prodigy-test/delay 2
        (lambda ()
-         (should (eq (plist-get service :status) 'failed))
-         (funcall done))))))
+         (when (eq (plist-get service :status) 'failed)
+           (funcall done)))))))
 
 (ert-deftest prodigy-start-service-test/path ()
   
@@ -61,23 +61,22 @@
 
 ;;;; on-output
 
-(ert-deftest-async prodigy-start-service-test/on-output/no-tags (done-log-foo done-log-bar done-stop)
+(ert-deftest-async prodigy-start-service-test/on-output/no-tags (done-log-foo done-stop)
   (with-sandbox
    (let ((service (prodigy-test/make-service
                    :on-output (lambda (&rest args)
                                 (let ((output (plist-get args :output))
                                       (service (plist-get args :service)))
-                                  (cond ((string= output "foo\n")
-                                         (funcall done-log-foo))
-                                        ((string= output "bar\n")
-                                         (funcall done-log-bar)
-                                         (prodigy-stop-service service nil done-stop))))))))
+                                  (when (string-match-p (regexp-quote "foo\n") output)
+                                    (funcall done-log-foo))
+                                  (when (string-match-p (regexp-quote "bar\n") output)
+                                    (prodigy-stop-service service nil done-stop)))))))
      (prodigy-start-service service
        (lambda ()
          (prodigy-test/post-message service 'log "foo")
          (prodigy-test/post-message service 'log "bar"))))))
 
-(ert-deftest-async prodigy-start-service-test/on-output/with-tag (done-service done-tag done-stop)
+(ert-deftest-async prodigy-start-service-test/on-output/with-tag (done-service done-stop)
   (with-sandbox
    (prodigy-define-tag
      :name 'tag
@@ -85,7 +84,6 @@
                   (let ((output (plist-get args :output))
                         (service (plist-get args :service)))
                     (when (string= output "foo\n")
-                      (funcall done-tag)
                       (prodigy-stop-service service nil done-stop)))))
    (let ((service
           (prodigy-test/make-service
