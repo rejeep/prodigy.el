@@ -1103,7 +1103,7 @@ started."
   (prodigy-goto-first-line))
 
 (defun prodigy-last ()
-  "Go to lsat service."
+  "Go to last service."
   (interactive)
   (prodigy-goto-last-line))
 
@@ -1274,8 +1274,10 @@ SIGNINT signal."
 ;;;; View mode functions
 
 (defun prodigy-strip-ctrl-m (output)
-  "Strip  line endings from OUTPUT."
-  (s-replace "" "" output))
+  "Strip 
+ line endings from OUTPUT."
+  (s-replace "
+" "" output))
 
 (defun prodigy-view-clear-buffer ()
   "Clear the current buffer.
