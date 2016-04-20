@@ -1103,7 +1103,7 @@ started."
   (prodigy-goto-first-line))
 
 (defun prodigy-last ()
-  "Go to lsat service."
+  "Go to last service."
   (interactive)
   (prodigy-goto-last-line))
 
