@@ -1279,6 +1279,7 @@ SIGNINT signal."
   (s-replace "
 " "" output))
 
+
 (defun prodigy-view-clear-buffer ()
   "Clear the current buffer.
 
