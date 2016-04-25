@@ -46,6 +46,16 @@
    (stub prodigy-service-port)
    (should-not (prodigy-url (prodigy-test/make-service)))))
 
+(ert-deftest prodigy-url-test/inherit-from-tag ()
+  (let ((prodigy-tags '((:name foo :url "http://localhost:3000")))
+        (service '(:tags (foo))))
+    (should (equal (prodigy-url service) "http://localhost:3000"))))
+
+(ert-deftest prodigy-url-test/override-from-tag ()
+  (let ((prodigy-tags '((:name foo :url "http://localhost:3000")))
+        (service '(:tags (foo) :url "http://localhost:3001")))
+    (should (equal (prodigy-url service) "http://localhost:3001"))))
+
 
 ;;;; prodigy-browse
 
