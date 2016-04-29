@@ -755,7 +755,7 @@ The completion system used is determined by
 (defun prodigy-url (service)
   "Return SERVICE url."
   (or
-   (plist-get service :url)
+   (prodigy-service-url service)
    (-when-let (port (prodigy-service-port service))
      (format "http://localhost:%d" port))))
 
