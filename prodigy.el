@@ -642,6 +642,8 @@ has that property and return its value."
 
 If ID is nil, use id stopped, which is the default service
 status."
+  (unless prodigy-status-list
+    (prodigy-define-default-status-list))
   (unless id (setq id 'stopped))
   (-first
    (lambda (status)
