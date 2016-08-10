@@ -93,7 +93,6 @@ ACTION and ARGS are json encoded and sent to the process."
      (setq prodigy-stop-tryouts 1)
      (setq prodigy-filters nil)
      (setq prodigy-view-truncate-by-default nil)
-     (prodigy-define-default-status-list)
      (with-mock ,@body)))
 
 (defun prodigy-test/delay (seconds callback)
