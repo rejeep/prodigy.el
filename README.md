@@ -189,7 +189,7 @@ stopping the service, the `sigkill` signal is used.
   :args '("-m" "SimpleHTTPServer" "6001")
   :cwd "/path/to/my/project"
   :tags '(work)
-  :kill-signal 'sigkill
+  :stop-signal 'sigkill
   :kill-process-buffer-on-stop t)
 ```
 
