@@ -350,6 +350,11 @@ Then tag your services with the `jekyll` tag.
 
 This is a short summary of changes between versions.
 
+### v0.7.0
+
+* Tail process buffer if the point is at the end
+* Misc bug fixes
+
 ### v0.6.0
 
 * Adding new function `prodigy-callback`, allowing for some syntactic
