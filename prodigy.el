@@ -4,7 +4,7 @@
 
 ;; Author: Johan Andersson <johan.rejeep@gmail.com>
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
-;; Version: 0.6.0-cvs
+;; Version: 0.7.0
 ;; URL: http://github.com/rejeep/prodigy.el
 ;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (f "0.14.0") (emacs "24"))
 
