@@ -19,6 +19,13 @@ Add `prodigy` to your [Cask](https://github.com/cask/cask) file:
 (depends-on "prodigy")
 ```
 
+If you are on a Mac, disable nap mode for Emacs, otherwise requests
+will be very slow when Emacs enters nap mode:
+
+```sh
+$ defaults write org.gnu.Emacs NSAppSleepDisabled -bool YES
+```
+
 ## Usage
 
 Start Prodigy with `M-x prodigy`. You should see a list of all defined
