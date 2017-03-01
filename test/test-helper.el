@@ -107,6 +107,6 @@ ACTION and ARGS are json encoded and sent to the process."
 (eval-when-compile
   (require 'cl))
 
-(provide 'test-helper)
+(provide 'prodigy-test-helper)
 
 ;;; test-helper.el ends here
