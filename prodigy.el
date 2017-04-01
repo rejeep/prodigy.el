@@ -1276,8 +1276,11 @@ SIGNINT signal."
 ;;;; View mode functions
 
 (defun prodigy-strip-ctrl-m (output)
-  "Strip  line endings from OUTPUT."
-  (s-replace "" "" output))
+  "Strip 
+ line endings from OUTPUT."
+  (s-replace "
+" "" output))
+
 
 (defun prodigy-view-clear-buffer ()
   "Clear the current buffer.
