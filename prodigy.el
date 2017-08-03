@@ -162,6 +162,9 @@ The list is a property list with the following properties:
 `cwd'
   Run command with this as `default-directory'.
 
+`sudo'
+  Run command as `sudo'
+
 `port'
   Specify service port for use with open function.
 
