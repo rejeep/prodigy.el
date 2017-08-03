@@ -966,6 +966,7 @@ NAME, BUFFER, PROGRAM, and PROGRAM-ARGS are as in `start-process.'"
          (start-process-shell-command
           name buffer (concat "sudo " (mapconcat #'shell-quote-argument sudo-args " ")))))
     (process-send-string process pwd)
+    (clear-string pwd)
     (process-send-string process "\r")
     (process-send-eof process)
     process))
