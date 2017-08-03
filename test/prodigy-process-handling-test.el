@@ -59,6 +59,30 @@
   
   )
 
+(ert-deftest-async prodigy-start-service-test/start-service-with-sudo (done)
+  (unwind-protect
+      (with-sandbox
+       (ad-add-advice
+        'start-process-shell-command
+        (list 'prodigy-sudo-test-spsc-advice
+              nil t
+              '(advice . (lambda ()
+                           (should (s-starts-with-p "sudo " (ad-get-arg 2)))
+                           (ad-set-arg 2 (substring (ad-get-arg 2) 5)))))
+        'before 'first)
+       (ad-activate 'start-process-shell-command)
+       (mock (read-passwd "Sudo password for `cat': ") => "dummy-sudo-password")
+       (let ((service (car
+                       (prodigy-define-service
+                         :name "Sudo test service"
+                         :sudo t
+                         :command "cat"
+                         :on-output (lambda (&rest args)
+                                      (should (string= (plist-get args :output) "dummy-sudo-password\n"))
+                                      (funcall done))))))
+         (prodigy-start-service service)))
+    (ad-disable-advice 'start-process-shell-command 'before 'prodigy-sudo-test-spsc-advice)))
+
 ;;;; on-output
 
 (ert-deftest-async prodigy-start-service-test/on-output/no-tags (done-log-foo done-stop)
