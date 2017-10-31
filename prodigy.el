@@ -1181,6 +1181,20 @@ started."
   (prodigy-with-refresh
    (-each (prodigy-relevant-services) 'prodigy-start-service)))
 
+(defun prodigy-clear-underlying-buffer (service)
+  "Clear output buffer associated with SERVICE"
+  (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
+      (progn
+        (with-current-buffer buffer
+          (prodigy-view-clear-buffer)))
+    (message "Nothing to clear for `'%s`'"
+             (plist-get service :name))))
+
+(defun prodigy-clear-underlying-buffers ()
+  "Clear service's underlying buffer at line or marked services."
+  (interactive)
+  (-each (prodigy-relevant-services) 'prodigy-clear-underlying-buffer))
+
 (defun prodigy-stop (&optional force)
   "Stop service at line or marked services.
 
