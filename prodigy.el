@@ -1291,6 +1291,21 @@ SIGNINT signal."
   (interactive)
   (prodigy-move-until 'up 'prodigy-service-has-status-p))
 
+(defun prodigy-stop-services-with-tag (tag)
+  "Stop services with TAG."
+  (interactive "MTag: ")
+  (prodigy-apply-to-services
+   (prodigy-services-tagged-with (intern tag))
+   'prodigy-stop-service))
+
+(defun prodigy-start-services-with-tag (tag)
+  "Start services with TAG."
+  (interactive "MTag: ")
+  (prodigy-apply-to-services
+   (prodigy-services-tagged-with (intern tag))
+   'prodigy-start-service))
+
+
 
 ;;;; View mode functions
 
