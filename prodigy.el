@@ -1436,18 +1436,18 @@ The old service process is transfered to the new service."
   (when (featurep 'discover)
     (prodigy-discover-initialize))
   (setq imenu-prev-index-position-function
-        #'prodigy--imenu-prev-index-position-function)
+        #'prodigy--imenu-prev-index-position)
   (setq imenu-extract-index-name-function
-        #'prodigy--imenu-extract-index-name-function))
+        #'prodigy--imenu-extract-index-name))
 
-(defun prodigy--imenu-prev-index-position-function ()
+(defun prodigy--imenu-prev-index-position ()
   "Move point to previous line in prodigy buffer.
 This function is used as a value for
 `imenu-prev-index-position-function'."
   (unless (bobp)
     (forward-line -1)))
 
-(defun prodigy--imenu-extract-index-name-function ()
+(defun prodigy--imenu-extract-index-name ()
   "Return imenu name for line at point.
 This function is used as a value for
 `imenu-extract-index-name-function'.  Point should be at the
