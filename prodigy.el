@@ -97,6 +97,14 @@ An example is restarting a service."
   :group 'prodigy
   :type 'number)
 
+(defcustom prodigy-file-manager 'dired
+  "A default set of file managers to use with `prodigy-jump-file-manager'"
+  :group 'prodigy
+  :type '(radio
+          (const :tag "Use `dired', default emacs file manager" dired)
+          (const :tag "Use `deer', ranger's file manager" deer)
+          (function :tag "Custom predicate")))
+
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
 
@@ -124,7 +132,7 @@ An example is restarting a service."
     (define-key map (kbd "f n") 'prodigy-add-name-filter)
     (define-key map (kbd "F") 'prodigy-clear-filters)
     (define-key map (kbd "j m") 'prodigy-jump-magit)
-    (define-key map (kbd "j d") 'prodigy-jump-dired)
+    (define-key map (kbd "j d") 'prodigy-jump-file-manager)
     (define-key map (kbd "M-n") 'prodigy-next-with-status)
     (define-key map (kbd "M-p") 'prodigy-prev-with-status)
     (define-key map (kbd "C-w") 'prodigy-copy-cmd)
@@ -1275,11 +1283,12 @@ SIGNINT signal."
   (-when-let (service (prodigy-service-at-pos))
     (magit-status (prodigy-service-cwd service))))
 
-(defun prodigy-jump-dired ()
-  "Jump to dired mode for service at point."
+(defun prodigy-jump-file-manager ()
+  "Jump to folder for service at point using selected file
+manager mode defined by `prodigy-file-manager'."
   (interactive)
   (-when-let (service (prodigy-service-at-pos))
-    (dired (prodigy-service-cwd service))))
+    (funcall prodigy-file-manager (prodigy-service-cwd service))))
 
 (defun prodigy-next-with-status ()
   "Move to next service with status."
