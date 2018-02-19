@@ -869,6 +869,10 @@ DIRECTION is either 'up or 'down."
           (at-buffer-end (equal (point) (point-max))))
       (goto-char (point-max))
       (insert (prodigy-process-output output))
+      (save-excursion
+        (goto-char current-position)
+        (while (re-search-forward "\\(\\)+" nil t)
+          (delete-char (* 2 (- (match-beginning 0) (match-end 0))))))
       (unless at-buffer-end
         (goto-char current-position)))))
 
