@@ -90,7 +90,10 @@ An example is restarting a service."
 (defcustom prodigy-kill-process-buffer-on-stop nil
   "Will kill process buffer on stop if this is true."
   :group 'prodigy
-  :type 'boolean)
+  :type '(radio
+          (const :tag "Always kill buffer" t)
+          (const :tag "Kill buffer unless it is visible" unless-visible)
+          (const :tag "Never kill buffer" nil)))
 
 (defcustom prodigy-timer-interval 1
   "How often to check for process changes, in seconds."
@@ -211,6 +214,12 @@ The list is a property list with the following properties:
 
 `kill-process-buffer-on-stop'
   Kill associated process buffer when process stops.
+  Possible values are:
+   * t - always kill the buffer.
+   * `unless-visible' - kill the buffer unless it is visible in some
+     window in any frame.
+   * `never' - never kill the buffer.
+   * nil or not set - use the value of `prodigy-kill-process-buffer-on-stop'.
 
 `truncate-output'
  Truncates the process ouptut buffer.  If set to t, truncates to
@@ -598,12 +607,26 @@ the timeouts stop."
       (progn (pop-to-buffer buffer) (prodigy-view-mode))
     (message "Nothing to show for %s" (plist-get service :name))))
 
+(defun prodigy-process-buffer-visible-p (service)
+  "Return non-nil if process buffer for SERVICE is visible.
+
+All windows from all frames are considered."
+  (-when-let (buffer (get-buffer (prodigy-buffer-name service)))
+    (-any?
+     (lambda (window) (equal (window-buffer window) buffer))
+     (-mapcat 'window-list (frame-list)))))
+
 (defun prodigy-maybe-kill-process-buffer (service)
   "Kill SERVICE buffer if kill-process-buffer-on-stop is t."
-  (let ((kill-process-buffer-on-stop (prodigy-service-kill-process-buffer-on-stop service)))
-    (when (or kill-process-buffer-on-stop prodigy-kill-process-buffer-on-stop)
-      (-when-let (buffer (get-buffer (prodigy-buffer-name service)))
-        (kill-buffer buffer)))))
+  (let* ((kill-process-buffer-on-stop (prodigy-service-kill-process-buffer-on-stop service))
+         (kill-buffer (or kill-process-buffer-on-stop prodigy-kill-process-buffer-on-stop)))
+    (-when-let (buffer (get-buffer (prodigy-buffer-name service)))
+      (cond
+       ((eq kill-buffer 'unless-visible)
+        (unless (prodigy-process-buffer-visible-p service)
+          (kill-buffer buffer)))
+       ((eq kill-buffer t)
+        (kill-buffer buffer))))))
 
 (defun prodigy-service-started-p (service)
   "Return true if SERVICE is started, false otherwise."
