@@ -182,6 +182,18 @@
   (with-service-buffer nil 'unless-visible
     (should-not (buffer-live-p buffer))))
 
+(ert-deftest prodigy-view-test/control/resolve-current-service ()
+  (with-service-buffer 'visible 'never
+    (should (equal (plist-get (prodigy-current-service) :name)
+                   (plist-get (prodigy-test/make-service) :name)))))
+
+(ert-deftest prodigy-view-test/control/resolve-relevant-services ()
+  (with-service-buffer 'visible 'never
+    (let ((services (prodigy-relevant-services)))
+      (should (= (length services) 1))
+      (should (equal (plist-get (car (prodigy-relevant-services)) :name)
+                     (plist-get (prodigy-test/make-service) :name))))))
+
 (provide 'prodigy-view-test)
 
 ;;; prodigy-view-test.el ends here
