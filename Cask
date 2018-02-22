@@ -6,6 +6,7 @@
 (development
  (depends-on "f")
  (depends-on "ecukes")
+ (depends-on "shut-up")
  (depends-on "el-mock")
  (depends-on "ert-runner")
  (depends-on "ert-async"))
