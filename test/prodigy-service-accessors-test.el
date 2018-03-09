@@ -199,7 +199,10 @@
     (should (prodigy-service-kill-process-buffer-on-stop service-1))
     (should (prodigy-service-kill-process-buffer-on-stop service-2))
     (should (prodigy-service-kill-process-buffer-on-stop service-3))
-    (should-not (prodigy-service-kill-process-buffer-on-stop service-4))))
+    (should-not (prodigy-service-kill-process-buffer-on-stop service-4))
+    ;; when service variable is not set use the global option
+    (let ((prodigy-kill-process-buffer-on-stop t))
+      (should (prodigy-service-kill-process-buffer-on-stop service-4)))))
 
 
 ;;;; prodigy-service-path

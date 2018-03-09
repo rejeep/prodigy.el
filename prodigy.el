@@ -498,7 +498,8 @@ SERVICE tag that has and return that."
 
 If SERVICE kill-process-buffer-on-stop exists, use that.  If not, find the first
 SERVICE tag that has and return that."
-  (prodigy-service-or-first-tag-with service :kill-process-buffer-on-stop))
+  (or (prodigy-service-or-first-tag-with service :kill-process-buffer-on-stop)
+      prodigy-kill-process-buffer-on-stop))
 
 (defun prodigy-service-path (service)
   "Return list of SERVICE path extended with all tags path."
@@ -618,14 +619,13 @@ All windows from all frames are considered."
 
 (defun prodigy-maybe-kill-process-buffer (service)
   "Kill SERVICE buffer if kill-process-buffer-on-stop is t."
-  (let* ((kill-process-buffer-on-stop (prodigy-service-kill-process-buffer-on-stop service))
-         (kill-buffer (or kill-process-buffer-on-stop prodigy-kill-process-buffer-on-stop)))
+  (let* ((kill-process-buffer (prodigy-service-kill-process-buffer-on-stop service)))
     (-when-let (buffer (get-buffer (prodigy-buffer-name service)))
       (cond
-       ((eq kill-buffer 'unless-visible)
+       ((eq kill-process-buffer 'unless-visible)
         (unless (prodigy-process-buffer-visible-p service)
           (kill-buffer buffer)))
-       ((eq kill-buffer t)
+       ((eq kill-process-buffer t)
         (kill-buffer buffer))))))
 
 (defun prodigy-service-started-p (service)
