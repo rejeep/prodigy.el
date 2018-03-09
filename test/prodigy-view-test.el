@@ -121,6 +121,67 @@
                        (should (= (point) (point-max))))
                      (prodigy-stop-service service nil done))))))))))))
 
+(ert-deftest prodigy-view-test/process-buffer-is-visible ()
+  (with-sandbox
+   (let* ((service (prodigy-test/make-service))
+          (buffer (get-buffer-create (prodigy-buffer-name service))))
+     (prodigy-switch-to-process-buffer service)
+     (should (prodigy-process-buffer-visible-p service)))))
+
+(ert-deftest prodigy-view-test/process-buffer-is-not-visible ()
+  (with-sandbox
+   (let ((service (prodigy-test/make-service))
+         (buffer (get-buffer-create " *prodigy test buffer*")))
+     (unwind-protect
+         (progn
+           (display-buffer buffer)
+           (should-not (prodigy-process-buffer-visible-p service)))
+       (kill-buffer buffer)))))
+
+(defmacro with-service-buffer (visible kill-process-buffer-on-stop &rest body)
+  (declare (indent 2))
+  `(with-sandbox
+    (let* ((service (prodigy-test/make-service))
+           (buffer (get-buffer-create (prodigy-buffer-name service))))
+      (plist-put service :kill-process-buffer-on-stop ,kill-process-buffer-on-stop)
+      (when ,visible (prodigy-switch-to-process-buffer service))
+      (prodigy-maybe-kill-process-buffer service)
+      ,@body)))
+
+(ert-deftest prodigy-view-test/kill-process-buffer-on-stop/visible-t ()
+  (with-service-buffer 'visible t
+    (should-not (buffer-live-p buffer))))
+
+(ert-deftest prodigy-view-test/kill-process-buffer-on-stop/invisible-t ()
+  (with-service-buffer nil t
+    (should-not (buffer-live-p buffer))))
+
+(ert-deftest prodigy-view-test/kill-process-buffer-on-stop/visible-nil ()
+  (let ((prodigy-kill-process-buffer-on-stop t))
+    (with-service-buffer 'visible nil
+      (should-not (buffer-live-p buffer)))))
+
+(ert-deftest prodigy-view-test/kill-process-buffer-on-stop/invisible-nil ()
+  (let ((prodigy-kill-process-buffer-on-stop t))
+    (with-service-buffer nil nil
+      (should-not (buffer-live-p buffer)))))
+
+(ert-deftest prodigy-view-test/kill-process-buffer-on-stop/visible-never ()
+  (with-service-buffer 'visible 'never
+    (should (buffer-live-p buffer))))
+
+(ert-deftest prodigy-view-test/kill-process-buffer-on-stop/invisible-never ()
+  (with-service-buffer nil 'never
+    (should (buffer-live-p buffer))))
+
+(ert-deftest prodigy-view-test/kill-process-buffer-on-stop/visible-unless-visible ()
+  (with-service-buffer 'visible 'unless-visible
+    (should (buffer-live-p buffer))))
+
+(ert-deftest prodigy-view-test/kill-process-buffer-on-stop/invisible-unless-visible ()
+  (with-service-buffer nil 'unless-visible
+    (should-not (buffer-live-p buffer))))
+
 (provide 'prodigy-view-test)
 
 ;;; prodigy-view-test.el ends here
