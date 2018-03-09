@@ -862,6 +862,35 @@ DIRECTION is either 'up or 'down."
     (setq output (funcall it output)))
   output)
 
+(defun prodigy-apply-ansi-escapes (output output-buffer service)
+  (with-temp-buffer
+    (insert output)
+    (goto-char (point-min))
+    (let ((last-escape (point))
+          (current-escape (point)))
+      (with-current-buffer output-buffer
+        (goto-char (or (plist-get service :process-update-from) (point-min))))
+      (while (setq current-escape (re-search-forward (rx "[" (group (1+ digit)) (group (char ?A ?B ?K))) nil t))
+        (let ((arg (string-to-number (match-string 1)))
+              (command (match-string 2))
+              (text (buffer-substring last-escape (match-beginning 0))))
+          (setq last-escape current-escape)
+          (with-current-buffer output-buffer
+            (insert text)
+            (cond
+             ((equal command "A")
+              (forward-line (- arg)))
+             ((equal command "B")
+              (forward-line arg))
+             ((equal command "K")
+              (if (= arg 1)
+                  (delete-region (line-beginning-position) (point))
+                (delete-region (point) (line-end-position))))))))
+      (let ((rest (buffer-substring last-escape (point-max))))
+        (with-current-buffer output-buffer
+          (insert rest)
+          (plist-put service :process-update-from (point)))))))
+
 (defun prodigy-insert-output (service output)
   "Switch to SERVICE process view buffer and insert OUTPUT."
   (prodigy-with-service-process-buffer service
@@ -869,10 +898,22 @@ DIRECTION is either 'up or 'down."
           (at-buffer-end (equal (point) (point-max))))
       (goto-char (point-max))
       (insert (prodigy-process-output output))
-      (save-excursion
-        (goto-char current-position)
-        (while (re-search-forward "\\(\\)+" nil t)
-          (delete-char (* 2 (- (match-beginning 0) (match-end 0))))))
+      ;; (prodigy-apply-ansi-escapes (prodigy-process-output output) (current-buffer))
+      ;; (save-excursion
+      ;;   (goto-char current-position)
+      ;;   (while (re-search-forward "\\(\\)+" nil t)
+      ;;     (delete-char (* 2 (- (match-beginning 0) (match-end 0)))))
+      ;;   (goto-char current-position)
+      ;;   (while (re-search-forward (rx "[" (group (1+ digit)) (group (char ?A ?B ?K))) nil t)
+      ;;     (let ((arg (string-to-number (match-string 1)))
+      ;;           (command (match-string 2)))
+      ;;       (cond
+      ;;        ((equal command "A")
+      ;;         (forward-line (- arg)))
+      ;;        ((equal command "B")
+      ;;         (forward-line arg))
+      ;;        ((equal command "K")
+      ;;         (delete-region (point) (line-end-position)))))))
       (unless at-buffer-end
         (goto-char current-position)))))
 
