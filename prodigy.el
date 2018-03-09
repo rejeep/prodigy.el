@@ -411,7 +411,7 @@ Buffer will be writable for BODY."
   (declare (indent 1))
   `(let ((buffer (get-buffer-create (prodigy-buffer-name ,service))))
      (let ((inhibit-read-only t))
-       (-if-let (buffer-window (car (get-buffer-window-list buffer)))
+       (-if-let (buffer-window (car (get-buffer-window-list buffer nil t)))
            (with-selected-window buffer-window
              ,@body)
          (with-current-buffer buffer
@@ -613,9 +613,7 @@ the timeouts stop."
 
 All windows from all frames are considered."
   (-when-let (buffer (get-buffer (prodigy-buffer-name service)))
-    (-any?
-     (lambda (window) (equal (window-buffer window) buffer))
-     (-mapcat 'window-list (frame-list)))))
+    (get-buffer-window-list buffer nil t)))
 
 (defun prodigy-maybe-kill-process-buffer (service)
   "Kill SERVICE buffer if kill-process-buffer-on-stop is t."
@@ -849,7 +847,9 @@ DIRECTION is either 'up or 'down."
       (goto-char (point-max))
       (insert (prodigy-process-output output))
       (unless at-buffer-end
-        (goto-char current-position)))))
+        (goto-char current-position)
+        (--map (set-window-point it current-position)
+               (get-buffer-window-list (current-buffer) nil t))))))
 
 (defun prodigy-truncate-buffer (service _)
   "Truncate SERVICE process view buffer to its maximum size."
