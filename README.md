@@ -96,8 +96,8 @@ output).
 
 ### Tags
 
-Services can have any number of tags. Tags does not have to be pre
-defined. If they are, the service will inherit all the tags
+Services can have any number of tags. Tags do not have to be
+predefined. If they are, the service will inherit all the tags
 properties. Tags can also have tags. A service will inherit all tags
 recursively.
 
@@ -202,7 +202,7 @@ stopping the service, the `sigkill` signal is used.
 
 ### Nodemon Server
 
-This service starts a Nodemon serveron port `6002`. The project is
+This service starts a Nodemon server on port `6002`. The project is
 using NVM (Node Version Manager), so before the process starts, NVM is
 set up.
 
