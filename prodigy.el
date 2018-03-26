@@ -133,6 +133,7 @@ An example is restarting a service."
     (define-key map (kbd "o") 'prodigy-browse)
     (define-key map (kbd "f t") 'prodigy-add-tag-filter)
     (define-key map (kbd "f n") 'prodigy-add-name-filter)
+    (define-key map (kbd "f s") 'prodigy-add-status-filter)
     (define-key map (kbd "F") 'prodigy-clear-filters)
     (define-key map (kbd "j m") 'prodigy-jump-magit)
     (define-key map (kbd "j d") 'prodigy-jump-file-manager)
@@ -352,6 +353,7 @@ return a string.")
      ("Filters"
       ("f t" "add tag filter" prodigy-add-tag-filter)
       ("f n" "add name filter" prodigy-add-name-filter)
+      ("f s" "add status filter" prodigy-add-status-filter)
       ("F" "clear all filters" prodigy-clear-filters))
      ("Misc"
       ("o" "open in browser" prodigy-browse))))
@@ -668,6 +670,11 @@ has that property and return its value."
                  (setq services (-select
                                  (lambda (service)
                                    (s-contains? value (plist-get service :name) 'ignore-case))
+                                 services)))
+                ((eq type :status)
+                 (setq services (-select
+                                 (lambda (service)
+                                   (eq value (plist-get service :status)))
                                  services)))))))
     services))
 
@@ -1291,7 +1298,16 @@ SIGNINT signal."
    (let ((string (read-string "string: ")))
      (prodigy-add-filter :name string))
    (ignore-errors
-     (prodigy-goto-first-line))))
+    (prodigy-goto-first-line))))
+
+(defun prodigy-add-status-filter ()
+  "Read string and add filter for status."
+  (interactive)
+  (prodigy-with-refresh
+   (let ((status (intern (downcase (read-string "Status: ")))))
+    (prodigy-add-filter :status status))
+   (ignore-errors
+    (prodigy-goto-first-line))))
 
 (defun prodigy-clear-filters ()
   "Clear all filters."
