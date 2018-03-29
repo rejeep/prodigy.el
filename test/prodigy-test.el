@@ -80,6 +80,25 @@
    (mock (browse-url "http://localhost:3000/foo"))
    (prodigy-browse)))
 
+
+;;;; prodigy-copy-cmd
+
+(ert-deftest prodigy-copy-cmd-test/multiple-env ()
+  (with-mock
+   (stub prodigy-service-at-pos => '(:command "stub-service"
+                                     :args ("--stub-arg")
+                                     :env (("STUB_ENV_A" "a")
+                                           ("STUB_ENV_B" "b"))))
+   (mock (kill-new "env STUB_ENV_A=a STUB_ENV_B=b stub-service --stub-arg"))
+   (shut-up (prodigy-copy-cmd))))
+
+(ert-deftest prodigy-copy-cmd-test/no-env ()
+  (with-mock
+   (stub prodigy-service-at-pos => '(:command "stub-service"
+                                     :args ("--stub-arg")))
+   (mock (kill-new "stub-service --stub-arg"))
+   (shut-up (prodigy-copy-cmd))))
+
 (provide 'prodigy-api)
 
 ;;; prodigy-api.el ends here

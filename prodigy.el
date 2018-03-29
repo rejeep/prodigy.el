@@ -1219,9 +1219,15 @@ started."
   "Copy cmd at line."
   (interactive)
   (let* ((service (prodigy-service-at-pos))
+         (envs (s-join " "
+                       (-map (lambda (env-var-value)
+                                 (s-join "=" env-var-value))
+                               (prodigy-service-env service))))
+         (envs-string (if (not (s-equals? envs ""))
+                          (concat "env " envs " ")))
          (cmd (prodigy-service-command service))
          (args (prodigy-service-args service))
-         (cmd-str (concat cmd " " (s-join " " args))))
+         (cmd-str (concat envs-string cmd " " (s-join " " args))))
     (kill-new cmd-str)
     (message "%s" cmd-str)))
 
