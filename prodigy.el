@@ -231,6 +231,9 @@ The list is a property list with the following properties:
   Call this function with (service, output), each time process gets
   new output.
 
+`auto-start'
+  Autostart the service
+
 `ready-message'
   The text that a service displays when it is ready.  Will be
   matched as a regexp.")
@@ -254,6 +257,7 @@ these (see `prodigy-services' doc-string for more information):
  * `kill-process-buffer-on-stop'
  * `on-output'
  * `truncate-output'
+ * `auto-start'
 
 These properties are also valid for a tag:
 
@@ -286,6 +290,11 @@ Supported filters:
 
 `face'
   The face to use for the status.")
+
+(defvar prodigy-auto-start-activated nil
+  "Activation status of the auto start mode. nil implies
+  auto-start is not enabled; t implies that auto-start is
+  enabled.")
 
 (defconst prodigy-buffer-name "*prodigy*"
   "Name of Prodigy mode buffer.")
@@ -1034,8 +1043,8 @@ NAME, BUFFER, PROGRAM, and PROGRAM-ARGS are as in `start-process.'"
   (let* ((sudo-args (cons program program-args))
          (pwd (read-passwd (concat "Sudo password for `" (mapconcat #'identity sudo-args " ") "': ")))
          (process
-         (start-process-shell-command
-          name buffer (concat "sudo " (mapconcat #'shell-quote-argument sudo-args " ")))))
+          (start-process-shell-command
+           name buffer (concat "sudo " (mapconcat #'shell-quote-argument sudo-args " ")))))
     (process-send-string process pwd)
     (clear-string pwd)
     (process-send-string process "\r")
@@ -1258,8 +1267,8 @@ started."
   (let* ((service (prodigy-current-service))
          (envs (s-join " "
                        (-map (lambda (env-var-value)
-                                 (s-join "=" env-var-value))
-                               (prodigy-service-env service))))
+                               (s-join "=" env-var-value))
+                             (prodigy-service-env service))))
          (envs-string (if (not (s-equals? envs ""))
                           (concat "env " envs " ")))
          (cmd (prodigy-service-command service))
@@ -1283,6 +1292,17 @@ started."
   (interactive)
   (prodigy-with-refresh
    (-each (prodigy-relevant-services) 'prodigy-start-service)))
+
+(defun prodigy-start-auto-start-service (service)
+  "Start service if indicated as `auto-start'."
+  (interactive)
+  (prodigy-with-refresh
+   (when (and prodigy-auto-start-activated
+              (or (eq (plist-get service :status) 'stopped)
+                  (eq (plist-get service :status) 'ready)
+                  (null (plist-get service :status)))
+              (plist-get service :auto-start))
+     (prodigy-start-service service))))
 
 (defun prodigy-stop (&optional force)
   "Stop service at line or marked services.
@@ -1431,10 +1451,14 @@ The old service process is transferred to the new service."
           (lambda (service)
             (string= (plist-get service :name) service-name)))
          (service (-first fn prodigy-services)))
+
     (when service
       (-when-let (process (plist-get service :process))
         (plist-put args :process process))
+
       (setq prodigy-services (-reject fn prodigy-services)))
+
+    (prodigy-start-auto-start-service args)
     (push args prodigy-services)))
 
 ;;;###autoload
@@ -1513,6 +1537,33 @@ beginning of the line."
     (define-key newmap (kbd "c") nil)
     (make-local-variable 'minor-mode-overriding-map-alist)
     (push `(view-mode . ,newmap) minor-mode-overriding-map-alist)))
+
+
+;;;###autoload
+(defun prodigy-enable-auto-start ()
+  "Set `prodigy-auto-start-activated' to `t' and start already
+defined services services whose property `auto-start' is set to
+`t'."
+  (interactive)
+  (let ((saved-buffer (current-buffer))
+        (buffer-p (prodigy-buffer))
+        (buffer (get-buffer-create prodigy-buffer-name)))
+
+    (setq prodigy-auto-start-activated t)
+
+    (set-buffer buffer)
+    (unless buffer-p
+      (prodigy-mode))
+    (prodigy-start-status-check-timer)
+
+    (prodigy-with-refresh
+     (progn
+       (prodigy-mark-all)
+       (-each (prodigy-relevant-services) 'prodigy-start-auto-start-service)
+       (prodigy-unmark-all)))
+
+    (set-buffer saved-buffer)))
+
 
 ;;;###autoload
 (defun prodigy ()
