@@ -899,21 +899,10 @@ DIRECTION is either 'up or 'down."
       (goto-char (point-max))
       (insert (prodigy-process-output output))
       ;; (prodigy-apply-ansi-escapes (prodigy-process-output output) (current-buffer))
-      ;; (save-excursion
-      ;;   (goto-char current-position)
-      ;;   (while (re-search-forward "\\(\\)+" nil t)
-      ;;     (delete-char (* 2 (- (match-beginning 0) (match-end 0)))))
-      ;;   (goto-char current-position)
-      ;;   (while (re-search-forward (rx "[" (group (1+ digit)) (group (char ?A ?B ?K))) nil t)
-      ;;     (let ((arg (string-to-number (match-string 1)))
-      ;;           (command (match-string 2)))
-      ;;       (cond
-      ;;        ((equal command "A")
-      ;;         (forward-line (- arg)))
-      ;;        ((equal command "B")
-      ;;         (forward-line arg))
-      ;;        ((equal command "K")
-      ;;         (delete-region (point) (line-end-position)))))))
+      (save-excursion
+        (goto-char current-position)
+        (while (re-search-forward "\\(\\)+" nil t)
+          (delete-char (* 2 (- (match-beginning 0) (match-end 0))))))
       (unless at-buffer-end
         (goto-char current-position)))))
 
