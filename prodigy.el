@@ -41,7 +41,7 @@
 
 (eval-when-compile
   (declare-function discover-add-context-menu "discover")
-  (declare-function magit-status-internal "magit"))
+  (declare-function magit-status "magit"))
 
 (defgroup prodigy nil
   "Manage external services from within Emacs."
@@ -145,6 +145,7 @@ An example is restarting a service."
 (defvar prodigy-view-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "k") 'prodigy-view-clear-buffer)
+    (define-key map (kbd "c") prodigy-mode-map)
     map)
   "Keymap for `prodigy-view-mode'.")
 
@@ -777,6 +778,17 @@ The completion system used is determined by
      (equal (plist-get service :name) name))
    prodigy-services))
 
+(defun prodigy-find-service-in-buffer (&optional buffer)
+  "Find service associated with BUFFER.
+
+If BUFFER is a prodigy service's process buffer then return the
+associated service definition."
+  (setq buffer (or (current-buffer) buffer))
+  (-first
+   (lambda (service)
+     (equal (prodigy-buffer-name service) (buffer-name buffer)))
+   prodigy-services))
+
 (defun prodigy-service-id (service)
   "Return SERVICE identifier."
   (let* ((name (plist-get service :name))
@@ -973,11 +985,27 @@ accordingly."
 (defun prodigy-relevant-services ()
   "Return list of relevant services.
 
-If there are any marked services, those are returned.  Otherwise,
-the service at pos is returned.
+If the service list buffer is selected and there are any marked
+services, those are returned.  Otherwise, the service at pos is
+returned.
+
+If the service's process buffer is selected return the service
+associated with this process.
 
 Note that the return value is always a list."
-  (or (prodigy-marked-services) (list (prodigy-service-at-pos))))
+  (or (prodigy-marked-services)
+      (--when-let (prodigy-current-service) (list it))))
+
+(defun prodigy-current-service ()
+  "Return service at point or service associated with current buffer.
+
+If the service list buffer is selected the service at pos is
+returned.
+
+If the service's process buffer is selected return the service
+associated with this process."
+  (or (prodigy-service-at-pos)
+      (prodigy-find-service-in-buffer)))
 
 (defun prodigy-set-default-directory ()
   "Set default directory to :cwd for service at point."
@@ -1218,7 +1246,7 @@ started."
 (defun prodigy-copy-cmd ()
   "Copy cmd at line."
   (interactive)
-  (let* ((service (prodigy-service-at-pos))
+  (let* ((service (prodigy-current-service))
          (envs (s-join " "
                        (-map (lambda (env-var-value)
                                  (s-join "=" env-var-value))
@@ -1265,7 +1293,7 @@ SIGNINT signal."
 (defun prodigy-browse ()
   "Browse service url at point if possible to figure out."
   (interactive)
-  (-when-let (service (prodigy-service-at-pos))
+  (-when-let (service (prodigy-current-service))
     (-if-let (url (prodigy-url service))
         (progn
           (when (listp url)
@@ -1309,14 +1337,14 @@ SIGNINT signal."
 (defun prodigy-jump-magit ()
   "Jump to magit status mode for service at point."
   (interactive)
-  (-when-let (service (prodigy-service-at-pos))
-    (magit-status-internal (prodigy-service-cwd service))))
+  (-when-let (service (prodigy-current-service))
+    (magit-status (prodigy-service-cwd service))))
 
 (defun prodigy-jump-file-manager ()
   "Jump to folder for service at point using selected file
 manager mode defined by `prodigy-file-manager'."
   (interactive)
-  (-when-let (service (prodigy-service-at-pos))
+  (-when-let (service (prodigy-current-service))
     (funcall prodigy-file-manager (prodigy-service-cwd service))))
 
 (defun prodigy-next-with-status ()
@@ -1459,7 +1487,16 @@ beginning of the line."
   "Mode for viewing prodigy process output."
   (view-mode 1)
   (font-lock-mode 1)
-  (use-local-map prodigy-view-mode-map))
+  (use-local-map prodigy-view-mode-map)
+  ;; Make the "c" binding point to prodigy-mode-map.  Because the
+  ;; `view-mode' minor-mode map has higher priority, we need to add an
+  ;; entry to `minor-mode-overriding-map-alist'.
+  (let ((oldmap (cdr (assoc 'view-mode minor-mode-map-alist)))
+        (newmap (make-sparse-keymap)))
+    (set-keymap-parent newmap oldmap)
+    (define-key newmap (kbd "c") nil)
+    (make-local-variable 'minor-mode-overriding-map-alist)
+    (push `(view-mode . ,newmap) minor-mode-overriding-map-alist)))
 
 ;;;###autoload
 (defun prodigy ()
