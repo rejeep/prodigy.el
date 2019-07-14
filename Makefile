@@ -12,7 +12,7 @@ test: clean-elc
 	${MAKE} clean-elc
 
 unit:
-	${CASK} exec ert-runner
+	${CASK} exec ert-runner --reporter ert
 
 ecukes:
 	${CASK} exec ecukes
