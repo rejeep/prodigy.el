@@ -94,6 +94,11 @@ process output. Each function in the hook takes two arguments,
 `service` (the service data structure) and `output` (the service's
 output).
 
+While the service output buffer is active, you can use all the
+interactive functions available from the main `M-x prodigy` buffer
+under the `c` prefix key.  For example, to restart the service
+associated with the view buffer, press `c r`.
+
 ### Tags
 
 Services can have any number of tags. Tags do not have to be
