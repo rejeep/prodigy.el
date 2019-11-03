@@ -1452,7 +1452,7 @@ The old service process is transfered to the new service."
   "Special mode for prodigy buffers."
   (buffer-disable-undo)
   (setq truncate-lines t)
-  (add-hook 'post-command-hook 'prodigy-set-default-directory)
+  (add-hook 'post-command-hook 'prodigy-set-default-directory nil t)
   (setq tabulated-list-format prodigy-list-format)
   (setq tabulated-list-entries 'prodigy-list-entries)
   (setq tabulated-list-sort-key prodigy-list-sort-key)
