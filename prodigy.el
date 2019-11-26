@@ -223,7 +223,7 @@ The list is a property list with the following properties:
    * nil or not set - use the value of `prodigy-kill-process-buffer-on-stop'.
 
 `truncate-output'
- Truncates the process ouptut buffer.  If set to t, truncates to
+ Truncates the process output buffer.  If set to t, truncates to
  `prodigy-view-buffer-maximum-size' lines.  If set to an integer,
  truncates to that number of lines.
 
@@ -700,7 +700,7 @@ The timer is not created if already exists."
   (get-buffer prodigy-buffer-name))
 
 (defun prodigy-buffer-visible-p ()
-  "Retrun true if the prodigy buffer is visible in any window."
+  "Return true if the prodigy buffer is visible in any window."
   (-any?
    (lambda (window)
      (equal (window-buffer window) (prodigy-buffer)))
@@ -712,7 +712,7 @@ The timer is not created if already exists."
 If status has been changed since last time, update the service
 status.
 
-When NEXT is specifed, call that to start a new timer.  See
+When NEXT is specified, call that to start a new timer.  See
 `prodigy-every'."
   (when (prodigy-buffer-visible-p)
     (-each prodigy-services
@@ -1408,7 +1408,7 @@ This function will refresh the Prodigy buffer."
   "Define a new service with ARGS.
 
 If service with that name already exists, the service is updated.
-The old service process is transfered to the new service."
+The old service process is transferred to the new service."
   (declare (indent defun))
   (let* ((service-name (plist-get args :name))
          (fn

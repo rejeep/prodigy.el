@@ -78,7 +78,7 @@ ACTION and ARGS are json encoded and sent to the process."
     (process-send-string process (json-encode (cons action args)))))
 
 (defun prodigy-test/log-lines (service n)
-  "Log N lines into the process ouptut."
+  "Log N lines into the process output."
   (--dotimes n
     (prodigy-test/post-message service 'log
                                (concat "Line " (number-to-string it)))))
