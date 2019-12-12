@@ -1268,6 +1268,16 @@ started."
     (kill-new cmd-str)
     (message "%s" cmd-str)))
 
+(defun prodigy-copy-url ()
+  "Copy url of service at point."
+  (interactive)
+  (-when-let (service (prodigy-current-service))
+    (-if-let (url (prodigy-single-url service))
+        (progn
+          (kill-new url)
+          (message "%s" url))
+      (message "Service does not specify url or port, cannot determine url"))))
+
 (defun prodigy-start ()
   "Start service at line or marked services."
   (interactive)

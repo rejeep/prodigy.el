@@ -113,6 +113,25 @@
    (mock (kill-new "stub-service --stub-arg"))
    (shut-up (prodigy-copy-cmd))))
 
+
+;;;; prodigy-copy-url
+
+(ert-deftest prodigy-copy-url-test/single-url ()
+  (with-mock
+    (stub prodigy-service-at-pos => '(:command "stub-service"
+                                               :url "http://foo.com/bar"))
+    (mock (kill-new "http://foo.com/bar"))
+    (shut-up (prodigy-copy-url))))
+
+(ert-deftest prodigy-copy-url-test/multiple-urls ()
+  (with-mock
+    (stub prodigy-service-at-pos => '(:command "stub-service"
+                                               :url ("http://foo.com/bar"
+                                                     "http://test.foo")))
+    (mock (prodigy-completing-read * *) => "http://test.foo")
+    (mock (kill-new "http://test.foo"))
+    (shut-up (prodigy-copy-url))))
+
 (provide 'prodigy-api)
 
 ;;; prodigy-api.el ends here
