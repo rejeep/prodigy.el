@@ -57,6 +57,20 @@
     (should (equal (prodigy-url service) "http://localhost:3001"))))
 
 
+;;;; prodigy-single-url
+
+(ert-deftest prodigy-single-url-test/with-one-url ()
+  (let* ((url "http://localhost:1234/secret.html")
+         (service (prodigy-test/make-service :url url)))
+    (should (string= (prodigy-single-url service) url))))
+
+(ert-deftest prodigy-single-url-test/with-two-urls ()
+  (let ((service (prodigy-test/make-service :url (list "http://localhost:1234" "a" "b"))))
+    (with-mock
+      (mock (prodigy-completing-read * *) => "http://localhost:1234")
+      (should (string= (prodigy-single-url service) "http://localhost:1234")))))
+
+
 ;;;; prodigy-browse
 
 (ert-deftest prodigy-browse-test/no-url ()
