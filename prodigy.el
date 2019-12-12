@@ -801,11 +801,20 @@ associated service definition."
   (--first (eq (prodigy-service-id it) id) prodigy-services))
 
 (defun prodigy-url (service)
-  "Return SERVICE url."
+  "Return SERVICE url or urls."
   (or
    (prodigy-service-url service)
    (-when-let (port (prodigy-service-port service))
      (format "http://localhost:%d" port))))
+
+(defun prodigy-single-url (service)
+  "Return a single url for service.
+If service defines several urls, ask the user which one is
+preferred."
+  (-when-let (url (prodigy-url service))
+    (if (listp url)
+        (prodigy-completing-read "URL: " url)
+      url)))
 
 (defun prodigy-discover-initialize ()
   "Initialize discover by adding prodigy context menu."
@@ -1259,6 +1268,16 @@ started."
     (kill-new cmd-str)
     (message "%s" cmd-str)))
 
+(defun prodigy-copy-url ()
+  "Copy url of service at point."
+  (interactive)
+  (-when-let (service (prodigy-current-service))
+    (-if-let (url (prodigy-single-url service))
+        (progn
+          (kill-new url)
+          (message "%s" url))
+      (message "Service does not specify url or port, cannot determine url"))))
+
 (defun prodigy-start ()
   "Start service at line or marked services."
   (interactive)
@@ -1294,11 +1313,8 @@ SIGNINT signal."
   "Browse service url at point if possible to figure out."
   (interactive)
   (-when-let (service (prodigy-current-service))
-    (-if-let (url (prodigy-url service))
-        (progn
-          (when (listp url)
-            (setq url (prodigy-completing-read "URL: " url)))
-          (browse-url url))
+    (-if-let (url (prodigy-single-url service))
+        (browse-url url)
       (message "Service does not specify url or port, cannot determine url"))))
 
 (defun prodigy-refresh ()
