@@ -40,8 +40,8 @@
 (require 'hl-line)
 
 (eval-when-compile
-  (declare-function discover-add-context-menu "discover")
-  (declare-function magit-status-internal "magit"))
+  (declare-function discover-add-context-menu "ext:discover")
+  (declare-function magit-status-setup-buffer "ext:magit-status"))
 
 (defgroup prodigy nil
   "Manage external services from within Emacs."
@@ -1354,7 +1354,7 @@ SIGNINT signal."
   "Jump to magit status mode for service at point."
   (interactive)
   (-when-let (service (prodigy-current-service))
-    (magit-status-internal (prodigy-service-cwd service))))
+    (magit-status-setup-buffer (prodigy-service-cwd service))))
 
 (defun prodigy-jump-file-manager ()
   "Jump to folder for service at point using selected file
