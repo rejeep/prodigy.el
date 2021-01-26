@@ -52,12 +52,44 @@
            (funcall done)))))))
 
 (ert-deftest prodigy-start-service-test/path ()
-  
+
   )
 
 (ert-deftest prodigy-start-service-test/env ()
-  
+
   )
+
+
+(ert-deftest-async prodigy-start-service-test/auto-start-start-service-with-enabling-after (done)
+  (with-sandbox
+   (let ((service))
+     (setq prodigy-auto-start-activated nil)
+     (setq service (prodigy-test/make-service
+                    :name "auto-start-after"
+                    :command "echo"
+                    :args '("foo")
+                    :auto-start t))
+     (prodigy-enable-auto-start)
+
+     (prodigy-test/delay 2
+       (lambda ()
+         (when (eq (plist-get service :status) 'failed)
+           (funcall done)))))))
+
+(ert-deftest-async prodigy-start-service-test/auto-start-start-service-with-enabling-before (done)
+  (with-sandbox
+   (let ((service))
+     (setq prodigy-auto-start-activated nil)
+     (prodigy-enable-auto-start)
+     (setq service (prodigy-test/make-service
+                    :name "auto-start-before"
+                    :command "echo"
+                    :args '("foo")
+                    :auto-start t))
+     (prodigy-test/delay 2
+       (lambda ()
+         (when (eq (plist-get service :status) 'failed)
+           (funcall done)))))))
 
 (ert-deftest-async prodigy-start-service-test/start-service-with-sudo (done)
   (unwind-protect
@@ -82,6 +114,7 @@
                                       (funcall done))))))
          (prodigy-start-service service)))
     (ad-disable-advice 'start-process-shell-command 'before 'prodigy-sudo-test-spsc-advice)))
+
 
 ;;;; on-output
 
@@ -168,7 +201,7 @@
 ;;;; init
 
 (ert-deftest prodigy-start-service-test/init ()
-  
+
   )
 
 ;;;; init-async

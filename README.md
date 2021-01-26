@@ -78,6 +78,25 @@ Services can be defined by setting the variable `prodigy-services`:
    (:prop value ...)))
 ```
 
+#### Auto start services
+
+Prodigy.el supports auto start services.
+To do so, you have to call the function `prodigy-enable-auto-start`.
+To indicate if a service should be automatically started, you have to set `auto-start` property to `t`.
+
+For example, you can use a configuration like this one:
+```lisp
+(prodigy-define-service
+  :name "auto-start-example"
+  :command "echo"
+  :args '("example")
+  :auto-start t)
+
+(prodigy-enable-auto-start)
+```
+
+The call to `prodigy-enable-auto-start` can be either after or before the definition of the service via `prodigy-define-service`.
+
 ### Viewing process output
 
 In the prodigy window, you can see a process' output with the `$` key.
