@@ -99,6 +99,21 @@ interactive functions available from the main `M-x prodigy` buffer
 under the `c` prefix key.  For example, to restart the service
 associated with the view buffer, press `c r`.
 
+### Columns
+In the `*prodigy*` buffer, you will always see a table with the following columns.
+  - **Marked**: Services that you want to perform an action on.
+  - **Name**: Service name.
+  - **Status**: Service status.
+  - **Tags**: Service associated tags.
+
+Edit `prodigy-custom-list-columns` to add your own columns, e.g.
+```lisp
+(setq prodigy-custom-list-columns
+   (quote
+    ((:function my-function :format
+                ("My Column Name" 25 t)))))
+```
+
 ### Tags
 
 Services can have any number of tags. Tags do not have to be

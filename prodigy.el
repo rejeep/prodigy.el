@@ -290,12 +290,39 @@ Supported filters:
 (defconst prodigy-buffer-name "*prodigy*"
   "Name of Prodigy mode buffer.")
 
-(defconst prodigy-list-format
-  [("Marked" 6 t :right-align t)
-   ("Name" 35 t)
-   ("Status" 15 t)
-   ("Tags" 25 nil)]
-  "List format.")
+(defconst prodigy-default-list-columns
+  '((:function prodigy-marked-col  :format ("Marked" 6 t :right-align t))
+    (:function prodigy-name-col    :format ("Name" 35 t))
+    (:function prodigy-status-col  :format ("Status" 15 t))
+    (:function prodigy-tags-col    :format ("Tags" 25 t)))
+  "Default set of columns to be shown in `*prodigy*' buffer.
+
+A list of `plist' with two properties, `function' (a lsip function) and `format' (see
+`tabulated-list-format').")
+
+(define-widget 'prodigy-column-widget 'list
+  "A single column property list.
+
+Function should be a lisp function.
+Format should follow `tabulated-list-format'."
+  :tag "Column definition"
+  :args '((group :format "%v" :inline t (const :format "Function: " :function) (function))
+          (group :format "%v" :inline t (const :format "  Format: " :format) (sexp))))
+
+(defcustom prodigy-custom-list-columns '()
+  "`*prodigy*' buffer custom user defined columns"
+  :group 'prodigy
+  :type '(repeat prodigy-column-widget))
+
+(defun prodigy-columns ()
+  "Join default, additional and custom defined `prodigy' columns"
+  (append prodigy-default-list-columns prodigy-custom-list-columns))
+
+(defun prodigy-list-format ()
+  (vconcat (-map (lambda (column) (plist-get column :format)) (prodigy-columns))))
+
+(defun prodigy-list-functions ()
+  (-map (lambda (column) (plist-get column :function)) (prodigy-columns)))
 
 (defconst prodigy-list-sort-key
   '("Name" . nil)
@@ -935,10 +962,8 @@ accordingly."
       (apply 'vector
              (--map
               (funcall it service)
-              '(prodigy-marked-col
-                prodigy-name-col
-                prodigy-status-col
-                prodigy-tags-col)))))
+              (prodigy-list-functions)
+              ))))
    (prodigy-services)))
 
 (defun prodigy-service-at-pos (&optional pos)
@@ -1469,7 +1494,7 @@ The old service process is transferred to the new service."
   (buffer-disable-undo)
   (setq truncate-lines t)
   (add-hook 'post-command-hook 'prodigy-set-default-directory nil t)
-  (setq tabulated-list-format prodigy-list-format)
+  (setq tabulated-list-format (prodigy-list-format))
   (setq tabulated-list-entries 'prodigy-list-entries)
   (setq tabulated-list-sort-key prodigy-list-sort-key)
   (tabulated-list-init-header)
