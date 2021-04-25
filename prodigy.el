@@ -72,6 +72,21 @@ An example is restarting a service."
   :type 'symbol
   :options '(ido default))
 
+(defcustom prodigy-display-buffer-function 'pop-to-buffer
+  "The function to display the prodigy buffer.
+This function should take a (prodigy) buffer and display it.
+The default is just `pop-to-buffer', which displays the buffer another window.
+Another option would be `switch-to-buffer' if you want to display it in the same window."
+  :group 'prodigy
+  :type 'function)
+
+(defcustom prodigy-process-display-buffer-function 'pop-to-buffer
+  "Just like `prodigy-display-buffer-function' but for the prodigy processes.
+The display function should take a (process) buffer and display it.
+Like with its counterpart, you can use `switch-to-buffer' as an alternative."
+  :group 'prodigy
+  :type 'function)
+
 (defcustom prodigy-init-async-timeout 10
   "Seconds to wait for init async callback before failing."
   :group 'prodigy
@@ -606,7 +621,9 @@ the timeouts stop."
 (defun prodigy-switch-to-process-buffer (service)
   "Switch to the process buffer for SERVICE."
   (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
-      (progn (pop-to-buffer buffer) (prodigy-view-mode))
+      (progn
+        (funcall prodigy-process-display-buffer-function buffer)
+        (prodigy-view-mode))
     (message "Nothing to show for %s" (plist-get service :name))))
 
 (defun prodigy-process-buffer-visible-p (service)
@@ -1520,7 +1537,7 @@ beginning of the line."
   (interactive)
   (let ((buffer-p (prodigy-buffer))
         (buffer (get-buffer-create prodigy-buffer-name)))
-    (pop-to-buffer buffer)
+    (funcall prodigy-display-buffer-function buffer)
     (unless buffer-p
       (prodigy-mode))
     (prodigy-start-status-check-timer)))
