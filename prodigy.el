@@ -606,7 +606,11 @@ the timeouts stop."
 (defun prodigy-switch-to-process-buffer (service)
   "Switch to the process buffer for SERVICE."
   (-if-let (buffer (get-buffer (prodigy-buffer-name service)))
-      (progn (pop-to-buffer buffer) (prodigy-view-mode))
+      (progn
+        (-if-let (cwd (prodigy-service-cwd service))
+            (setq default-directory cwd))
+        (pop-to-buffer buffer)
+        (prodigy-view-mode))
     (message "Nothing to show for %s" (plist-get service :name))))
 
 (defun prodigy-process-buffer-visible-p (service)
