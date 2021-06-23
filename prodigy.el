@@ -108,6 +108,11 @@ An example is restarting a service."
           (const :tag "Use `deer', ranger's file manager" deer)
           (function :tag "Custom predicate")))
 
+(defcustom prodigy-fall-back-to-completing-read nil
+  "If not nil then read service from minibuffer when no service found."
+  :group 'prodigy
+  :type 'boolean)
+
 (defvar prodigy-mode-hook nil
   "Mode hook for `prodigy-mode'.")
 
@@ -995,15 +1000,18 @@ accordingly."
   "Return list of relevant services.
 
 If the service list buffer is selected and there are any marked
-services, those are returned.  Otherwise, the service at pos is
-returned.
+services, those are returned.  If not, the service at pos is
+returned. Otherwise, if `prodigy-fall-back-to-completing-read`
+is `t` then read with `prodigy-service-completing-read`
 
 If the service's process buffer is selected return the service
 associated with this process.
 
 Note that the return value is always a list."
   (or (prodigy-marked-services)
-      (--when-let (prodigy-current-service) (list it))))
+      (--when-let (prodigy-current-service) (list it))
+      (if prodigy-fall-back-to-completing-read
+          (list (prodigy-service-completing-read)))))
 
 (defun prodigy-current-service ()
   "Return service at point or service associated with current buffer.
@@ -1513,6 +1521,16 @@ beginning of the line."
     (define-key newmap (kbd "c") nil)
     (make-local-variable 'minor-mode-overriding-map-alist)
     (push `(view-mode . ,newmap) minor-mode-overriding-map-alist)))
+
+;;;###autoload
+(defun prodigy-service-completing-read ()
+  "Select a service with `completing-read` by name."
+  (let ((services (mapcar (lambda (service)
+                            (cons (plist-get service :name)
+                                  service))
+                          prodigy-services)))
+    (alist-get-equal (completing-read "prompt" services)
+                     services)))
 
 ;;;###autoload
 (defun prodigy ()
