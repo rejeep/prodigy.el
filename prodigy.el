@@ -1072,7 +1072,7 @@ the process is put in failed status."
                 (setq process (apply (if sudo 'prodigy-start-sudo-process 'start-process)
                                      (append (list name nil  command) args)))))))
       (-when-let (init (prodigy-service-init service))
-        (funcall init))
+        (prodigy-callback-with-plist init service))
       (-when-let (init-async (prodigy-service-init-async service))
         (let (callbacked)
           (funcall
