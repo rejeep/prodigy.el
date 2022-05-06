@@ -1,6 +1,6 @@
 ;;; prodigy-internals-test.el --- Prodigy: Tests for the internal functions -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2014 Johan Andersson
+;; Copyright (C) 2014-2022 Johan Andersson
 
 ;; Author: Johan Andersson <johan.rejeep@gmail.com>
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>

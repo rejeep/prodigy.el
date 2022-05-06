@@ -1,6 +1,6 @@
 ;;; prodigy.el --- Manage external services from within Emacs -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013-2014 Johan Andersson
+;; Copyright (C) 2013-2022 Johan Andersson
 
 ;; Author: Johan Andersson <johan.rejeep@gmail.com>
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
