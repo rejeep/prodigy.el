@@ -37,6 +37,13 @@
   (let ((url "http://localhost:1234/secret.html"))
     (should (string= (prodigy-url (prodigy-test/make-service :url url)) url))))
 
+(ert-deftest prodigy-url-test/with-function-url ()
+  (let* ((service (prodigy-test/make-service
+                   :port 3030
+                   :url (prodigy-callback (service)
+                          (format "http://domain.com:%d" (prodigy-service-port service))))))
+    (should (string= (prodigy-url service) "http://domain.com:3030"))))
+
 (ert-deftest prodigy-url-test/no-url-with-port ()
   (let ((url "http://localhost:6001"))
     (with-mock

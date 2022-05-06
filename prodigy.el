@@ -218,9 +218,10 @@ The list is a property list with the following properties:
   environment variable and second item is the value of the variable.
 
 `url'
-  Single URL or list of URLs to use for browsing.  If single URL is
-  specified, use that.  If a list of URLs are specified, ask for what
-  URL to browse.
+  Single URL or list of URLs to use for browsing.  If single
+  URL is a string, use that.  If single URL is a function,
+  evaluate the function and use the result.  If a list of URLs
+  is specified, ask for what URL to browse.
 
 `kill-process-buffer-on-stop'
   Kill associated process buffer when process stops.
@@ -538,7 +539,10 @@ SERVICE tag that has and return that."
 
 If SERVICE's `url' exists, use that.  If not, find the first SERVICE
 tag that has and return that."
-  (prodigy-service-or-first-tag-with service :url))
+  (let ((url (prodigy-service-or-first-tag-with service :url)))
+    (if (functionp url)
+        (prodigy-callback-with-plist url service)
+      url)))
 
 (defun prodigy-service-on-output (service)
   "Return SERVICE and its tags on-output functions as list.
