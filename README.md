@@ -11,7 +11,7 @@ services.
 To get rid of this tedious work, I started working on this Emacs
 plugin, which provides a nice and simple GUI to manage services.
 
-![Prodigy](/prodigy.png)
+![Prodigy](./prodigy.png)
 
 ## Installation
 
