@@ -1,5 +1,7 @@
 # Prodigy
 
+[![CI](https://github.com/rejeep/prodigy.el/actions/workflows/test.yml/badge.svg)](https://github.com/rejeep/prodigy.el/actions/workflows/test.yml)
+
 Manage external services from within Emacs
 
 I came up with the idea when I got to work one Monday morning and
