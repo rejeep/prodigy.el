@@ -1,6 +1,6 @@
 ;;; prodigy-steps.el --- Prodigy: Ecukes step definitions -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2014 Johan Andersson
+;; Copyright (C) 2014-2022 Johan Andersson
 
 ;; Author: Johan Andersson <johan.rejeep@gmail.com>
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
