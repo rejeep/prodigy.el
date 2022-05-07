@@ -1,4 +1,4 @@
-;;; prodigy.el --- Manage external services from within Emacs -*- lexical-binding: t; -*-
+;;; prodigy.el --- Manage external services -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013-2022 Johan Andersson
 
@@ -6,7 +6,7 @@
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
 ;; Version: 0.7.0
 ;; URL: http://github.com/rejeep/prodigy.el
-;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (f "0.14.0") (emacs "24"))
+;; Package-Requires: ((s "1.8.0") (dash "2.4.0") (f "0.14.0") (emacs "27.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -28,6 +28,15 @@
 ;; Boston, MA 02110-1301, USA.
 
 ;;; Commentary:
+
+;; Manage external services from within Emacs
+
+;; I came up with the idea when I got to work one Monday morning and
+;; before I could start working I had to manually start ten or so
+;; services.
+
+;; To get rid of this tedious work, I started working on this Emacs
+;; plugin, which provides a nice and simple GUI to manage services.
 
 ;;; Code:
 
@@ -73,7 +82,7 @@ An example is restarting a service."
   :options '(ido default))
 
 (defcustom prodigy-init-async-timeout 10
-  "Seconds to wait for init async callback before failing."
+  "Seconds to wait for `init-async' callback before failing."
   :group 'prodigy
   :type 'number)
 
@@ -101,7 +110,7 @@ An example is restarting a service."
   :type 'number)
 
 (defcustom prodigy-file-manager 'dired
-  "A default set of file managers to use with `prodigy-jump-file-manager'"
+  "A default set of file managers to use with `prodigy-jump-file-manager'."
   :group 'prodigy
   :type '(radio
           (const :tag "Use `dired', default emacs file manager" dired)
@@ -187,7 +196,7 @@ The list is a property list with the following properties:
   Function called before process is started.
 
 `init-async'
-  Function called before process is started with async callback.
+  Function called before process is started with asynchronous callback.
 
 `stop-signal'
   How to signal processes when stopping it.  This property can have
@@ -209,9 +218,9 @@ The list is a property list with the following properties:
   environment variable and second item is the value of the variable.
 
 `url'
-  Single url or list of urls to use for browsing.  If single url is
-  specified, use that.  If a list of urls are specified, ask for what
-  url to browse.
+  Single URL or list of URLs to use for browsing.  If single URL is
+  specified, use that.  If a list of URLs are specified, ask for what
+  URL to browse.
 
 `kill-process-buffer-on-stop'
   Kill associated process buffer when process stops.
@@ -359,7 +368,7 @@ return a string.")
   "The discover context menu.")
 
 (easy-menu-define prodigy-mode-menu prodigy-mode-map
-  "Prodigy menu"
+  "Prodigy menu."
   '("Prodigy"
     ["Next service" prodigy-next t]
     ["Previous service" prodigy-prev t]
@@ -457,9 +466,9 @@ SERVICE tag that has a command and return that."
       command)))
 
 (defun prodigy-service-args (service)
-  "Return SERVICE args list.
+  "Return SERVICE's `args' list.
 
-If SERVICE args exists, use that.  If not, find the first SERVICE
+If SERVICE's `args' exists, use that.  If not, find the first SERVICE
 tag that has and return that."
   (let ((args (prodigy-service-or-first-tag-with service :args)))
     (if (functionp args)
@@ -469,21 +478,21 @@ tag that has and return that."
 (defun prodigy-service-cwd (service)
   "Return SERVICE current working directory.
 
-If SERVICE cwd exists, use that.  If not, find the first SERVICE
+If SERVICE's `cwd' exists, use that.  If not, find the first SERVICE
 tag that has and return that."
   (prodigy-service-or-first-tag-with service :cwd))
 
 (defun prodigy-service-init (service)
-  "Return SERVICE init callback function.
+  "Return SERVICE's `init' callback function.
 
-If SERVICE init exists, use that.  If not, find the first SERVICE
+If SERVICE's `init' exists, use that.  If not, find the first SERVICE
 tag that has and return that."
   (prodigy-service-or-first-tag-with service :init))
 
 (defun prodigy-service-init-async (service)
-  "Return SERVICE init async callback function.
+  "Return SERVICE's `init-async' callback function.
 
-If SERVICE init exists, use that.  If not, find the first SERVICE
+If SERVICE's `init-async' exists, use that.  If not, find the first SERVICE
 tag that has and return that."
   (prodigy-service-or-first-tag-with service :init-async))
 
@@ -513,7 +522,7 @@ SERVICE tag that has and return that."
            (prodigy-service-tags service))))))
 
 (defun prodigy-service-env (service)
-  "Return list of SERVICE env extended with all tags env."
+  "Return list of SERVICE's `env' extended with all tags' `env'."
   (let ((-compare-fn
          (lambda (a b)
            (equal (car a) (car b)))))
@@ -525,9 +534,9 @@ SERVICE tag that has and return that."
                            (prodigy-service-tags service)))))))
 
 (defun prodigy-service-url (service)
-  "Return SERVICE url.
+  "Return SERVICE's `url'.
 
-If SERVICE url exists, use that.  If not, find the first SERVICE
+If SERVICE's `url' exists, use that.  If not, find the first SERVICE
 tag that has and return that."
   (prodigy-service-or-first-tag-with service :url))
 
@@ -600,7 +609,7 @@ the timeouts stop."
                 (prodigy-every seconds callback))))))
 
 (defun prodigy-service-stopping-p (service)
-  "Return true if SERVICE is currently stopping, false otherwise."
+  "Return non-nil if SERVICE is currently stopping, nil otherwise."
   (eq (plist-get service :status) 'stopping))
 
 (defun prodigy-switch-to-process-buffer (service)
@@ -630,7 +639,7 @@ All windows from all frames are considered."
         (kill-buffer buffer))))))
 
 (defun prodigy-service-started-p (service)
-  "Return true if SERVICE is started, false otherwise."
+  "Return non-nil if SERVICE is started, nil otherwise."
   (-when-let (process (plist-get service :process))
     (process-live-p process)))
 
@@ -700,7 +709,7 @@ The timer is not created if already exists."
   (get-buffer prodigy-buffer-name))
 
 (defun prodigy-buffer-visible-p ()
-  "Return true if the prodigy buffer is visible in any window."
+  "Return non-nil if the prodigy buffer is visible in any window."
   (-any?
    (lambda (window)
      (equal (window-buffer window) (prodigy-buffer)))
@@ -732,11 +741,11 @@ When NEXT is specified, call that to start a new timer.  See
   (when next (funcall next)))
 
 (defun prodigy-tags ()
-  "Return uniq list of tags."
+  "Return a list of all tags used by all services in `prodigy-services'."
   (-uniq (-flatten (--map (plist-get it :tags) prodigy-services))))
 
 (defun prodigy-service-tagged-with? (service tag)
-  "Return true if SERVICE is tagged with TAG."
+  "Return non-nil if SERVICE is tagged with TAG."
   (-contains? (plist-get service :tags) tag))
 
 (defun prodigy-services-tagged-with (tag)
@@ -801,15 +810,16 @@ associated service definition."
   (--first (eq (prodigy-service-id it) id) prodigy-services))
 
 (defun prodigy-url (service)
-  "Return SERVICE url or urls."
+  "Return SERVICE's `url'.
+Can be a string or a list of strings."
   (or
    (prodigy-service-url service)
    (-when-let (port (prodigy-service-port service))
      (format "http://localhost:%d" port))))
 
 (defun prodigy-single-url (service)
-  "Return a single url for service.
-If service defines several urls, ask the user which one is
+  "Return a single URL for SERVICE.
+If SERVICE defines several URLs, ask the user which one is
 preferred."
   (-when-let (url (prodigy-url service))
     (if (listp url)
@@ -833,7 +843,7 @@ preferred."
   (prodigy-define-status :id 'failed :face 'prodigy-red-face))
 
 (defun prodigy-service-has-status-p (service)
-  "Return true if SERVICE has a status, except for stopped."
+  "Return non-nil if SERVICE has a status, except for stopped."
   (let ((status (plist-get service :status)))
     (and status (not (eq status 'stopped)))))
 
@@ -946,7 +956,7 @@ accordingly."
   (prodigy-find-by-id (tabulated-list-get-id pos)))
 
 (defun prodigy-service-at-pos-p (&optional pos)
-  "Return true if there is a service at POS or current position."
+  "Return non-nil if there is a service at POS or current position."
   (not (null (prodigy-service-at-pos pos))))
 
 (defun prodigy-goto-next-line ()
@@ -995,7 +1005,7 @@ accordingly."
   "Return list of relevant services.
 
 If the service list buffer is selected and there are any marked
-services, those are returned.  Otherwise, the service at pos is
+services, those are returned.  Otherwise, the service at point is
 returned.
 
 If the service's process buffer is selected return the service
@@ -1008,7 +1018,7 @@ Note that the return value is always a list."
 (defun prodigy-current-service ()
   "Return service at point or service associated with current buffer.
 
-If the service list buffer is selected the service at pos is
+If the service list buffer is selected the service at point is
 returned.
 
 If the service's process buffer is selected return the service
@@ -1017,7 +1027,7 @@ associated with this process."
       (prodigy-find-service-in-buffer)))
 
 (defun prodigy-set-default-directory ()
-  "Set default directory to :cwd for service at point."
+  "Set default directory to `cwd' for service at point."
   (when (eq major-mode 'prodigy-mode)
     (-when-let (service (prodigy-service-at-pos))
       (setq default-directory
@@ -1253,7 +1263,7 @@ started."
        (plist-put service :marked nil)))))
 
 (defun prodigy-copy-cmd ()
-  "Copy cmd at line."
+  "Add the command used to start the service at point to the kill ring."
   (interactive)
   (let* ((service (prodigy-current-service))
          (envs (s-join " "
@@ -1269,7 +1279,7 @@ started."
     (message "%s" cmd-str)))
 
 (defun prodigy-copy-url ()
-  "Copy url of service at point."
+  "Add URL of service at point to the kill ring."
   (interactive)
   (-when-let (service (prodigy-current-service))
     (-if-let (url (prodigy-single-url service))
@@ -1310,7 +1320,7 @@ SIGNINT signal."
     (prodigy-switch-to-process-buffer service)))
 
 (defun prodigy-browse ()
-  "Browse service url at point if possible to figure out."
+  "Browse service URL at point if possible to figure out."
   (interactive)
   (-when-let (service (prodigy-current-service))
     (-if-let (url (prodigy-single-url service))
@@ -1351,14 +1361,14 @@ SIGNINT signal."
   (prodigy-goto-first-line))
 
 (defun prodigy-jump-magit ()
-  "Jump to magit status mode for service at point."
+  "Open a MAGIT buffer for service at point."
   (interactive)
   (-when-let (service (prodigy-current-service))
     (magit-status-setup-buffer (prodigy-service-cwd service))))
 
 (defun prodigy-jump-file-manager ()
-  "Jump to folder for service at point using selected file
-manager mode defined by `prodigy-file-manager'."
+  "Jump to folder for service at point.
+Customize `prodigy-file-manager' to choose your favorite file manager."
   (interactive)
   (-when-let (service (prodigy-current-service))
     (funcall prodigy-file-manager (prodigy-service-cwd service))))
@@ -1369,7 +1379,7 @@ manager mode defined by `prodigy-file-manager'."
   (prodigy-move-until 'down 'prodigy-service-has-status-p))
 
 (defun prodigy-prev-with-status ()
-  "Move to prev service with status."
+  "Move to the previous service with status."
   (interactive)
   (prodigy-move-until 'up 'prodigy-service-has-status-p))
 
@@ -1528,3 +1538,5 @@ beginning of the line."
 (provide 'prodigy)
 
 ;;; prodigy.el ends here
+
+;; LocalWords:  plist minibuffer sudo unmark program-args
