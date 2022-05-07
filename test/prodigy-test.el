@@ -28,6 +28,8 @@
 
 ;;; Code:
 
+(require 'shut-up)
+
 
 ;;;; prodigy-url
 
