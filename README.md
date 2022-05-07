@@ -1,5 +1,7 @@
 # Prodigy
 
+[![CI](https://github.com/rejeep/prodigy.el/actions/workflows/test.yml/badge.svg)](https://github.com/rejeep/prodigy.el/actions/workflows/test.yml)
+
 Manage external services from within Emacs
 
 I came up with the idea when I got to work one Monday morning and
@@ -9,7 +11,7 @@ services.
 To get rid of this tedious work, I started working on this Emacs
 plugin, which provides a nice and simple GUI to manage services.
 
-![Prodigy](/prodigy.png)
+![Prodigy](./prodigy.png)
 
 ## Installation
 
@@ -361,6 +363,26 @@ Then tag your services with the `jekyll` tag.
 ## Changelog
 
 This is a short summary of changes between versions.
+
+### v1.0.0
+
+* Add support for `imenu` in `prodigy-mode`
+* Add `:sudo` service property: when non-`nil`, the command is executed by
+  `sudo`
+* Add variable `prodigy-file-manager` for users who want a different
+  file manager than `dired` when typing <kbd>j d</kbd> on a service
+* Extend the setting of `prodigy-kill-process-buffer-on-stop` (and
+  related service option) with `unless-visible` value to keep the
+  buffer alive if it is visible
+* `prodigy-copy-cmd` (bound to <kbd>C-w</kbd> in `prodigy-mode`) now
+  adds the environment variables to the result
+* Pressing <kbd>c</kbd> in the log buffer of a service (thus using
+  `prodigy-view-mode`) now gives access to all commands accessible in
+  `prodigy-mode`. This is, for example, useful to restart the service
+  (with <kbd>c r</kbd>) or to open `dired` (with <kbd>c j d</kbd>) or
+  `magit` (with <kbd>c j m</kbd>) in the directory of the service
+* Add command `prodigy-copy-url` to add the URL of service at point to
+  the kill ring
 
 ### v0.7.0
 
