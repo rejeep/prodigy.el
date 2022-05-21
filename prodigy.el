@@ -827,7 +827,16 @@ If SERVICE defines several URLs, ask the user which one is
 preferred."
   (-when-let (url (prodigy-url service))
     (if (listp url)
-        (prodigy-completing-read "URL: " url)
+        (prodigy-completing-read
+         "URL: "
+         (lambda (string predicate action)
+           (if (eq action 'metadata)
+               ;; don't sort candidates so the user can learn their
+               ;; positions by heart:
+               `(metadata (display-sort-function . ,#'identity)
+                          (cycle-sort-function . ,#'identity))
+             (complete-with-action
+              action url string predicate))))
       url)))
 
 (defun prodigy-discover-initialize ()
