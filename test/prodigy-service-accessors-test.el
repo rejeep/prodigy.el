@@ -1,6 +1,6 @@
 ;;; prodigy-service-accessors-test.el --- Prodigy: Tests for the public API -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2014-2022 Johan Andersson
+;; Copyright (C) 2014-2023 Johan Andersson
 
 ;; Author: Johan Andersson <johan.rejeep@gmail.com>
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
