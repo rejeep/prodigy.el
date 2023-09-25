@@ -1,6 +1,6 @@
 ;;; prodigy.el --- Manage external services -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013-2022 Johan Andersson
+;; Copyright (C) 2013-2023 Johan Andersson
 
 ;; Author: Johan Andersson <johan.rejeep@gmail.com>
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
@@ -651,7 +651,7 @@ All windows from all frames are considered."
   "Return SERVICE PROPERTY or tag with PROPERTY.
 
 If SERVICE has PROPERTY, return the value of that property.  Note
-that '(:foo nil) means that the list has the property :foo.  If
+that (:foo nil) means that the list has the property :foo.  If
 SERVICE does not have property, find the first SERVICE tag that
 has that property and return its value."
   (if (plist-member service property)
@@ -863,7 +863,7 @@ preferred."
 (defun prodigy-move-until (direction callback)
   "Move in DIRECTION until while CALLBACK return false.
 
-DIRECTION is either 'up or 'down."
+DIRECTION is either `up' or `down'."
   (let ((pos (line-beginning-position))
         (found
          (catch 'break
