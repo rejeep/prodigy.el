@@ -163,6 +163,19 @@
   (lambda (dir)
     (should (string= dir default-directory))))
 
+(Then "^The current frame has \"\\([^\"]+\\)\" window/s$"
+  (lambda (n)
+    (should (= (count-windows) (string-to-number n)))))
+
+(Given "^I add the display-buffer-same-window rule to display-buffer-alist$"
+  (lambda ()
+    (push '("\\*prodigy\\*"
+            (display-buffer-same-window)) display-buffer-alist)))
+
+(Then "^I delete the other windows$"
+  (lambda ()
+    (delete-other-windows)))
+
 (provide 'prodigy-steps)
 
 ;;; prodigy-steps.el ends here
