@@ -33,3 +33,12 @@ Feature: Prodigy
       | baz  | nil         |
       | foo  | nil         |
       | qux  | nil         |
+
+  Scenario: Prodigy buffer respects display-buffer-alist
+    Given I start prodigy
+    Then The current frame has "2" window/s
+    When I kill the prodigy buffer
+    Then I delete the other windows
+    Given I add the display-buffer-same-window rule to display-buffer-alist
+    Then I start prodigy
+    Then The current frame has "1" window/s
