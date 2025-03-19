@@ -194,7 +194,7 @@ For more information, see status example below!
 ### Python Simple HTTP Server
 
 This service start a Python Simple HTTP Server on port `6001`. When
-stopping the service, the `sigkill` signal is used.
+stopping the service, the `kill` signal is used.
 
 ```lisp
 (prodigy-define-service
@@ -203,7 +203,7 @@ stopping the service, the `sigkill` signal is used.
   :args '("-m" "SimpleHTTPServer" "6001")
   :cwd "/path/to/my/project"
   :tags '(work)
-  :stop-signal 'sigkill
+  :stop-signal 'kill
   :kill-process-buffer-on-stop t)
 ```
 
