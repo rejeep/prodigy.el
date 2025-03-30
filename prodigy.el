@@ -1,6 +1,6 @@
 ;;; prodigy.el --- Manage external services -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013-2023 Johan Andersson
+;; Copyright (C) 2013-2025 Johan Andersson
 
 ;; Author: Johan Andersson <johan.rejeep@gmail.com>
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
