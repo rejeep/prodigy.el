@@ -1409,7 +1409,7 @@ Customize `prodigy-file-manager' to choose your favorite file manager."
 ;;;; View mode functions
 
 (defun prodigy-strip-ctrl-m (output)
-  "Strip  line endings from OUTPUT."
+  "Strip ^M line endings from OUTPUT."
   (s-replace "" "" output))
 
 (defun prodigy-view-clear-buffer ()
