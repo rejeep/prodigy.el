@@ -1,6 +1,6 @@
 ;;; prodigy.el --- Manage external services -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2013-2023 Johan Andersson
+;; Copyright (C) 2013-2025 Johan Andersson
 
 ;; Author: Johan Andersson <johan.rejeep@gmail.com>
 ;; Maintainer: Johan Andersson <johan.rejeep@gmail.com>
@@ -1409,7 +1409,7 @@ Customize `prodigy-file-manager' to choose your favorite file manager."
 ;;;; View mode functions
 
 (defun prodigy-strip-ctrl-m (output)
-  "Strip  line endings from OUTPUT."
+  "Strip ^M line endings from OUTPUT."
   (s-replace "" "" output))
 
 (defun prodigy-view-clear-buffer ()

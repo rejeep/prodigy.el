@@ -10,9 +10,9 @@ jobs:
     strategy:
       matrix:
         emacs_version:
-          - 27.1
           - 28.1
           - 29.4
+          - 30.1
     steps:
     - name: Set up Emacs
       uses: purcell/setup-emacs@master
@@ -20,7 +20,7 @@ jobs:
         version: ${{matrix.emacs_version}}
 
     - name: Check out the source code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Test the project
       run: |
